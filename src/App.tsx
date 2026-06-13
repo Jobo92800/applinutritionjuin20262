@@ -13,7 +13,6 @@ import ShoppingList from './components/ShoppingList';
 import ProgressTracking from './components/ProgressTracking';
 import AdminPanel from './components/AdminPanel';
 import AccountProfile from './components/AccountProfile';
-import FoodAnalyzer from './components/FoodAnalyzer';
 
 function AppContent() {
   const { user, isLoading, completeOnboarding } = useAuth();
@@ -110,8 +109,6 @@ function AppContent() {
         return <ShoppingList />;
       case 'progress':
         return <ProgressTracking />;
-      case 'food-analyzer':
-        return <FoodAnalyzer />;
       case 'account':
         return <AccountProfile />;
       case 'admin':
