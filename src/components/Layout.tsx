@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, Book, Calendar, ShoppingCart, TrendingUp, Headphones, Settings, LogOut, Menu, X } from 'lucide-react';
+import { Home, Book, Calendar, ShoppingCart, TrendingUp, Headphones, Settings, LogOut, Menu, X, ScanLine } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import FloatingMessageButton from './FloatingMessageButton';
 
@@ -20,6 +20,7 @@ export default function Layout({ children, currentPage, onPageChange }: LayoutPr
     { id: 'calendar', name: 'Calendrier', icon: Calendar },
     { id: 'shopping', name: 'Courses', icon: ShoppingCart },
     { id: 'progress', name: 'Suivi', icon: TrendingUp },
+    { id: 'food-analyzer', name: 'Analyse calorique', icon: ScanLine },
     { id: 'account', name: 'Compte', icon: Settings },
   ];
 
