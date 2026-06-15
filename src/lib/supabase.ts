@@ -14,7 +14,14 @@ let supabase: any;
 
 if (isSupabaseConfigured) {
   try {
-    supabase = createClient(supabaseUrl!, supabaseAnonKey!);
+    supabase = createClient(supabaseUrl!, supabaseAnonKey!, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        lock: (_name, _acquireTimeout, fn) => fn(),
+      },
+    });
   } catch (error) {
     console.error('Error creating Supabase client:', error);
     throw error;
