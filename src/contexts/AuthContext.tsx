@@ -317,9 +317,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
 
-        // Mode démo - vérifier les identifiants de démonstration
-        if ((email === 'admin@nutrition.com' && password === 'admin123') ||
-            (email === 'user@nutrition.com' && password === 'user123')) {
+        // Mode démo - vérifier les identifiants de démonstration (dev uniquement)
+        if (import.meta.env.DEV && (
+            (email === 'admin@nutrition.com' && password === 'admin123') ||
+            (email === 'user@nutrition.com' && password === 'user123'))) {
           const demoUser = {
             id: 'demo-user',
             email: email,
