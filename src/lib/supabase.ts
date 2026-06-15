@@ -3,30 +3,18 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-console.log('=== SUPABASE CONFIGURATION ===');
-console.log('Environment:', import.meta.env.MODE);
-console.log('VITE_SUPABASE_URL present:', !!supabaseUrl);
-console.log('VITE_SUPABASE_ANON_KEY present:', !!supabaseAnonKey);
-
-if (supabaseUrl && supabaseAnonKey) {
-  console.log('Supabase URL:', supabaseUrl);
-  console.log('Supabase configured: YES - Using production database');
-} else {
-  console.warn('Supabase NOT configured - Running in DEMO mode');
-  console.warn('Missing variables:', {
-    url: !supabaseUrl ? 'VITE_SUPABASE_URL' : null,
-    key: !supabaseAnonKey ? 'VITE_SUPABASE_ANON_KEY' : null
-  });
-}
-
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
+export const isProduction = import.meta.env.PROD;
+
+if (import.meta.env.DEV) {
+  console.log('Supabase configured:', isSupabaseConfigured);
+}
 
 let supabase: any;
 
 if (isSupabaseConfigured) {
   try {
     supabase = createClient(supabaseUrl!, supabaseAnonKey!);
-    console.log('Supabase client created successfully');
   } catch (error) {
     console.error('Error creating Supabase client:', error);
     throw error;

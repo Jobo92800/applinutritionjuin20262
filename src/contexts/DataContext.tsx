@@ -292,15 +292,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (error) {
         console.error('[DataContext] Error loading recipes:', error);
         console.error('Error details:', error.message, error.code, error.details);
-        setRecipes(DEMO_RECIPES);
+        setRecipes([]);
         return;
       }
 
       console.log('[DataContext] Recipes loaded successfully:', data?.length || 0, 'recipes');
 
       if (!data || data.length === 0) {
-        console.warn('[DataContext] No recipes found in database, using demo data');
-        setRecipes(DEMO_RECIPES);
+        setRecipes([]);
         return;
       }
 
@@ -326,7 +325,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       console.log('[DataContext] Recipes state updated successfully');
     } catch (error) {
       console.error('[DataContext] Exception loading recipes:', error);
-      setRecipes(DEMO_RECIPES);
+      setRecipes([]);
     }
   };
 
@@ -341,15 +340,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (error) {
         console.error('[DataContext] Error loading podcasts:', error);
         console.error('Error details:', error.message, error.code, error.details);
-        setPodcasts(DEMO_PODCASTS);
+        setPodcasts([]);
         return;
       }
 
       console.log('[DataContext] Podcasts loaded successfully:', data?.length || 0, 'podcasts');
 
       if (!data || data.length === 0) {
-        console.warn('[DataContext] No podcasts found in database, using demo data');
-        setPodcasts(DEMO_PODCASTS);
+        setPodcasts([]);
         return;
       }
 
@@ -376,7 +374,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       console.log('[DataContext] Podcasts state updated successfully');
     } catch (error) {
       console.error('[DataContext] Exception loading podcasts:', error);
-      setPodcasts(DEMO_PODCASTS);
+      setPodcasts([]);
     }
   };
 
