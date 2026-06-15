@@ -201,21 +201,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Ajouter un listener pour détecter quand l'utilisateur revient sur l'onglet
     const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible' && isSupabaseConfigured) {
-        try {
-          const savedProfile = localStorage.getItem('supabase_user_profile');
-          if (savedProfile) {
-            const parsedProfile = JSON.parse(savedProfile);
-            setUser(parsedProfile);
-          }
-
-          const { data: { session }, error } = await supabase.auth.getSession();
-          if (session?.user && !error) {
-            await fetchUserProfile(session.user, true);
-          }
-        } catch (error) {
-          console.error('Error checking session on visibility change:', error);
+      if (document.visibilityState !== 'visible' || !isSupabaseConfigured) return;
+      try {
+        const { data: refreshed } = await supabase.auth.refreshSession();
+        if (refreshed?.session?.user) {
+          await fetchUserProfile(refreshed.session.user, true);
+          return;
         }
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          await fetchUserProfile(session.user, true);
+          return;
+        }
+        if (mounted) {
+          setUser(null);
+          try {
+            localStorage.removeItem('supabase_user_profile');
+          } catch (e) {
+            /* ignore */
+          }
+        }
+      } catch (error) {
+        console.error('Erreur lors du rafraîchissement de la session:', error);
       }
     };
 
