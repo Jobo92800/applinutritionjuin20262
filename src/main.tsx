@@ -25,7 +25,6 @@ if (!rootElement) {
         <App />
       </StrictMode>
     );
-    console.log('App rendered successfully');
   } catch (error) {
     console.error('Error rendering app:', error);
     rootElement.innerHTML = '<div style="padding: 20px; text-align: center;"><h1>Erreur de rendu de l\'application</h1><p>Vérifiez la console pour plus de détails</p></div>';

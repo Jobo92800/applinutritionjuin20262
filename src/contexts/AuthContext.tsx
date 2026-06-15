@@ -44,23 +44,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const initAuth = async () => {
       try {
-        console.log('=== INIT AUTH START ===');
-        console.log('isSupabaseConfigured:', isSupabaseConfigured);
-
         if (!isSupabaseConfigured) {
           // Vérifier s'il y a un profil sauvegardé
           let savedProfile = null;
           try {
             savedProfile = localStorage.getItem('user_profile');
-            console.log('Saved profile from localStorage:', savedProfile);
           } catch (error) {
-            console.warn('Cannot access localStorage:', error);
+            console.error('Cannot access localStorage:', error);
           }
 
           if (savedProfile) {
             try {
               const parsedProfile = JSON.parse(savedProfile);
-              console.log('Parsed profile:', parsedProfile);
               if (mounted) {
                 setUser(parsedProfile);
                 setIsLoading(false);
@@ -71,13 +66,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               try {
                 localStorage.removeItem('user_profile');
               } catch (e) {
-                console.warn('Cannot remove from localStorage:', e);
+                // ignore
               }
             }
           }
 
           // Mode démo avec utilisateur fictif (admin par défaut)
-          console.log('Setting demo user...');
           if (mounted) {
             setUser({
               id: 'demo-user',
@@ -99,14 +93,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const savedSupabaseProfile = localStorage.getItem('supabase_user_profile');
           if (savedSupabaseProfile) {
             restoredUser = JSON.parse(savedSupabaseProfile);
-            console.log('Restored user from localStorage:', restoredUser);
             if (mounted) {
               setUser(restoredUser);
               setIsLoading(false);
             }
           }
         } catch (error) {
-          console.warn('Cannot restore from localStorage:', error);
+          // ignore
         }
 
         // Récupérer la session actuelle
@@ -115,22 +108,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) {
           console.error('Erreur lors de la récupération de la session:', error);
 
-          // Si on a un utilisateur restauré du localStorage, le garder
           if (restoredUser && mounted) {
-            console.log('Keeping restored user despite session error');
             return;
           }
 
-          // Si l'erreur est liée à un refresh token invalide, nettoyer la session
           if (error.message?.includes('refresh_token_not_found') ||
               error.message?.includes('Invalid Refresh Token')) {
-            console.log('Token de rafraîchissement invalide détecté, nettoyage de la session...');
-            // Mettre à jour l'état immédiatement pour éviter l'affichage de l'erreur
             if (mounted) {
               setUser(null);
               setIsLoading(false);
             }
-            // Nettoyer la session de manière asynchrone
             try {
               await supabase.auth.signOut();
               localStorage.removeItem('supabase_user_profile');
@@ -158,13 +145,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
           if (!mounted) return;
 
-          console.log('Auth state changed:', event);
-
-          // Ne pas réinitialiser l'utilisateur lors du rafraîchissement du token
           if (event === 'TOKEN_REFRESHED') {
-            console.log('Token refreshed, keeping current user');
             if (session?.user) {
-              // Mettre à jour le profil silencieusement
               await fetchUserProfile(session.user, true);
             }
             return;
@@ -176,7 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             try {
               localStorage.removeItem('supabase_user_profile');
             } catch (e) {
-              console.warn('Cannot remove from localStorage:', e);
+              // ignore
             }
             return;
           }
@@ -197,18 +179,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('Erreur lors de l\'initialisation de l\'authentification:', error);
 
         if (mounted) {
-          // Essayer de restaurer depuis le localStorage en cas d'erreur
           try {
             const savedProfile = localStorage.getItem('supabase_user_profile');
             if (savedProfile) {
               const parsedProfile = JSON.parse(savedProfile);
-              console.log('Restored user after error:', parsedProfile);
               setUser(parsedProfile);
               setIsLoading(false);
               return;
             }
           } catch (e) {
-            console.warn('Cannot restore user after error:', e);
+            // ignore
           }
 
           setUser(null);
@@ -222,21 +202,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Ajouter un listener pour détecter quand l'utilisateur revient sur l'onglet
     const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible' && isSupabaseConfigured) {
-        console.log('Tab became visible, checking session...');
-
         try {
-          // Essayer de restaurer l'utilisateur depuis le localStorage
           const savedProfile = localStorage.getItem('supabase_user_profile');
           if (savedProfile) {
             const parsedProfile = JSON.parse(savedProfile);
-            console.log('Restoring user from localStorage on tab focus:', parsedProfile);
             setUser(parsedProfile);
           }
 
-          // Vérifier la session Supabase en arrière-plan
           const { data: { session }, error } = await supabase.auth.getSession();
           if (session?.user && !error) {
-            console.log('Session is valid, refreshing user profile');
             await fetchUserProfile(session.user, true);
           }
         } catch (error) {
@@ -260,7 +234,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       if (!isSupabaseConfigured) return;
 
-      console.log('[AuthContext] Fetching user profile for:', authUser.id);
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
@@ -269,9 +242,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error('[AuthContext] Error fetching profile:', error);
-        console.error('Error details:', error.message, error.code, error.details);
-
-        // En mode silencieux, ne pas réinitialiser l'utilisateur
         if (!silent) {
           setUser(null);
           setIsLoading(false);
@@ -280,7 +250,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (profile) {
-        console.log('[AuthContext] Profile found:', profile);
         const userProfile = {
           id: profile.id,
           email: profile.email,
@@ -302,22 +271,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
 
         setUser(userProfile);
-        console.log('[AuthContext] User state updated successfully');
 
-        // Sauvegarder dans le localStorage pour la persistance
         try {
           localStorage.setItem('supabase_user_profile', JSON.stringify(userProfile));
-          console.log('[AuthContext] User profile saved to localStorage');
         } catch (e) {
-          console.warn('Cannot save to localStorage:', e);
+          // ignore
         }
-      } else {
-        console.warn('[AuthContext] No profile found for user:', authUser.id);
       }
     } catch (error) {
       console.error('Erreur lors de la récupération du profil:', error);
-
-      // En mode silencieux, ne pas réinitialiser l'utilisateur
       if (!silent) {
         setUser(null);
       }
@@ -330,36 +292,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string): Promise<'success' | 'invalid_credentials' | 'error'> => {
     try {
-      console.log('=== LOGIN ATTEMPT ===');
-      console.log('Email:', email);
-      console.log('isSupabaseConfigured:', isSupabaseConfigured);
-      
       if (!isSupabaseConfigured) {
-        // Vérifier s'il y a un profil sauvegardé pour cet email
         let savedProfile = null;
         try {
           savedProfile = localStorage.getItem('user_profile');
         } catch (error) {
-          console.warn('Cannot access localStorage:', error);
+          // ignore
         }
-        
-        console.log('=== LOGIN - CHECKING FOR SAVED PROFILE ===');
-        console.log('Email attempting login:', email);
-        console.log('Saved profile in localStorage:', savedProfile);
 
         if (savedProfile) {
           try {
             const parsedProfile = JSON.parse(savedProfile);
-            console.log('Login: checking saved profile for email:', email);
-            console.log('Saved profile email:', parsedProfile.email);
-            console.log('Complete parsed profile:', JSON.stringify(parsedProfile, null, 2));
             if (parsedProfile.email === email) {
-              console.log('Email matches! Loading user with full profile data');
-              console.log('Profile contains:', {
-                hasProfile: !!parsedProfile.profile,
-                profileData: parsedProfile.profile,
-                isOnboardingComplete: parsedProfile.isOnboardingComplete
-              });
               setUser(parsedProfile);
               return 'success';
             }
@@ -368,15 +312,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             try {
               localStorage.removeItem('user_profile');
             } catch (e) {
-              console.warn('Cannot remove from localStorage:', e);
+              // ignore
             }
           }
         }
-        
+
         // Mode démo - vérifier les identifiants de démonstration
         if ((email === 'admin@nutrition.com' && password === 'admin123') ||
             (email === 'user@nutrition.com' && password === 'user123')) {
-          console.log('Demo credentials matched');
           const demoUser = {
             id: 'demo-user',
             email: email,
@@ -384,19 +327,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             role: email === 'admin@nutrition.com' ? 'admin' : 'user',
             subscription_tier: 'admin',
             createdAt: new Date().toISOString(),
-            isOnboardingComplete: true // Les comptes de démo ont déjà terminé l'onboarding
+            isOnboardingComplete: true
           };
-          
-          // Sauvegarder le profil démo dans localStorage
+
           try {
             localStorage.setItem('user_profile', JSON.stringify(demoUser));
           } catch (error) {
-            console.warn('Cannot save to localStorage:', error);
+            // ignore
           }
           setUser(demoUser);
           return 'success';
         } else {
-          console.log('Invalid demo credentials');
           return 'invalid_credentials';
         }
       }
@@ -429,7 +370,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (email: string, password: string, name: string): Promise<'success' | 'user_exists' | 'error'> => {
     try {
       if (!isSupabaseConfigured) {
-        // Mode démo - simuler la création de compte
         const newUser = {
           id: 'demo-user-new',
           email: email,
@@ -437,12 +377,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: 'user',
           subscription_tier: 'user',
           createdAt: new Date().toISOString(),
-          isOnboardingComplete: false // Les nouveaux comptes doivent faire l'onboarding
+          isOnboardingComplete: false
         };
-        console.log('Setting new user with onboarding incomplete:', newUser);
         setUser(newUser);
-        
-        // Sauvegarder le nouveau profil dans localStorage
         localStorage.setItem('user_profile', JSON.stringify(newUser));
         return 'success';
       }
@@ -483,8 +420,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const requestPasswordReset = async (email: string): Promise<'success' | 'error'> => {
     try {
       if (!isSupabaseConfigured) {
-        // Mode démo - simuler l'envoi d'email
-        console.log('Mode démo: Email de réinitialisation simulé pour', email);
         return 'success';
       }
 
@@ -513,12 +448,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     activityLevel: 'faible' | 'moderee' | 'elevee';
     metabolism: 'normal' | 'ralentissement';
   }) => {
-    console.log('completeOnboarding called with:', data);
     if (!user) return;
 
     try {
       if (!isSupabaseConfigured) {
-        // Mode démo - mettre à jour l'utilisateur local
         const updatedUser = {
           ...user,
           isOnboardingComplete: true,
@@ -532,18 +465,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             metabolism: data.metabolism
           }
         };
-        console.log('Setting updated user:', updatedUser);
-        console.log('Profile being saved:', updatedUser.profile);
-        
-        // Sauvegarder dans le localStorage AVANT de mettre à jour l'état
-        const profileToSave = JSON.stringify(updatedUser);
-        console.log('Saving to localStorage:', profileToSave);
-        localStorage.setItem('user_profile', profileToSave);
-        
-        // Vérifier que la sauvegarde a fonctionné
-        const savedCheck = localStorage.getItem('user_profile');
-        console.log('Verification - saved profile:', savedCheck);
-        
+
+        localStorage.setItem('user_profile', JSON.stringify(updatedUser));
         setUser(updatedUser);
         return;
       }
@@ -600,12 +523,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setUser(updatedUser);
 
-      // Sauvegarder dans le localStorage pour la persistance
       try {
         localStorage.setItem('supabase_user_profile', JSON.stringify(updatedUser));
-        console.log('[AuthContext] Updated user profile saved to localStorage');
       } catch (e) {
-        console.warn('Cannot save to localStorage:', e);
+        // ignore
       }
     } catch (error) {
       console.error('Erreur lors de la finalisation de l\'onboarding:', error);
@@ -615,11 +536,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshProfile = async () => {
     try {
-      console.log('[AuthContext] Refreshing user profile...');
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (authUser) {
         await fetchUserProfile(authUser, true);
-        console.log('[AuthContext] Profile refreshed successfully');
       }
     } catch (error) {
       console.error('Erreur lors du rafraîchissement du profil:', error);

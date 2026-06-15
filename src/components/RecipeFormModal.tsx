@@ -72,7 +72,6 @@ export default function RecipeFormModal({ recipe, isOpen, onClose }: RecipeFormM
 
   useEffect(() => {
     if (recipe) {
-      console.log('Loading recipe data:', recipe);
       setFormData({
         title: recipe.title,
         description: recipe.description || '',
@@ -113,7 +112,6 @@ export default function RecipeFormModal({ recipe, isOpen, onClose }: RecipeFormM
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted with data:', formData);
     setLoading(true);
 
     try {
@@ -124,13 +122,9 @@ export default function RecipeFormModal({ recipe, isOpen, onClose }: RecipeFormM
         variants: formData.variants.filter(variant => variant.name.trim() !== '')
       };
 
-      console.log('Processed recipe data:', recipeData);
-
       if (recipe) {
-        console.log('Updating recipe with ID:', recipe.id);
         await updateRecipe(recipe.id, recipeData);
       } else {
-        console.log('Adding new recipe');
         await addRecipe(recipeData);
       }
 

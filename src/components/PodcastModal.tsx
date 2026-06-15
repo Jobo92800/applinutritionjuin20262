@@ -243,11 +243,12 @@ export default function PodcastModal({ podcast, isOpen, onClose }: PodcastModalP
                 </div>
                 <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">Contenu Premium</h3>
                 <p className="text-sm sm:text-base text-gray-600 mb-4">
-                  Ce podcast nécessite un abonnement {
-                    podcast.access_tier === '1_month' ? '1 mois' :
-                    podcast.access_tier === '3_month' ? '3 mois' :
-                    podcast.access_tier === '6_month' ? '6 mois' : podcast.access_tier
-                  } pour être écouté.
+                  Ce podcast nécessite un abonnement{' '}
+                  {(podcast.access_tiers || [])
+                    .filter(t => t !== 'all')
+                    .map(t => t === '1_month' ? '1 mois' : t === '3_month' ? '3 mois' : t === '6_month' ? '6 mois' : t)
+                    .join(' ou ')}{' '}
+                  pour être écouté.
                 </p>
                 <button className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-semibold hover:from-yellow-600 hover:to-orange-600 transition-colors text-sm sm:text-base">
                   Améliorer mon abonnement

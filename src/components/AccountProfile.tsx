@@ -31,8 +31,6 @@ export default function AccountProfile() {
 
   // Update formData when user changes
   React.useEffect(() => {
-    console.log('AccountProfile: user changed', user);
-    console.log('User profile data:', user?.profile);
     if (user) {
       setFormData(prev => ({
         ...prev,
@@ -83,8 +81,6 @@ export default function AccountProfile() {
   const handleSave = async () => {
     if (!user) return;
 
-    console.log('Sauvegarde des modifications:', formData);
-
     try {
       // Save to Supabase
       const { error } = await supabase
@@ -107,10 +103,7 @@ export default function AccountProfile() {
         return;
       }
 
-      console.log('Profile saved successfully to Supabase');
-
       await refreshProfile();
-      console.log('Profile refreshed in context');
 
       alert('Profil mis à jour avec succès!');
       setIsEditing(false);

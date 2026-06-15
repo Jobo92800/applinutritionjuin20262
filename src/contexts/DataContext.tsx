@@ -210,8 +210,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        console.log('Loading data for user:', user.id, 'role:', user.role);
-
         if (isSupabaseConfigured) {
           await loadAllDataFromSupabase();
         } else {
@@ -232,7 +230,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
     // Ajouter un listener pour recharger les données quand l'onglet devient visible
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && user) {
-        console.log('Tab became visible, reloading data...');
         if (isSupabaseConfigured) {
           loadAllDataFromSupabase().catch(error => {
             console.error('Error reloading data on visibility change:', error);
@@ -283,7 +280,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const loadRecipes = async () => {
     try {
-      console.log('[DataContext] Loading recipes from Supabase...');
       const { data, error } = await supabase
         .from('recipes')
         .select('*')
@@ -291,12 +287,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error('[DataContext] Error loading recipes:', error);
-        console.error('Error details:', error.message, error.code, error.details);
         setRecipes([]);
         return;
       }
-
-      console.log('[DataContext] Recipes loaded successfully:', data?.length || 0, 'recipes');
 
       if (!data || data.length === 0) {
         setRecipes([]);
@@ -322,7 +315,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }));
 
       setRecipes(formattedRecipes);
-      console.log('[DataContext] Recipes state updated successfully');
     } catch (error) {
       console.error('[DataContext] Exception loading recipes:', error);
       setRecipes([]);
@@ -331,7 +323,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const loadPodcasts = async () => {
     try {
-      console.log('[DataContext] Loading podcasts from Supabase...');
       const { data, error } = await supabase
         .from('podcasts')
         .select('*')
@@ -339,12 +330,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error('[DataContext] Error loading podcasts:', error);
-        console.error('Error details:', error.message, error.code, error.details);
         setPodcasts([]);
         return;
       }
-
-      console.log('[DataContext] Podcasts loaded successfully:', data?.length || 0, 'podcasts');
 
       if (!data || data.length === 0) {
         setPodcasts([]);
@@ -371,7 +359,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }));
 
       setPodcasts(formattedPodcasts);
-      console.log('[DataContext] Podcasts state updated successfully');
     } catch (error) {
       console.error('[DataContext] Exception loading podcasts:', error);
       setPodcasts([]);
@@ -754,8 +741,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
           throw error;
         }
       }
-
-      console.log('Ordre des podcasts sauvegardé en base de données');
     } catch (error) {
       console.error('Erreur lors de la mise à jour de l\'ordre des podcasts:', error);
       await loadPodcasts();
@@ -765,22 +750,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // Fonctions CRUD simplifiées pour le mode démo
   const addRecipe = async (recipe: Omit<Recipe, 'id' | 'createdAt'>) => {
-    console.log('addRecipe called with:', recipe);
-    
     if (!isSupabaseConfigured) {
       const newRecipe: Recipe = {
         ...recipe,
         id: Date.now().toString(),
         createdAt: new Date().toISOString()
       };
-      console.log('Demo mode: Adding recipe:', newRecipe);
       setRecipes(prev => [newRecipe, ...prev]);
       return;
     }
 
     try {
-      console.log('Supabase mode: Inserting recipe...');
-      
       // Validation et nettoyage des données
       const cleanedIngredients = recipe.ingredients.map(ingredient => ({
         id: ingredient.id,
@@ -808,7 +788,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         : [];
       
       const insertData = {
-        title: String(recipe.title || ''),
         description: String(recipe.description || ''),
         image: String(recipe.image || ''),
         difficulty: recipe.difficulty,
@@ -822,9 +801,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         dietary_preferences: cleanedDietaryPreferences,
         created_by: user?.id
       };
-      
-      console.log('Insert data:', insertData);
-      
+
       const { data, error } = await supabase
         .from('recipes')
         .insert(insertData)
@@ -836,7 +813,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         throw new Error(`Erreur lors de l'ajout de la recette: ${error.message}`);
       }
 
-      console.log('Recipe added successfully:', data);
       await loadRecipes();
     } catch (error) {
       console.error('Erreur dans addRecipe:', error);
@@ -845,16 +821,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const updateRecipe = async (id: string, recipe: Partial<Recipe>) => {
-    console.log('updateRecipe called with id:', id, 'data:', recipe);
-    
     if (!isSupabaseConfigured) {
-      console.log('Demo mode: Updating recipe');
       setRecipes(prev => prev.map(r => r.id === id ? { ...r, ...recipe } : r));
       return;
     }
 
     try {
-      console.log('Supabase mode: Updating recipe...');
       const updateData: any = {};
       
       if (recipe.title !== undefined) updateData.title = String(recipe.title || '');
@@ -905,8 +877,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         updateData.variants = recipe.variants || [];
       }
 
-      console.log('Update data:', updateData);
-
       const { error } = await supabase
         .from('recipes')
         .update(updateData)
@@ -917,7 +887,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         throw new Error(`Erreur lors de la mise à jour de la recette: ${error.message}`);
       }
 
-      console.log('Recipe updated successfully');
       await loadRecipes();
     } catch (error) {
       console.error('Erreur dans updateRecipe:', error);
@@ -926,16 +895,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteRecipe = async (id: string) => {
-    console.log('deleteRecipe called with id:', id);
-    
     if (!isSupabaseConfigured) {
-      console.log('Demo mode: Deleting recipe');
       setRecipes(prev => prev.filter(r => r.id !== id));
       return;
     }
 
     try {
-      console.log('Supabase mode: Deleting recipe...');
       const { error } = await supabase
         .from('recipes')
         .delete()
@@ -946,7 +911,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         throw new Error(`Erreur lors de la suppression de la recette: ${error.message}`);
       }
 
-      console.log('Recipe deleted successfully');
       await loadRecipes();
     } catch (error) {
       console.error('Erreur dans deleteRecipe:', error);
@@ -1005,8 +969,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         insertData.cta_button2 = podcast.ctaButton2;
       }
 
-      console.log('Données à insérer en base:', insertData);
-
       const { data, error } = await supabase
         .from('podcasts')
         .insert(insertData)
@@ -1018,7 +980,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         throw new Error(`Erreur lors de l'ajout du podcast: ${error.message}`);
       }
 
-      console.log('Podcast ajouté avec succès:', data);
       await loadPodcasts();
     } catch (error) {
       console.error('Erreur dans addPodcast:', error);
@@ -1067,8 +1028,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      console.log('Données à mettre à jour:', updateData);
-
       const { error } = await supabase
         .from('podcasts')
         .update(updateData)
@@ -1079,7 +1038,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         throw new Error(`Erreur lors de la mise à jour du podcast: ${error.message}`);
       }
 
-      console.log('Podcast mis à jour avec succès');
       await loadPodcasts();
     } catch (error) {
       console.error('Erreur dans updatePodcast:', error);
@@ -1108,15 +1066,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // Fonction pour obtenir un plan de repas par date
   const getMealPlanByDate = async (userId: string, date: string): Promise<MealPlan | null> => {
-    console.log('=== DataContext.getMealPlanByDate ===');
-    console.log('userId:', userId, 'date:', date);
-    console.log('isSupabaseConfigured:', isSupabaseConfigured);
-    
     if (!isSupabaseConfigured) {
-      const found = mealPlans.find(plan => plan.userId === userId && plan.date === date) || null;
-      console.log('Mode démo - Plan trouvé:', found);
-      console.log('Tous les plans disponibles:', mealPlans);
-      return found;
+      return mealPlans.find(plan => plan.userId === userId && plan.date === date) || null;
     }
 
     try {
@@ -1151,40 +1102,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // Fonctions simplifiées pour les autres opérations
   const addMealPlan = async (mealPlan: Omit<MealPlan, 'id'>) => {
-    console.log('=== DataContext.addMealPlan ===');
-    console.log('mealPlan à ajouter:', mealPlan);
-    console.log('isSupabaseConfigured:', isSupabaseConfigured);
-    
     if (!isSupabaseConfigured) {
       const newMealPlan: MealPlan = {
         ...mealPlan,
         id: Date.now().toString()
       };
-      console.log('Mode démo - nouveau plan:', newMealPlan);
-      
+
       setMealPlans(prev => {
-        // Vérifier s'il existe déjà un plan pour cette date et cet utilisateur
-        const existingIndex = prev.findIndex(plan => 
+        const existingIndex = prev.findIndex(plan =>
           plan.userId === mealPlan.userId && plan.date === mealPlan.date
         );
-        console.log('Index du plan existant:', existingIndex);
-        
+
         if (existingIndex >= 0) {
-          // Remplacer le plan existant
           const updated = [...prev];
           updated[existingIndex] = newMealPlan;
-          console.log('Plan remplacé, nouvelle liste:', updated);
           return updated;
         } else {
-          // Ajouter un nouveau plan
-          console.log('Nouveau plan ajouté à la liste');
-          const newList = [newMealPlan, ...prev];
-          console.log('Nouvelle liste complète:', newList);
-          return newList;
+          return [newMealPlan, ...prev];
         }
       });
-      
-      console.log('Meal plan added successfully');
+
       return;
     }
 
@@ -1201,35 +1138,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
       throw error;
     }
 
-    // Recharger les données immédiatement
     await loadMealPlans();
-    
-    // Forcer un re-render en mettant à jour l'état
+
     setMealPlans(prev => [...prev]);
   };
 
   const updateMealPlan = async (id: string, mealPlan: Partial<MealPlan>) => {
-    console.log('=== DataContext.updateMealPlan ===');
-    console.log('ID à mettre à jour:', id);
-    console.log('Données de mise à jour:', mealPlan);
-    console.log('isSupabaseConfigured:', isSupabaseConfigured);
-    
     if (!isSupabaseConfigured) {
-      setMealPlans(prev => {
-        const updated = prev.map(mp => {
-          if (mp.id === id) {
-            const updatedPlan = { ...mp, ...mealPlan };
-            console.log('Plan mis à jour:', updatedPlan);
-            return updatedPlan;
-          }
-          return mp;
-        });
-        console.log('Mode démo - Plans mis à jour:', updated);
-        
-        return updated;
-      });
-      
-      console.log('Meal plan updated successfully');
+      setMealPlans(prev => prev.map(mp => mp.id === id ? { ...mp, ...mealPlan } : mp));
       return;
     }
 
@@ -1248,10 +1164,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       throw error;
     }
 
-    // Recharger les données immédiatement
     await loadMealPlans();
-    
-    console.log('Meal plan updated successfully');
   };
 
   const addWeightEntry = async (entry: Omit<WeightEntry, 'id'>) => {
@@ -1411,38 +1324,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const generateShoppingList = async (userId: string, weekStart?: string) => {
-    console.log('=== GENERATE SHOPPING LIST ===');
-    console.log('userId:', userId);
-    console.log('weekStart:', weekStart);
-    
     let userMealPlans = mealPlans.filter(plan => plan.userId === userId);
-    console.log('Total meal plans for user:', userMealPlans.length);
-    
-    // Si une semaine spécifique est sélectionnée, filtrer par cette semaine
+
     if (weekStart) {
       const weekStartDate = new Date(weekStart);
       const weekEndDate = new Date(weekStartDate);
       weekEndDate.setDate(weekEndDate.getDate() + 6);
-      
+
       userMealPlans = userMealPlans.filter(plan => {
         const planDate = new Date(plan.date);
         return planDate >= weekStartDate && planDate <= weekEndDate;
       });
-      
-      console.log('Filtered meal plans for week:', userMealPlans.length);
-      console.log('Week range:', weekStartDate.toLocaleDateString(), '-', weekEndDate.toLocaleDateString());
     }
     
     const ingredients: { [key: string]: ShoppingItem } = {};
 
     userMealPlans.forEach(plan => {
-      console.log('Processing plan for date:', plan.date, 'meals:', plan.meals);
       Object.values(plan.meals).forEach(recipeId => {
         if (recipeId) {
-          console.log('Looking for recipe:', recipeId);
           const recipe = recipes.find(r => r.id === recipeId);
           if (recipe) {
-            console.log('Found recipe:', recipe.title, 'with', recipe.ingredients.length, 'ingredients');
             recipe.ingredients.forEach(ingredient => {
               const key = `${ingredient.name}-${ingredient.unit}`;
               if (ingredients[key]) {
@@ -1458,16 +1359,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 };
               }
             });
-          } else {
-            console.log('Recipe not found for ID:', recipeId);
           }
         }
       });
     });
 
     const shoppingItems = Object.values(ingredients);
-    console.log('Generated shopping items:', shoppingItems.length);
-    console.log('Shopping items:', shoppingItems);
     await updateShoppingList(shoppingItems);
   };
 

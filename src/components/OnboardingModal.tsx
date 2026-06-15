@@ -60,7 +60,6 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
   };
 
   const handleComplete = () => {
-    console.log('Completing onboarding with data:', formData);
     onComplete(formData);
   };
 

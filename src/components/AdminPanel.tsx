@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Upload, Clock, Users, ChefHat, GripVertical, MessageCircle } from 'lucide-react';
+import { Plus, CreditCard as Edit, Trash2, Upload, Clock, Users, ChefHat, GripVertical, MessageCircle } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Recipe, Podcast } from '../types';
@@ -270,7 +270,7 @@ export default function AdminPanel() {
                         <p className="text-sm text-gray-600 mb-2 line-clamp-2">{podcast.description}</p>
                         <div className="flex items-center space-x-4 text-sm text-gray-500">
                           <span>{Math.floor(podcast.duration / 60)} min</span>
-                          <span className="capitalize">{podcast.access_tier}</span>
+                          <span>{(podcast.access_tiers || []).join(', ')}</span>
                         </div>
                       </div>
                       <div className="flex space-x-2">

@@ -44,12 +44,10 @@ export default function MealCalendar() {
   // Recharger les données quand l'utilisateur change
   useEffect(() => {
     if (user) {
-      console.log('User changed, reloading meal plans for:', user.id);
-      // Forcer un rechargement des données
       const timer = setTimeout(() => {
-        setCurrentWeek(prev => new Date(prev)); // Trigger re-render
+        setCurrentWeek(prev => new Date(prev));
       }, 100);
-      
+
       return () => clearTimeout(timer);
     }
   }, [user]);
@@ -142,53 +140,30 @@ export default function MealCalendar() {
   };
 
   const getMealPlanForDate = useCallback((date: string): MealPlan | null => {
-    const plan = mealPlans.find(plan => 
+    const plan = mealPlans.find(plan =>
       plan.userId === user?.id && plan.date === date
     );
-    console.log(`getMealPlanForDate(${date}):`, plan);
     return plan || null;
   }, [mealPlans, user?.id]);
 
   const getRecipeById = (id: string) => {
-    // Gérer les variantes avec l'identifiant format: recipeId_variant_variantId
     if (id.includes('_variant_')) {
       const [recipeId, , variantId] = id.split('_');
-      console.log('=== SEARCHING FOR VARIANT ===');
-      console.log('Full ID:', id);
-      console.log('Recipe ID:', recipeId);
-      console.log('Variant ID:', variantId);
-      
       const recipe = recipes.find(r => r.id === recipeId);
-      console.log('Recipe found:', recipe ? 'YES' : 'NO');
-      
+
       if (recipe) {
-        console.log('Recipe variants:', recipe.variants);
-        console.log('Number of variants:', recipe.variants?.length || 0);
-        
         if (recipe.variants) {
-          // Chercher la variante par index ou par ID
           let variant = recipe.variants.find(v => v.id === variantId);
-          
-          // Si pas trouvé par ID, essayer par index
+
           if (!variant) {
             const variantIndex = parseInt(variantId);
             if (!isNaN(variantIndex) && variantIndex < recipe.variants.length) {
               variant = recipe.variants[variantIndex];
-              console.log('Found variant by index:', variantIndex, variant);
             }
-          } else {
-            console.log('Found variant by ID:', variant);
           }
-          
+
           if (variant) {
-            console.log('=== VARIANT DETAILS ===');
-            console.log('Variant object:', variant);
-            console.log('Variant keys:', Object.keys(variant));
-            console.log('targetCalories:', variant.targetCalories);
-            console.log('nutrition:', variant.nutrition);
-            
-            // Créer l'objet recette avec les données de la variante
-            const variantRecipe = {
+            return {
               ...recipe,
               id: id,
               title: `${recipe.title} (${variant.name})`,
@@ -201,24 +176,12 @@ export default function MealCalendar() {
                 fat: variant.nutrition?.fat || recipe.nutrition.fat
               }
             };
-            
-            console.log('=== FINAL VARIANT RECIPE ===');
-            console.log('Final nutrition:', variantRecipe.nutrition);
-            console.log('Final calories:', variantRecipe.nutrition.calories);
-            
-            return variantRecipe;
-          } else {
-            console.log('Variant not found, returning original recipe');
           }
         }
       }
     }
-    
-    const originalRecipe = recipes.find(recipe => recipe.id === id);
-    if (originalRecipe) {
-      console.log('Returning original recipe:', originalRecipe.title, 'calories:', originalRecipe.nutrition.calories);
-    }
-    return originalRecipe;
+
+    return recipes.find(recipe => recipe.id === id);
   };
 
   // Filtrer les recettes selon la catégorie sélectionnée et le terme de recherche
@@ -295,14 +258,7 @@ export default function MealCalendar() {
   const assignRecipeToMeal = (recipeId: string) => {
     if (!selectedMeal || !user) return;
 
-    console.log('=== ASSIGN RECIPE TO MEAL ===');
-    console.log('Original recipe ID:', recipeId);
-    console.log('Selected variant:', selectedVariant);
-
-    // Si une variante est sélectionnée, créer un identifiant unique
     const finalRecipeId = selectedVariant ? `${recipeId}_variant_${selectedVariant.id || selectedVariant.name || '0'}` : recipeId;
-    
-    console.log('Final recipe ID:', finalRecipeId);
 
     const existingPlan = mealPlans.find(
       plan => plan.date === selectedMeal.date && plan.userId === user.id
@@ -340,14 +296,7 @@ export default function MealCalendar() {
   const assignRecipeToMealWithVariant = (recipeId: string, variant?: any) => {
     if (!selectedMeal || !user) return;
 
-    console.log('=== ASSIGN RECIPE TO MEAL WITH VARIANT ===');
-    console.log('Original recipe ID:', recipeId);
-    console.log('Variant passed:', variant);
-
-    // Si une variante est passée, créer un identifiant unique
     const finalRecipeId = variant ? `${recipeId}_variant_${variant.id || variant.name || '0'}` : recipeId;
-    
-    console.log('Final recipe ID:', finalRecipeId);
 
     const existingPlan = mealPlans.find(
       plan => plan.date === selectedMeal.date && plan.userId === user.id

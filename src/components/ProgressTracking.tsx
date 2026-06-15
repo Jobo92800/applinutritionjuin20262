@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, Plus, Target, Calendar, Weight, CheckCircle, Award, Star, Edit2, Trash2 } from 'lucide-react';
+import { TrendingUp, Plus, Target, Calendar, Weight, CheckCircle, Award, Star, CreditCard as Edit2, Trash2 } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -19,6 +19,7 @@ export default function ProgressTracking() {
   const [showAddEntry, setShowAddEntry] = useState(false);
   const [showEditEntry, setShowEditEntry] = useState(false);
   const [editingEntry, setEditingEntry] = useState<any>(null);
+  const [entryError, setEntryError] = useState<string | null>(null);
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
   const [newEntry, setNewEntry] = useState({
     weight: '',
@@ -37,48 +38,65 @@ export default function ProgressTracking() {
   const currentWeekProgress = user ? getCurrentWeekProgress(user.id) : null;
   const userBadges = user ? getUserBadges(user.id) : [];
 
-  const handleAddEntry = () => {
+  const handleAddEntry = async () => {
     if (!newEntry.weight || !user) return;
+    setEntryError(null);
 
-    addWeightEntry({
-      userId: user.id,
-      weight: parseFloat(newEntry.weight),
-      date: newEntry.date,
-      measurements: {
-        waist: newEntry.measurements.waist ? parseFloat(newEntry.measurements.waist) : undefined,
-        chest: newEntry.measurements.chest ? parseFloat(newEntry.measurements.chest) : undefined,
-        hips: newEntry.measurements.hips ? parseFloat(newEntry.measurements.hips) : undefined
-      }
-    });
+    try {
+      await addWeightEntry({
+        userId: user.id,
+        weight: parseFloat(newEntry.weight),
+        date: newEntry.date,
+        measurements: {
+          waist: newEntry.measurements.waist ? parseFloat(newEntry.measurements.waist) : undefined,
+          chest: newEntry.measurements.chest ? parseFloat(newEntry.measurements.chest) : undefined,
+          hips: newEntry.measurements.hips ? parseFloat(newEntry.measurements.hips) : undefined
+        }
+      });
 
-    setNewEntry({
-      weight: '',
-      date: new Date().toISOString().split('T')[0],
-      measurements: { waist: '', chest: '', hips: '' }
-    });
-    setShowAddEntry(false);
+      setNewEntry({
+        weight: '',
+        date: new Date().toISOString().split('T')[0],
+        measurements: { waist: '', chest: '', hips: '' }
+      });
+      setShowAddEntry(false);
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout de l\'entrée:', error);
+      setEntryError('Une erreur est survenue lors de l\'ajout. Veuillez réessayer.');
+    }
   };
 
-  const handleEditEntry = () => {
+  const handleEditEntry = async () => {
     if (!editingEntry || !editingEntry.weight || !user) return;
+    setEntryError(null);
 
-    updateWeightEntry(editingEntry.id, {
-      weight: parseFloat(editingEntry.weight),
-      date: editingEntry.date,
-      measurements: {
-        waist: editingEntry.measurements?.waist ? parseFloat(editingEntry.measurements.waist) : undefined,
-        chest: editingEntry.measurements?.chest ? parseFloat(editingEntry.measurements.chest) : undefined,
-        hips: editingEntry.measurements?.hips ? parseFloat(editingEntry.measurements.hips) : undefined
-      }
-    });
+    try {
+      await updateWeightEntry(editingEntry.id, {
+        weight: parseFloat(editingEntry.weight),
+        date: editingEntry.date,
+        measurements: {
+          waist: editingEntry.measurements?.waist ? parseFloat(editingEntry.measurements.waist) : undefined,
+          chest: editingEntry.measurements?.chest ? parseFloat(editingEntry.measurements.chest) : undefined,
+          hips: editingEntry.measurements?.hips ? parseFloat(editingEntry.measurements.hips) : undefined
+        }
+      });
 
-    setEditingEntry(null);
-    setShowEditEntry(false);
+      setEditingEntry(null);
+      setShowEditEntry(false);
+    } catch (error) {
+      console.error('Erreur lors de la modification de l\'entrée:', error);
+      setEntryError('Une erreur est survenue lors de la modification. Veuillez réessayer.');
+    }
   };
 
-  const handleDeleteEntry = (entryId: string) => {
+  const handleDeleteEntry = async (entryId: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer cette entrée ?')) {
-      deleteWeightEntry(entryId);
+      try {
+        await deleteWeightEntry(entryId);
+      } catch (error) {
+        console.error('Erreur lors de la suppression de l\'entrée:', error);
+        alert('Une erreur est survenue lors de la suppression. Veuillez réessayer.');
+      }
     }
   };
 
@@ -998,7 +1016,7 @@ export default function ProgressTracking() {
 
             <div className="flex space-x-4 mt-6">
               <button
-                onClick={() => setShowAddEntry(false)}
+                onClick={() => { setShowAddEntry(false); setEntryError(null); }}
                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Annuler
@@ -1011,6 +1029,7 @@ export default function ProgressTracking() {
                 Ajouter
               </button>
             </div>
+            {entryError && <p className="mt-3 text-sm text-red-600">{entryError}</p>}
           </div>
         </div>
       )}
@@ -1092,6 +1111,7 @@ export default function ProgressTracking() {
                 onClick={() => {
                   setShowEditEntry(false);
                   setEditingEntry(null);
+                  setEntryError(null);
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
@@ -1105,6 +1125,7 @@ export default function ProgressTracking() {
                 Enregistrer
               </button>
             </div>
+            {entryError && <p className="mt-3 text-sm text-red-600">{entryError}</p>}
           </div>
         </div>
       )}
