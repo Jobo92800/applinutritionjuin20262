@@ -203,17 +203,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const handleVisibilityChange = async () => {
       if (document.visibilityState !== 'visible' || !isSupabaseConfigured) return;
       try {
-        const { data: refreshed } = await supabase.auth.refreshSession();
-        if (refreshed?.session?.user) {
-          await fetchUserProfile(refreshed.session.user, true);
-          return;
-        }
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           await fetchUserProfile(session.user, true);
-          return;
-        }
-        if (mounted) {
+        } else if (mounted) {
           setUser(null);
           try {
             localStorage.removeItem('supabase_user_profile');
@@ -222,7 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
       } catch (error) {
-        console.error('Erreur lors du rafraîchissement de la session:', error);
+        console.error('Erreur lors de la vérification de la session:', error);
       }
     };
 
