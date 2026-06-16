@@ -19,7 +19,6 @@ if (isSupabaseConfigured) {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        lock: (_name, _acquireTimeout, fn) => fn(),
       },
     });
   } catch (error) {
