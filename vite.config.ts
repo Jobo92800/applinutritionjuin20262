@@ -6,10 +6,13 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      // Le service worker se met à jour tout seul dès qu'une nouvelle version
-      // est déployée : les utilisateurs ne restent jamais bloqués sur du vieux code.
-      registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      // Une nouvelle version n'est appliquée qu'après confirmation de l'utilisateur
+      // (bandeau « Actualiser »), pour ne pas mélanger ancienne et nouvelle version
+      // pendant la navigation en cours.
+      registerType: 'prompt',
+      // L'enregistrement est fait par le composant UpdatePrompt, qui a besoin
+      // des rappels de mise à jour.
+      injectRegister: null,
       // On conserve le manifest statique existant (public/manifest.json).
       manifest: false,
       workbox: {

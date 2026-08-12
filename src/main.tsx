@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import ErrorBoundary from './components/ErrorBoundary.tsx';
 import InstallPrompt from './components/InstallPrompt.tsx';
+import UpdatePrompt from './components/UpdatePrompt.tsx';
 import './index.css';
 
 // Capture l'événement d'installation PWA le plus tôt possible (il peut se
@@ -38,6 +39,7 @@ if (!rootElement) {
       <StrictMode>
         <ErrorBoundary>
           <App />
+          <UpdatePrompt />
           <InstallPrompt />
         </ErrorBoundary>
       </StrictMode>
