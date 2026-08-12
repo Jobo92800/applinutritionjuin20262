@@ -13,13 +13,12 @@ export default defineConfig({
       // On conserve le manifest statique existant (public/manifest.json).
       manifest: false,
       workbox: {
+        // Ajoute la réception des notifications push au service worker.
+        importScripts: ['/push-handler.js'],
         // Sert la coquille de l'app hors-ligne (navigation SPA).
         navigateFallback: '/index.html',
-        // Le service worker OneSignal a son propre scope : on le laisse totalement
-        // en dehors du cache de la PWA.
-        navigateFallbackDenylist: [/^\/push\//],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        globIgnores: ['**/push/onesignal/**'],
+        globIgnores: ['**/push-handler.js'],
         // Les appels réseau (Supabase, audio des podcasts...) restent toujours
         // servis depuis le réseau — jamais depuis un cache potentiellement périmé.
         runtimeCaching: [

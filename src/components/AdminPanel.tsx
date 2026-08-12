@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Plus, CreditCard as Edit, Trash2, Clock, Users, GripVertical, MessageCircle } from 'lucide-react';
+import { Plus, CreditCard as Edit, Trash2, Clock, Users, GripVertical, MessageCircle, Bell } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Recipe, Podcast } from '../types';
 import RecipeFormModal from './RecipeFormModal';
 import PodcastFormModal from './PodcastFormModal';
 import MessagesPanel from './MessagesPanel';
+import NotificationsPanel from './NotificationsPanel';
 
 export default function AdminPanel() {
   const {
@@ -17,7 +18,7 @@ export default function AdminPanel() {
     updatePodcastOrder
   } = useData();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'recipes' | 'podcasts' | 'messages'>('recipes');
+  const [activeTab, setActiveTab] = useState<'recipes' | 'podcasts' | 'messages' | 'notifications'>('recipes');
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [editingPodcast, setEditingPodcast] = useState<Podcast | null>(null);
   const [showRecipeForm, setShowRecipeForm] = useState(false);
@@ -158,6 +159,17 @@ export default function AdminPanel() {
                 </span>
               )}
             </button>
+            <button
+              onClick={() => setActiveTab('notifications')}
+              className={`px-6 py-4 font-medium text-sm flex items-center space-x-2 ${
+                activeTab === 'notifications'
+                  ? 'border-b-2 border-green-500 text-green-600 bg-green-50'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Bell className="w-4 h-4" />
+              <span>Notifications</span>
+            </button>
           </nav>
         </div>
 
@@ -297,6 +309,10 @@ export default function AdminPanel() {
 
           {activeTab === 'messages' && (
             <MessagesPanel />
+          )}
+
+          {activeTab === 'notifications' && (
+            <NotificationsPanel />
           )}
         </div>
       </div>

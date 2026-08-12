@@ -8,9 +8,9 @@ import {
   subscribeToPush,
   unsubscribeFromPush,
   permissionState,
-  linkUser,
+  sendPush,
   withTimeout,
-} from '../lib/onesignal';
+} from '../lib/webpush';
 
 type Status = 'loading' | 'unsupported' | 'ios-install' | 'denied' | 'on' | 'off';
 
@@ -19,6 +19,7 @@ export default function PushNotificationSettings() {
   const [status, setStatus] = useState<Status>('loading');
   const [busy, setBusy] = useState(false);
   const [errorDetail, setErrorDetail] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -34,27 +35,19 @@ export default function PushNotificationSettings() {
       }
 
       const permission = permissionState();
-
       if (permission === 'denied') {
         if (!cancelled) setStatus('denied');
         return;
       }
-
-      // Autorisation jamais demandée : inutile de charger le SDK OneSignal,
-      // on affiche directement le bouton d'activation.
       if (permission !== 'granted') {
         if (!cancelled) setStatus('off');
         return;
       }
 
-      // Autorisation déjà accordée : on confirme l'abonnement, sans jamais
-      // laisser l'interface bloquée si le SDK ne répond pas.
       try {
         const subscribed = await withTimeout(isSubscribed(), 8000);
         if (!cancelled) setStatus(subscribed ? 'on' : 'off');
       } catch {
-        // Impossible de confirmer l'abonnement : on affiche le bouton plutôt
-        // qu'un faux « activé », qui masquerait un abonnement non enregistré.
         if (!cancelled) setStatus('off');
       }
     };
@@ -66,18 +59,36 @@ export default function PushNotificationSettings() {
   }, []);
 
   const handleEnable = async () => {
+    if (!user?.id) return;
     setBusy(true);
     setErrorDetail(null);
+    setWarning(null);
     try {
-      const ok = await withTimeout(subscribeToPush(), 30000);
-      if (ok) {
-        if (user?.id) {
-          // Le ciblage est optionnel : il ne doit pas retarder la confirmation.
-          withTimeout(linkUser(user.id, user.email), 8000).catch(() => {});
-        }
-        setStatus('on');
-      } else {
+      const ok = await withTimeout(subscribeToPush(user.id), 30000);
+
+      if (!ok) {
         setStatus(permissionState() === 'denied' ? 'denied' : 'off');
+        return;
+      }
+
+      setStatus('on');
+
+      // Notification de confirmation : preuve immédiate que tout fonctionne.
+      try {
+        await withTimeout(
+          sendPush({
+            title: 'MAbeautyplus Nutrition',
+            body: 'Vos notifications sont bien activées 🎉',
+            userId: user.id,
+          }),
+          20000
+        );
+      } catch (error) {
+        setWarning(
+          error instanceof Error
+            ? `Abonnement enregistré, mais l'envoi de confirmation a échoué : ${error.message}`
+            : "Abonnement enregistré, mais l'envoi de confirmation a échoué."
+        );
       }
     } catch (error) {
       console.error('Erreur activation des notifications:', error);
@@ -90,8 +101,9 @@ export default function PushNotificationSettings() {
 
   const handleDisable = async () => {
     setBusy(true);
+    setWarning(null);
     try {
-      await unsubscribeFromPush();
+      await withTimeout(unsubscribeFromPush(), 15000);
       setStatus('off');
     } catch (error) {
       console.error('Erreur désactivation des notifications:', error);
@@ -121,7 +133,6 @@ export default function PushNotificationSettings() {
             Recevez vos rappels et les nouveautés, même quand l'application est fermée.
           </p>
 
-          {/* État + action */}
           <div className="mt-4">
             {status === 'loading' && (
               <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -143,9 +154,7 @@ export default function PushNotificationSettings() {
 
                 {errorDetail && (
                   <div className="bg-red-50 border border-red-100 rounded-lg px-4 py-3">
-                    <p className="text-sm text-red-800">
-                      L'activation a échoué. Vérifiez votre connexion et réessayez.
-                    </p>
+                    <p className="text-sm text-red-800">L'activation a échoué.</p>
                     <p className="text-xs text-red-500 mt-1 break-words">Détail : {errorDetail}</p>
                   </div>
                 )}
@@ -158,6 +167,13 @@ export default function PushNotificationSettings() {
                   <CheckCircle className="w-5 h-5 flex-shrink-0" />
                   <span className="font-medium">Notifications activées</span>
                 </div>
+
+                {warning && (
+                  <div className="bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
+                    <p className="text-xs text-amber-800 break-words">{warning}</p>
+                  </div>
+                )}
+
                 <button
                   onClick={handleDisable}
                   disabled={busy}
