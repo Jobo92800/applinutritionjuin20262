@@ -6,12 +6,15 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      // Une nouvelle version n'est appliquée qu'après confirmation de l'utilisateur
-      // (bandeau « Actualiser »), pour ne pas mélanger ancienne et nouvelle version
-      // pendant la navigation en cours.
-      registerType: 'prompt',
-      // L'enregistrement est fait par le composant UpdatePrompt, qui a besoin
-      // des rappels de mise à jour.
+      // Le nouveau service worker prend la main dès qu'il est installé.
+      // En mode 'prompt', il resterait « en attente » tant que toutes les fenêtres
+      // de l'application ne sont pas fermées : des utilisateurs pouvaient rester
+      // bloqués très longtemps sur une ancienne version.
+      // Le composant UpdatePrompt affiche ensuite un bandeau invitant à recharger
+      // la page, sans jamais l'imposer au milieu d'une saisie.
+      registerType: 'autoUpdate',
+      // L'enregistrement est fait par UpdatePrompt, qui a besoin des rappels
+      // de mise à jour (et ne doit pas recharger la page automatiquement).
       injectRegister: null,
       // On conserve le manifest statique existant (public/manifest.json).
       manifest: false,

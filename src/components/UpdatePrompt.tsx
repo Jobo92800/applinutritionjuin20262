@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { RefreshCw, X } from 'lucide-react';
-import { registerSW } from 'virtual:pwa-register';
 
 // Fréquence de vérification d'une nouvelle version pour les sessions ouvertes
 // longtemps (l'application est aussi vérifiée à chaque ouverture).
@@ -9,39 +8,50 @@ const UPDATE_CHECK_INTERVAL = 60 * 60 * 1000; // 1 heure
 export default function UpdatePrompt() {
   const [needRefresh, setNeedRefresh] = useState(false);
   const [updating, setUpdating] = useState(false);
-  const updateRef = useRef<((reload?: boolean) => Promise<void>) | null>(null);
 
   useEffect(() => {
-    const update = registerSW({
-      onNeedRefresh() {
-        setNeedRefresh(true);
-      },
-      onRegisteredSW(_swUrl, registration) {
-        if (!registration) return;
-        setInterval(() => {
+    if (!('serviceWorker' in navigator)) return;
+    // Aucun service worker n'est généré par le serveur de développement.
+    if (!import.meta.env.PROD) return;
+
+    // Y avait-il déjà un service worker aux commandes ? Si non, il s'agit de la
+    // toute première installation : ce n'est pas une mise à jour.
+    const premiereInstallation = !navigator.serviceWorker.controller;
+
+    // Le nouveau service worker vient de prendre la main : le code affiché à
+    // l'écran est encore l'ancien, on invite donc à recharger — sans jamais
+    // recharger d'autorité, ce qui interromprait une saisie en cours.
+    const onControllerChange = () => {
+      if (!premiereInstallation) setNeedRefresh(true);
+    };
+    navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
+
+    let timer: ReturnType<typeof setInterval> | undefined;
+
+    navigator.serviceWorker
+      .register('/sw.js', { scope: '/' })
+      .then((registration) => {
+        // Vérifie régulièrement l'arrivée d'une nouvelle version pour les
+        // sessions restées ouvertes longtemps.
+        timer = setInterval(() => {
           registration.update().catch(() => {});
         }, UPDATE_CHECK_INTERVAL);
-      },
-    });
+      })
+      .catch((error) => {
+        console.error("Enregistrement du service worker impossible :", error);
+      });
 
-    updateRef.current = update;
+    return () => {
+      navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+      if (timer) clearInterval(timer);
+    };
   }, []);
 
-  const handleUpdate = async () => {
+  // Le nouveau service worker est déjà actif : un simple rechargement suffit à
+  // charger le nouveau code (aucune attente possible, donc aucun blocage).
+  const handleUpdate = () => {
     setUpdating(true);
-
-    // Filet de sécurité : si l'activation n'entraîne aucun rechargement
-    // (par exemple s'il n'y a plus de version en attente), on recharge nous-mêmes
-    // pour ne pas laisser le bouton bloqué sur « Mise à jour… ».
-    const fallback = setTimeout(() => window.location.reload(), 3000);
-
-    try {
-      // Active la nouvelle version puis recharge la page.
-      await updateRef.current?.(true);
-    } catch {
-      clearTimeout(fallback);
-      window.location.reload();
-    }
+    window.location.reload();
   };
 
   if (!needRefresh) return null;
