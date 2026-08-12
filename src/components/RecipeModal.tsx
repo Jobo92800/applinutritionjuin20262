@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import { X, Clock, Users, ChefHat, Heart, Calendar, Plus, Zap } from 'lucide-react';
+import { useState } from 'react';
+import { X, Clock, Users, ChefHat, Heart, Zap } from 'lucide-react';
 import { Recipe } from '../types';
 import { useData } from '../contexts/DataContext';
-import { useAuth } from '../contexts/AuthContext';
 
 interface RecipeModalProps {
   recipe: Recipe;
@@ -12,8 +11,6 @@ interface RecipeModalProps {
 
 export default function RecipeModal({ recipe, isOpen, onClose }: RecipeModalProps) {
   const { favorites, toggleFavorite } = useData();
-  const { user } = useAuth();
-  const [showVariants, setShowVariants] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
 
   if (!isOpen) return null;
@@ -148,7 +145,7 @@ export default function RecipeModal({ recipe, isOpen, onClose }: RecipeModalProp
                     }))
                   ]
                   .sort((a, b) => a.nutrition.calories - b.nutrition.calories)
-                  .map((variant, index) => (
+                  .map((variant) => (
                     <button
                       key={variant.id}
                       onClick={() => setSelectedVariant(variant.isOriginal ? null : variant)}
@@ -207,7 +204,7 @@ export default function RecipeModal({ recipe, isOpen, onClose }: RecipeModalProp
                   Ingrédients
                 </h2>
                 <div className="space-y-3">
-                  {currentRecipe.ingredients.map((ingredient, index) => (
+                  {currentRecipe.ingredients.map((ingredient: any, index: number) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                       <div className="flex items-center space-x-3">
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -230,7 +227,7 @@ export default function RecipeModal({ recipe, isOpen, onClose }: RecipeModalProp
                   Préparation
                 </h2>
                 <div className="space-y-4">
-                  {currentRecipe.steps.map((step, index) => (
+                  {currentRecipe.steps.map((step: any, index: number) => (
                     <div key={index} className="flex space-x-4">
                       <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
                         {index + 1}

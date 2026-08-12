@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Heart, Clock, Users, ChefHat, Search, Filter } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
-import { useAuth } from '../contexts/AuthContext';
 import { Recipe } from '../types';
 import RecipeModal from './RecipeModal';
 
@@ -11,7 +10,6 @@ interface RecipeListProps {
 
 export default function RecipeList({ onRecipeSelect }: RecipeListProps) {
   const { recipes, favorites, toggleFavorite } = useData();
-  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState('');

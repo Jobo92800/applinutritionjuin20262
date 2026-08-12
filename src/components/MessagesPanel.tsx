@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { MessageCircle, AlertCircle, Clock, CheckCircle, X, Send, Filter } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
@@ -29,7 +29,7 @@ export default function MessagesPanel() {
 
   const handleStatusChange = async (messageId: string, newStatus: string) => {
     try {
-      await updateMessage(messageId, { status: newStatus });
+      await updateMessage(messageId, { status: newStatus as 'new' | 'in_progress' | 'resolved' | 'closed' });
       if (selectedMessage?.id === messageId) {
         setSelectedMessage({ ...selectedMessage, status: newStatus });
       }

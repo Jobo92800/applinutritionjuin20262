@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Check, Plus, Trash2, Download, RefreshCw, ShoppingCart, CheckCheck, X, Calendar, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
+import { Check, Plus, Trash2, Download, ShoppingCart, CheckCheck, X, Calendar, ChevronDown } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { ShoppingItem } from '../types';
@@ -9,7 +9,7 @@ export default function ShoppingList() {
   const { user } = useAuth();
   const [newItem, setNewItem] = useState({ name: '', quantity: 1, unit: 'pièce', category: 'autres' });
   const [showWeekSelector, setShowWeekSelector] = useState(false);
-  const [selectedWeekStart, setSelectedWeekStart] = useState('');
+  const [, setSelectedWeekStart] = useState('');
 
   const categories = [
     { key: 'fruits-legumes', name: '🍎 Fruits et légumes', color: 'bg-green-100' },
@@ -39,6 +39,8 @@ export default function ShoppingList() {
   };
 
   const markAllAsDone = () => {
+    // "J'ai fait mes courses" : on décoche tout pour pouvoir réutiliser la même
+    // liste la semaine suivante (comportement voulu).
     const updatedList = shoppingList.map(item => ({ ...item, checked: false }));
     updateShoppingList(updatedList);
   };

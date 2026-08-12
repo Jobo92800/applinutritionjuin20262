@@ -20,9 +20,15 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
   const currentWeekMealPlans = mealPlans.filter(plan => {
     const planDate = new Date(plan.date);
     const today = new Date();
-    const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
+    // Semaine du lundi au dimanche, cohérente avec le calendrier des repas.
+    const dayOfWeek = today.getDay(); // 0 = dimanche
+    const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - diffToMonday);
+    weekStart.setHours(0, 0, 0, 0);
     const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekEnd.getDate() + 6);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
     return planDate >= weekStart && planDate <= weekEnd && plan.userId === user?.id;
   });
 

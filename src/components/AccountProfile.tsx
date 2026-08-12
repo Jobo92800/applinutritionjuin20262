@@ -98,9 +98,38 @@ export default function AccountProfile() {
         .eq('id', user.id);
 
       if (error) {
-        console.error('Erreur lors de la sauvegarde du profil:', error);
+        console.error('Erreur lors de la sauvegarde du profil:', error?.message || error);
         alert('Erreur lors de la sauvegarde du profil');
         return;
+      }
+
+      // Changement de mot de passe (optionnel)
+      if (formData.newPassword) {
+        if (formData.newPassword.length < 6) {
+          alert('Le nouveau mot de passe doit contenir au moins 6 caractères.');
+          return;
+        }
+        if (formData.newPassword !== formData.confirmPassword) {
+          alert('Le nouveau mot de passe et sa confirmation ne correspondent pas.');
+          return;
+        }
+
+        const { error: passwordError } = await supabase.auth.updateUser({
+          password: formData.newPassword
+        });
+
+        if (passwordError) {
+          console.error('Erreur lors du changement de mot de passe:', passwordError);
+          alert('Le profil a été enregistré, mais le mot de passe n\'a pas pu être modifié.');
+          return;
+        }
+
+        setFormData(prev => ({
+          ...prev,
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        }));
       }
 
       await refreshProfile();
@@ -233,17 +262,13 @@ export default function AccountProfile() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Adresse email</label>
-                  {isEditing ? (
-                    <input
-                      type="email"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    />
-                  ) : (
-                    <p className="text-gray-800 bg-gray-50 px-4 py-2 rounded-lg flex items-center">
-                      <Mail className="w-4 h-4 mr-2 text-gray-500" />
-                      {user?.email}
+                  <p className="text-gray-800 bg-gray-50 px-4 py-2 rounded-lg flex items-center">
+                    <Mail className="w-4 h-4 mr-2 text-gray-500" />
+                    {user?.email}
+                  </p>
+                  {isEditing && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      L'adresse email de connexion ne peut pas être modifiée ici.
                     </p>
                   )}
                 </div>
@@ -387,7 +412,7 @@ export default function AccountProfile() {
                 <select
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   value={formData.activityLevel}
-                  onChange={(e) => setFormData({ ...formData, activityLevel: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, activityLevel: e.target.value as 'faible' | 'moderee' | 'elevee' })}
                 >
                   {activityLevels.map(level => (
                     <option key={level.value} value={level.value}>{level.label}</option>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Download, Clock, Search, Volume2, SkipBack, SkipForward, Calendar, GripVertical } from 'lucide-react';
+import { Play, Pause, Clock, Search, Volume2, SkipBack, SkipForward, GripVertical } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Podcast } from '../types';
@@ -9,7 +9,6 @@ export default function PodcastList() {
   const { podcasts, updatePodcastOrder } = useData();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
   const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -20,7 +19,7 @@ export default function PodcastList() {
   const [selectedPodcast, setSelectedPodcast] = useState<Podcast | null>(null);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
   const [draggedPodcast, setDraggedPodcast] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
+  const [, setIsDragging] = useState(false);
 
   // Fonction pour vérifier si l'utilisateur a accès à un podcast
   const hasAccessToPodcast = (podcast: Podcast): boolean => {
@@ -198,11 +197,14 @@ export default function PodcastList() {
     const handleEnded = () => {
       setIsPlaying(false);
       setCurrentTime(0);
-      // Auto-play next podcast si disponible
-      const currentIndex = podcasts.findIndex(p => p.id === currentlyPlaying);
-      if (currentIndex < podcasts.length - 1) {
-        const nextPodcast = podcasts[currentIndex + 1];
-        playPodcast(nextPodcast);
+      // Auto-play : uniquement parmi les podcasts accessibles à l'utilisateur,
+      // dans l'ordre d'affichage (ne jamais enchaîner sur du contenu premium non autorisé).
+      const playable = podcasts
+        .filter(hasAccessToPodcast)
+        .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+      const currentIndex = playable.findIndex(p => p.id === currentlyPlaying);
+      if (currentIndex >= 0 && currentIndex < playable.length - 1) {
+        playPodcast(playable[currentIndex + 1]);
       } else {
         setCurrentlyPlaying(null);
       }
@@ -569,7 +571,7 @@ export default function PodcastList() {
       )}
 
       {/* Styles pour les sliders */}
-      <style jsx>{`
+      <style>{`
         .slider::-webkit-slider-thumb {
           appearance: none;
           width: 16px;

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { Recipe, Podcast, MealPlan, WeightEntry, ShoppingItem, WeeklyGoal, WeeklyProgress, Badge, Message } from '../types';
@@ -14,10 +14,10 @@ interface DataContextType {
   weeklyProgress: WeeklyProgress[];
   badges: Badge[];
   messages: Message[];
-  addRecipe: (recipe: Omit<Recipe, 'id' | 'createdAt'>) => Promise<void>;
+  addRecipe: (recipe: Omit<Recipe, 'id' | 'createdAt' | 'createdBy'>) => Promise<void>;
   updateRecipe: (id: string, recipe: Partial<Recipe>) => Promise<void>;
   deleteRecipe: (id: string) => Promise<void>;
-  addPodcast: (podcast: Omit<Podcast, 'id' | 'createdAt'>) => Promise<void>;
+  addPodcast: (podcast: Omit<Podcast, 'id' | 'createdAt' | 'createdBy'>) => Promise<void>;
   updatePodcast: (id: string, podcast: Partial<Podcast>) => Promise<void>;
   deletePodcast: (id: string) => Promise<void>;
   addMealPlan: (mealPlan: Omit<MealPlan, 'id'>) => Promise<void>;
@@ -28,7 +28,7 @@ interface DataContextType {
   deleteWeightEntry: (id: string) => Promise<void>;
   toggleFavorite: (recipeId: string) => Promise<void>;
   updateShoppingList: (items: ShoppingItem[]) => Promise<void>;
-  generateShoppingList: (userId: string) => Promise<void>;
+  generateShoppingList: (userId: string, weekStart?: string) => Promise<void>;
   updateWeeklyProgress: (userId: string, goalId: string, dayIndex: number, completed: boolean) => Promise<void>;
   updateWeeklyGoal: (userId: string, goalId: string, completed: boolean) => Promise<void>;
   getCurrentWeekProgress: (userId: string) => WeeklyProgress | null;
@@ -296,7 +296,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const formattedRecipes: Recipe[] = data.map(recipe => ({
+      const formattedRecipes: Recipe[] = data.map((recipe: any) => ({
         id: recipe.id,
         title: recipe.title,
         description: recipe.description || '',
@@ -339,7 +339,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const formattedPodcasts: Podcast[] = data.map(podcast => ({
+      const formattedPodcasts: Podcast[] = data.map((podcast: any) => ({
         id: podcast.id,
         title: podcast.title,
         description: podcast.description || '',
@@ -380,7 +380,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const formattedMealPlans: MealPlan[] = data.map(plan => ({
+      const formattedMealPlans: MealPlan[] = data.map((plan: any) => ({
         id: plan.id,
         userId: plan.user_id,
         date: plan.date,
@@ -409,7 +409,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const formattedEntries: WeightEntry[] = data.map(entry => ({
+      const formattedEntries: WeightEntry[] = data.map((entry: any) => ({
         id: entry.id,
         userId: entry.user_id,
         weight: entry.weight,
@@ -439,7 +439,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const formattedItems: ShoppingItem[] = data.map(item => ({
+      const formattedItems: ShoppingItem[] = data.map((item: any) => ({
         id: item.id,
         name: item.name,
         quantity: item.quantity,
@@ -469,7 +469,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      setFavorites(data.map(fav => fav.recipe_id));
+      setFavorites(data.map((fav: any) => fav.recipe_id));
     } catch (error) {
       console.error('Erreur lors du chargement des favoris:', error);
       setFavorites([]);
@@ -489,7 +489,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const formattedGoals: WeeklyGoal[] = data.map(goal => ({
+      const formattedGoals: WeeklyGoal[] = data.map((goal: any) => ({
         id: goal.id,
         title: goal.title,
         description: goal.description,
@@ -520,7 +520,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const formattedProgress: WeeklyProgress[] = data.map(progress => ({
+      const formattedProgress: WeeklyProgress[] = data.map((progress: any) => ({
         id: progress.id,
         userId: progress.user_id,
         weekStart: progress.week_start,
@@ -555,7 +555,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const formattedMessages: Message[] = data.map(msg => ({
+      const formattedMessages: Message[] = data.map((msg: any) => ({
         id: msg.id,
         userId: msg.user_id,
         userName: msg.user_name,
@@ -749,12 +749,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   // Fonctions CRUD simplifiées pour le mode démo
-  const addRecipe = async (recipe: Omit<Recipe, 'id' | 'createdAt'>) => {
+  const addRecipe = async (recipe: Omit<Recipe, 'id' | 'createdAt' | 'createdBy'>) => {
     if (!isSupabaseConfigured) {
       const newRecipe: Recipe = {
         ...recipe,
         id: Date.now().toString(),
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        createdBy: user?.id || 'demo-user'
       };
       setRecipes(prev => [newRecipe, ...prev]);
       return;
@@ -788,6 +789,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         : [];
       
       const insertData = {
+        title: String(recipe.title || ''),
         description: String(recipe.description || ''),
         image: String(recipe.image || ''),
         difficulty: recipe.difficulty,
@@ -799,10 +801,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
         steps: cleanedSteps,
         nutrition: cleanedNutrition,
         dietary_preferences: cleanedDietaryPreferences,
+        variants: recipe.variants || [],
         created_by: user?.id
       };
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('recipes')
         .insert(insertData)
         .select()
@@ -919,12 +922,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   // Fonctions similaires pour les autres entités (simplifiées pour le mode démo)
-  const addPodcast = async (podcast: Omit<Podcast, 'id' | 'createdAt'>) => {
+  const addPodcast = async (podcast: Omit<Podcast, 'id' | 'createdAt' | 'createdBy'>) => {
     if (!isSupabaseConfigured) {
       const newPodcast: Podcast = {
         ...podcast,
         id: Date.now().toString(),
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        createdBy: user?.id || 'demo-user'
       };
       setPodcasts(prev => [newPodcast, ...prev]);
       return;
@@ -969,7 +973,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         insertData.cta_button2 = podcast.ctaButton2;
       }
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('podcasts')
         .insert(insertData)
         .select()
@@ -1131,7 +1135,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         user_id: mealPlan.userId,
         date: mealPlan.date,
         meals: mealPlan.meals
-      });
+      }, { onConflict: 'user_id,date' });
 
     if (error) {
       console.error('Erreur lors de l\'ajout du plan de repas:', error);
@@ -1289,13 +1293,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      // Supprimer tous les articles existants
-      await supabase
+      // Récupérer les IDs existants AVANT toute modification.
+      const { data: existing } = await supabase
         .from('shopping_items')
-        .delete()
+        .select('id')
         .eq('user_id', user.id);
+      const oldIds = (existing || []).map((row: any) => row.id);
 
-      // Ajouter les nouveaux articles
+      // Insérer d'abord les nouveaux articles : si l'insertion échoue,
+      // l'ancienne liste est préservée (pas de suppression prématurée).
       if (items.length > 0) {
         const { error } = await supabase
           .from('shopping_items')
@@ -1313,6 +1319,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (error) {
           console.error('Erreur lors de la mise à jour de la liste de courses:', error);
           throw error;
+        }
+      }
+
+      // L'insertion a réussi : on peut supprimer les anciens articles.
+      if (oldIds.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('shopping_items')
+          .delete()
+          .in('id', oldIds);
+
+        if (deleteError) {
+          console.error('Erreur lors du nettoyage de l\'ancienne liste de courses:', deleteError);
+          throw deleteError;
         }
       }
 

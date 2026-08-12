@@ -16,6 +16,8 @@ export interface Recipe {
   prepTime: number;
   servings: number;
   categories: string[];
+  /** Champ hérité : conservé pour compatibilité, `categories` fait référence désormais. */
+  category?: string;
   dietaryPreferences: string[];
   ingredients: Ingredient[];
   steps: string[];

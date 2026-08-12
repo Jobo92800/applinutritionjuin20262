@@ -3,10 +3,19 @@
 
 export interface NutritionProfile {
   gender: 'homme' | 'femme';
-  age: '18-30' | '31-50' | '51+';
+  // Tranches d'âge telles que stockées en base de données.
+  age: '18-30' | '31-70' | '71+';
   activityLevel: 'faible' | 'moderee' | 'elevee';
   metabolism: 'normal' | 'ralentissement';
 }
+
+// Les tableaux nutritionnels internes sont indexés par 31-50 / 51+.
+// On mappe les tranches stockées en base vers ces clés.
+const AGE_KEY_MAP: Record<NutritionProfile['age'], '18-30' | '31-50' | '51+'> = {
+  '18-30': '18-30',
+  '31-70': '31-50',
+  '71+': '51+',
+};
 
 export interface NutritionTargets {
   calories: { min: number; max: number };
@@ -291,8 +300,9 @@ export function calculateNutritionTargets(profile: NutritionProfile): NutritionT
   // Convertir le genre en code
   const genderCode = profile.gender === 'homme' ? 'M' : 'F';
   
-  // Créer la clé pour rechercher dans les données
-  const key = `${genderCode}-${profile.age}-${profile.activityLevel}-${profile.metabolism}`;
+  // Créer la clé pour rechercher dans les données (âge mappé vers les clés internes)
+  const ageKey = AGE_KEY_MAP[profile.age] || profile.age;
+  const key = `${genderCode}-${ageKey}-${profile.activityLevel}-${profile.metabolism}`;
   
   // Récupérer les données nutritionnelles
   const targets = NUTRITION_DATA[key];

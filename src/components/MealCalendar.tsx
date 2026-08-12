@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Plus, X, Filter, Zap } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Plus, X, Zap } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import RecipeModal from './RecipeModal';
-import { calculateNutritionTargets, getNutritionRecommendations } from '../utils/nutritionCalculator';
+import { getNutritionRecommendations } from '../utils/nutritionCalculator';
 
 export default function MealCalendar() {
   const { recipes, mealPlans, addMealPlan, updateMealPlan } = useData();
@@ -15,7 +15,7 @@ export default function MealCalendar() {
   const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
   const [selectedRecipeForPlanning, setSelectedRecipeForPlanning] = useState<any>(null);
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [, setRefreshKey] = useState(0);
 
   // Calculer les recommandations nutritionnelles personnalisées
   const userNutritionTargets = React.useMemo(() => {
@@ -139,13 +139,6 @@ export default function MealCalendar() {
     return plan?.meals[mealKey as keyof typeof plan.meals];
   };
 
-  const getMealPlanForDate = useCallback((date: string): MealPlan | null => {
-    const plan = mealPlans.find(plan =>
-      plan.userId === user?.id && plan.date === date
-    );
-    return plan || null;
-  }, [mealPlans, user?.id]);
-
   const getRecipeById = (id: string) => {
     if (id.includes('_variant_')) {
       const [recipeId, , variantId] = id.split('_');
@@ -168,7 +161,7 @@ export default function MealCalendar() {
               id: id,
               title: `${recipe.title} (${variant.name})`,
               ingredients: variant.ingredients || recipe.ingredients,
-              steps: variant.steps || recipe.steps,
+              steps: recipe.steps,
               nutrition: {
                 calories: variant.targetCalories || variant.nutrition?.calories || recipe.nutrition.calories,
                 protein: variant.nutrition?.protein || recipe.nutrition.protein,
@@ -544,7 +537,7 @@ export default function MealCalendar() {
                   }))
                 ]
                 .sort((a, b) => a.nutrition.calories - b.nutrition.calories)
-                .map((variant, index) => (
+                .map((variant) => (
                   <button
                     key={variant.id}
                     onClick={() => {
@@ -891,8 +884,8 @@ export default function MealCalendar() {
             <p className="text-sm text-gray-600 mt-1">
               Basés sur votre profil : {(user.profile?.gender || 'homme') === 'homme' ? 'Homme' : 'Femme'}, {
                 (user.profile?.age || '18-30') === '18-30' ? '18-30 ans' :
-                (user.profile?.age || '18-30') === '31-50' ? '31-50 ans' :
-                (user.profile?.age || '18-30') === '51+' ? '51+ ans' : (user.profile?.age || '18-30')
+                (user.profile?.age || '18-30') === '31-70' ? '31-70 ans' :
+                (user.profile?.age || '18-30') === '71+' ? '71+ ans' : (user.profile?.age || '18-30')
               }, activité {
                 (user.profile?.activityLevel || 'moderee') === 'faible' ? 'faible' :
                 (user.profile?.activityLevel || 'moderee') === 'moderee' ? 'modérée' :

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Target, User, Activity, Utensils, Save } from 'lucide-react';
+import { useState } from 'react';
+import { Target, User, Activity, Save } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface OnboardingModalProps {
@@ -317,7 +317,7 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
                 {activityLevels.map((level) => (
                   <button
                     key={level.value}
-                    onClick={() => setFormData({ ...formData, activityLevel: level.value })}
+                    onClick={() => setFormData({ ...formData, activityLevel: level.value as 'faible' | 'moderee' | 'elevee' })}
                     className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
                       formData.activityLevel === level.value
                         ? 'border-orange-500 bg-orange-50'

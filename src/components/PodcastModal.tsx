@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, Play, Pause, Volume2, SkipBack, SkipForward, Clock, Star, Download, FileText } from 'lucide-react';
 import { Podcast } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -416,7 +416,7 @@ export default function PodcastModal({ podcast, isOpen, onClose }: PodcastModalP
         </div>
 
         {/* Styles pour les sliders */}
-        <style jsx>{`
+        <style>{`
           .slider::-webkit-slider-thumb {
             appearance: none;
             width: 16px;

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { User } from '@supabase/supabase-js';
 
@@ -11,10 +11,11 @@ interface AuthUser {
   createdAt: string;
   isOnboardingComplete?: boolean;
   profile?: {
+    currentWeight?: number;
     weightGoal?: number;
     heightCm?: number;
     gender?: 'homme' | 'femme';
-    age?: '18-30' | '31-50' | '51+';
+    age?: '18-30' | '31-70' | '71+';
     activityLevel?: 'faible' | 'moderee' | 'elevee';
     metabolism?: 'normal' | 'ralentissement';
     dietaryPreferences?: string[];
@@ -136,13 +137,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (session?.user && mounted) {
           await fetchUserProfile(session.user);
-        } else if (mounted && !restoredUser) {
+        } else if (mounted) {
+          // Pas de session Supabase valide : ne pas faire confiance au cache local
+          // (sinon l'utilisateur paraît connecté mais toutes ses requêtes échouent).
           setUser(null);
           setIsLoading(false);
+          try {
+            localStorage.removeItem('supabase_user_profile');
+          } catch (e) {
+            // ignore
+          }
         }
 
         // Écouter les changements d'authentification
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
           if (!mounted) return;
 
           if (event === 'TOKEN_REFRESHED') {
@@ -230,23 +238,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const fetchUserProfile = async (authUser: User, silent: boolean = false) => {
+  const fetchUserProfile = async (authUser: User, silent: boolean = false): Promise<boolean> => {
     try {
-      if (!isSupabaseConfigured) return;
+      if (!isSupabaseConfigured) return false;
 
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', authUser.id)
-        .maybeSingle();
+      // Le profil est créé par un trigger Supabase juste après l'inscription :
+      // on réessaie quelques fois pour absorber la latence du trigger.
+      let profile: any = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', authUser.id)
+          .maybeSingle();
 
-      if (error) {
-        console.error('[AuthContext] Error fetching profile:', error);
-        if (!silent) {
-          setUser(null);
-          setIsLoading(false);
+        if (error) {
+          console.error('[AuthContext] Error fetching profile:', error);
+          if (!silent) {
+            setUser(null);
+            setIsLoading(false);
+          }
+          return false;
         }
-        return;
+
+        if (data) {
+          profile = data;
+          break;
+        }
+
+        // Profil pas encore présent : courte attente avant nouvelle tentative
+        await new Promise((resolve) => setTimeout(resolve, 400));
       }
 
       if (profile) {
@@ -277,12 +298,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (e) {
           // ignore
         }
+        return true;
       }
+
+      return false;
     } catch (error) {
       console.error('Erreur lors de la récupération du profil:', error);
       if (!silent) {
         setUser(null);
       }
+      return false;
     } finally {
       if (!silent) {
         setIsLoading(false);
@@ -321,7 +346,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (import.meta.env.DEV && (
             (email === 'admin@nutrition.com' && password === 'admin123') ||
             (email === 'user@nutrition.com' && password === 'user123'))) {
-          const demoUser = {
+          const demoUser: AuthUser = {
             id: 'demo-user',
             email: email,
             name: email === 'admin@nutrition.com' ? 'Admin Démo' : 'Utilisateur Démo',
@@ -357,8 +382,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (data.user) {
-        await fetchUserProfile(data.user);
-        return 'success';
+        const loaded = await fetchUserProfile(data.user);
+        return loaded ? 'success' : 'error';
       }
 
       return 'error';
@@ -371,7 +396,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (email: string, password: string, name: string): Promise<'success' | 'user_exists' | 'error'> => {
     try {
       if (!isSupabaseConfigured) {
-        const newUser = {
+        const newUser: AuthUser = {
           id: 'demo-user-new',
           email: email,
           name: name,
@@ -488,7 +513,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('id', user.id);
 
       if (error) {
-        console.error('Erreur lors de la mise à jour du profil:', error);
+        console.error('Erreur lors de la mise à jour du profil:', error?.message || error);
         throw error;
       }
 
@@ -560,7 +585,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               !error.message?.includes('session_not_found') &&
               !error.message?.includes('Auth session missing') &&
               !error.message?.includes('Session from session_id claim in JWT does not exist') &&
-              !(error as any)?.status === 403) {
+              (error as any)?.status !== 403) {
             console.error('Erreur de déconnexion:', error);
           }
         }
@@ -584,7 +609,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           !error.message?.includes('session_not_found') &&
           !error.message?.includes('Auth session missing') &&
           !error.message?.includes('Session from session_id claim in JWT does not exist') &&
-          !(error as any)?.status === 403) {
+          (error as any)?.status !== 403) {
         console.error('Erreur de déconnexion:', error);
       }
       // Même en cas d'erreur, nettoyer l'état local

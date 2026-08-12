@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { MessageCircle, X } from 'lucide-react';
+import { useState } from 'react';
+import { MessageCircle } from 'lucide-react';
 import MessageModal from './MessageModal';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,17 +9,45 @@ export default function FloatingMessageButton() {
   const { messages } = useData();
   const { user } = useAuth();
 
+  const seenKey = user ? `lastSeenMsgResponse_${user.id}` : '';
+
+  const getLastSeen = () => {
+    if (!seenKey) return 0;
+    try {
+      return Number(localStorage.getItem(seenKey)) || 0;
+    } catch {
+      return 0;
+    }
+  };
+
   const hasUnreadNotifications = () => {
     if (!user) return false;
 
     if (user.role === 'admin') {
       return messages.some(msg => msg.status === 'new');
     } else {
+      const lastSeen = getLastSeen();
       return messages.some(msg =>
         msg.userId === user.id &&
         msg.adminResponse &&
-        msg.respondedAt
+        msg.respondedAt &&
+        new Date(msg.respondedAt).getTime() > lastSeen
       );
+    }
+  };
+
+  const openModal = () => {
+    setIsModalOpen(true);
+    // Marquer les réponses actuelles comme lues pour les utilisateurs.
+    if (user && user.role !== 'admin' && seenKey) {
+      try {
+        const latest = messages
+          .filter(m => m.userId === user.id && m.respondedAt)
+          .reduce((max, m) => Math.max(max, new Date(m.respondedAt as string).getTime()), 0);
+        localStorage.setItem(seenKey, String(latest || Date.now()));
+      } catch {
+        // ignore
+      }
     }
   };
 
@@ -28,7 +56,7 @@ export default function FloatingMessageButton() {
   return (
     <>
       <button
-        onClick={() => setIsModalOpen(true)}
+        onClick={openModal}
         className="fixed bottom-6 right-6 bg-gradient-to-r from-green-500 to-blue-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 z-40 group"
         aria-label="Envoyer un message"
       >

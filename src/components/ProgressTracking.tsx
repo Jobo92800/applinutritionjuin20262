@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { TrendingUp, Plus, Target, Calendar, Weight, CheckCircle, Award, Star, CreditCard as Edit2, Trash2 } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -246,7 +246,10 @@ export default function ProgressTracking() {
 
     const minValue = Math.min(...allValues);
     const maxValue = Math.max(...allValues);
-    const valueRange = maxValue - minValue;
+    const rawRange = maxValue - minValue;
+    // Si toutes les valeurs sont identiques (ex. une seule pesée), forcer une plage
+    // non nulle pour éviter une division par zéro (points/ligne à NaN).
+    const valueRange = rawRange > 0 ? rawRange : Math.max(1, Math.abs(maxValue) * 0.1);
     const yMin = Math.max(0, minValue - valueRange * 0.1);
     const yMax = maxValue + valueRange * 0.1;
 

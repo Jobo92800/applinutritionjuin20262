@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, CreditCard as Edit, Trash2, Upload, Clock, Users, ChefHat, GripVertical, MessageCircle } from 'lucide-react';
+import { Plus, CreditCard as Edit, Trash2, Clock, Users, GripVertical, MessageCircle } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Recipe, Podcast } from '../types';
@@ -12,11 +12,7 @@ export default function AdminPanel() {
     recipes,
     podcasts,
     messages,
-    addRecipe,
-    updateRecipe,
     deleteRecipe,
-    addPodcast,
-    updatePodcast,
     deletePodcast,
     updatePodcastOrder
   } = useData();

@@ -122,7 +122,31 @@ export default function FoodAnalysis() {
         throw new Error(data.error);
       }
 
-      setResult(data as AnalysisResult);
+      // Normalisation défensive : un JSON incomplet ne doit jamais faire planter l'affichage.
+      const num = (v: unknown): number => {
+        const n = typeof v === 'string' ? parseFloat(v) : Number(v);
+        return Number.isFinite(n) ? n : 0;
+      };
+      const foods: FoodItem[] = Array.isArray(data?.foods)
+        ? data.foods.map((f: any) => ({
+            name: typeof f?.name === 'string' && f.name.trim() ? f.name : 'Aliment',
+            portionGrams: num(f?.portionGrams),
+            calories: num(f?.calories),
+            protein: num(f?.protein),
+            carbs: num(f?.carbs),
+            fat: num(f?.fat),
+          }))
+        : [];
+      const normalized: AnalysisResult = {
+        mealName: typeof data?.mealName === 'string' ? data.mealName : 'Repas analysé',
+        foods,
+        totalCalories: data?.totalCalories !== undefined ? num(data.totalCalories) : foods.reduce((s, f) => s + f.calories, 0),
+        totalProtein: data?.totalProtein !== undefined ? num(data.totalProtein) : foods.reduce((s, f) => s + f.protein, 0),
+        totalCarbs: data?.totalCarbs !== undefined ? num(data.totalCarbs) : foods.reduce((s, f) => s + f.carbs, 0),
+        totalFat: data?.totalFat !== undefined ? num(data.totalFat) : foods.reduce((s, f) => s + f.fat, 0),
+        notes: typeof data?.notes === 'string' ? data.notes : undefined,
+      };
+      setResult(normalized);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     } finally {
@@ -170,9 +194,6 @@ export default function FoodAnalysis() {
     setError(null);
     setSavedSuccess(false);
   };
-
-  const macroBarWidth = (value: number, max: number) =>
-    `${Math.min(100, Math.round((value / max) * 100))}%`;
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">

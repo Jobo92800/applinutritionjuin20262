@@ -124,7 +124,37 @@ Si tu ne peux pas identifier d'aliments clairement, retourne quand même un JSON
       });
     }
 
-    return new Response(JSON.stringify(analysis), {
+    // Normaliser/valider la réponse du modèle pour garantir une forme exploitable côté client
+    // (un JSON valide mais incomplet ne doit jamais faire planter l'interface).
+    const toNumber = (value: unknown): number => {
+      const n = typeof value === "string" ? parseFloat(value) : Number(value);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    const rawFoods = Array.isArray(analysis?.foods) ? analysis.foods : [];
+    const foods = rawFoods.map((food: any) => ({
+      name: typeof food?.name === "string" && food.name.trim() ? food.name : "Aliment",
+      portionGrams: toNumber(food?.portionGrams),
+      calories: toNumber(food?.calories),
+      protein: toNumber(food?.protein),
+      carbs: toNumber(food?.carbs),
+      fat: toNumber(food?.fat),
+    }));
+
+    const sum = (key: "calories" | "protein" | "carbs" | "fat") =>
+      foods.reduce((total: number, f: any) => total + toNumber(f[key]), 0);
+
+    const normalized = {
+      mealName: typeof analysis?.mealName === "string" ? analysis.mealName : "Repas analysé",
+      foods,
+      totalCalories: analysis?.totalCalories !== undefined ? toNumber(analysis.totalCalories) : sum("calories"),
+      totalProtein: analysis?.totalProtein !== undefined ? toNumber(analysis.totalProtein) : sum("protein"),
+      totalCarbs: analysis?.totalCarbs !== undefined ? toNumber(analysis.totalCarbs) : sum("carbs"),
+      totalFat: analysis?.totalFat !== undefined ? toNumber(analysis.totalFat) : sum("fat"),
+      notes: typeof analysis?.notes === "string" ? analysis.notes : "",
+    };
+
+    return new Response(JSON.stringify(normalized), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
