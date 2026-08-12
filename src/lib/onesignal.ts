@@ -63,19 +63,43 @@ export function iosNeedsInstall(): boolean {
   return isIOS() && !isStandalone();
 }
 
-function loadSdk(): Promise<void> {
+function injectSdk(): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${SDK_URL}"]`)) {
-      resolve();
-      return;
+    const existing = document.querySelector(`script[src="${SDK_URL}"]`);
+    if (existing) {
+      if ((window as any).OneSignalDeferred || (window as any).OneSignal) {
+        resolve();
+        return;
+      }
+      existing.remove(); // tentative précédente échouée : on repart proprement
     }
     const script = document.createElement('script');
     script.src = SDK_URL;
     script.defer = true;
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error('Impossible de charger le SDK OneSignal'));
+    script.onerror = () =>
+      reject(
+        new Error(
+          "Le script des notifications n'a pas pu être téléchargé. Il est probablement bloqué " +
+            '(bloqueur de publicités, protection anti-traceurs) ou votre connexion est indisponible.'
+        )
+      );
     document.head.appendChild(script);
   });
+}
+
+/** Charge le SDK avec une seconde tentative (échecs réseau passagers). */
+async function loadSdk(): Promise<void> {
+  try {
+    await withTimeout(injectSdk(), 8000, 'Chargement du SDK OneSignal trop long');
+  } catch (firstError) {
+    await new Promise((r) => setTimeout(r, 1200));
+    try {
+      await withTimeout(injectSdk(), 8000, 'Chargement du SDK OneSignal trop long');
+    } catch {
+      throw firstError;
+    }
+  }
 }
 
 /** Charge et initialise OneSignal (une seule fois). */
@@ -87,7 +111,8 @@ export function initOneSignal(): Promise<any> {
       throw new Error('Notifications non supportées par ce navigateur');
     }
 
-    await withTimeout(loadSdk(), 10000, 'Chargement du SDK OneSignal trop long');
+    // loadSdk gère lui-même ses propres délais et sa seconde tentative.
+    await loadSdk();
 
     const w = window as any;
     w.OneSignalDeferred = w.OneSignalDeferred || [];
@@ -141,17 +166,29 @@ export async function subscribeToPush(): Promise<boolean> {
   // Ouvre la demande d'autorisation native du navigateur.
   await OneSignal.Notifications.requestPermission();
 
-  if (OneSignal.Notifications.permission) {
-    // S'assure que l'abonnement est actif (cas d'un ancien désabonnement).
-    try {
-      await OneSignal.User.PushSubscription.optIn();
-    } catch {
-      // ignore : déjà abonné
-    }
-    return true;
+  if (!OneSignal.Notifications.permission) {
+    return false;
   }
 
-  return false;
+  // S'assure que l'abonnement est actif (cas d'un ancien désabonnement).
+  try {
+    await OneSignal.User.PushSubscription.optIn();
+  } catch {
+    // ignore : déjà abonné
+  }
+
+  // L'enregistrement chez OneSignal n'est pas instantané : on attend une
+  // confirmation réelle, pour ne pas annoncer un abonnement inexistant.
+  for (let attempt = 0; attempt < 10; attempt++) {
+    if (OneSignal.User?.PushSubscription?.id) {
+      return true;
+    }
+    await new Promise((r) => setTimeout(r, 700));
+  }
+
+  throw new Error(
+    "L'autorisation a été accordée, mais l'abonnement n'a pas pu être enregistré auprès du service de notifications."
+  );
 }
 
 /** Désabonne l'utilisateur (sans révoquer l'autorisation du navigateur). */

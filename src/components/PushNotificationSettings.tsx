@@ -50,12 +50,12 @@ export default function PushNotificationSettings() {
       // Autorisation déjà accordée : on confirme l'abonnement, sans jamais
       // laisser l'interface bloquée si le SDK ne répond pas.
       try {
-        const subscribed = await withTimeout(isSubscribed(), 6000);
+        const subscribed = await withTimeout(isSubscribed(), 8000);
         if (!cancelled) setStatus(subscribed ? 'on' : 'off');
       } catch {
-        // L'autorisation a été accordée depuis cette page : on considère
-        // les notifications actives plutôt que d'afficher un état bloqué.
-        if (!cancelled) setStatus('on');
+        // Impossible de confirmer l'abonnement : on affiche le bouton plutôt
+        // qu'un faux « activé », qui masquerait un abonnement non enregistré.
+        if (!cancelled) setStatus('off');
       }
     };
 
