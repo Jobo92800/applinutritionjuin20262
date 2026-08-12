@@ -76,8 +76,8 @@ export default function NotificationsPanel() {
             </>
           ) : (
             <>
-              <strong>{subscriberCount}</strong> appareil{subscriberCount > 1 ? 's' : ''} recevra
-              {subscriberCount > 1 ? 'ont' : ''} cette notification.
+              <strong>{subscriberCount}</strong> appareil{subscriberCount > 1 ? 's' : ''}{' '}
+              {subscriberCount > 1 ? 'recevront' : 'recevra'} cette notification.
             </>
           )}
         </p>
