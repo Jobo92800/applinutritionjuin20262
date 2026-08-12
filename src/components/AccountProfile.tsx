@@ -3,6 +3,7 @@ import { User, Mail, Lock, Target, Calendar, Shield, Save, CreditCard as Edit, E
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { supabase } from '../lib/supabase';
+import PushNotificationSettings from './PushNotificationSettings';
 
 export default function AccountProfile() {
   const { user, logout, refreshProfile } = useAuth();
@@ -542,6 +543,8 @@ export default function AccountProfile() {
         </h3>
         
         <div className="space-y-4">
+          <PushNotificationSettings />
+
           <div className="flex items-center justify-between">
             <div>
               <h4 className="font-medium text-gray-800">Notifications par email</h4>
