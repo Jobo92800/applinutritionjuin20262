@@ -4,8 +4,11 @@
 //   - Envoi à TOUS les abonnés : réservé aux comptes administrateurs.
 //   - Envoi à soi-même : autorisé pour tout utilisateur connecté
 //     (sert à confirmer l'activation des notifications).
+//
+// On interroge Supabase via son API REST (fetch) plutôt qu'avec le client JS :
+// ce dernier initialise un client temps-réel qui exige des WebSockets natifs,
+// absents de l'environnement Node 20 de Netlify (échec au démarrage).
 import webpush from 'web-push';
-import { createClient } from '@supabase/supabase-js';
 
 // Clé publique VAPID (publique par nature, identique à celle du client).
 const VAPID_PUBLIC_KEY =
@@ -21,6 +24,20 @@ const json = (status, payload) =>
     status,
     headers: { 'Content-Type': 'application/json' },
   });
+
+/** Appel à l'API Supabase au nom de l'utilisateur (les règles RLS s'appliquent). */
+async function supabaseFetch(path, token, options = {}) {
+  const response = await fetch(`${SUPABASE_URL}${path}`, {
+    ...options,
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    },
+  });
+  return response;
+}
 
 export default async (req) => {
   if (req.method !== 'POST') {
@@ -54,37 +71,31 @@ export default async (req) => {
     return json(400, { error: 'Le titre et le message sont obligatoires.' });
   }
 
-  // Client Supabase agissant au nom de l'utilisateur appelant (RLS appliquée).
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError || !user) {
+  // 1. Identifier l'appelant
+  const userResponse = await supabaseFetch('/auth/v1/user', token);
+  if (!userResponse.ok) {
+    return json(401, { error: 'Session invalide ou expirée.' });
+  }
+  const user = await userResponse.json();
+  if (!user?.id) {
     return json(401, { error: 'Session invalide ou expirée.' });
   }
 
-  // Un utilisateur non-administrateur ne peut viser que lui-même.
+  // 2. Vérifier les droits : viser autrui exige un compte administrateur.
   const isSelfTargeted = targetUserId && targetUserId === user.id;
 
   if (!isSelfTargeted) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (profile?.role !== 'admin') {
+    const profileResponse = await supabaseFetch(
+      `/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}&select=role`,
+      token
+    );
+    const profiles = profileResponse.ok ? await profileResponse.json() : [];
+    if (profiles?.[0]?.role !== 'admin') {
       return json(403, { error: 'Seuls les administrateurs peuvent envoyer une notification.' });
     }
   }
 
-  // Appelant légitime : on peut maintenant signaler un éventuel défaut de configuration.
+  // Appelant légitime : on peut maintenant signaler un défaut de configuration.
   if (!VAPID_PRIVATE_KEY) {
     return json(500, {
       error:
@@ -92,23 +103,27 @@ export default async (req) => {
     });
   }
 
-  let query = supabase.from('push_subscriptions').select('id, endpoint, p256dh, auth');
+  // 3. Récupérer les abonnements visés
+  let subscriptionsPath = '/rest/v1/push_subscriptions?select=endpoint,p256dh,auth';
   if (targetUserId) {
-    query = query.eq('user_id', targetUserId);
+    subscriptionsPath += `&user_id=eq.${encodeURIComponent(targetUserId)}`;
   }
 
-  const { data: subscriptions, error: subsError } = await query;
-
-  if (subsError) {
-    return json(500, { error: `Lecture des abonnés impossible : ${subsError.message}` });
+  const subsResponse = await supabaseFetch(subscriptionsPath, token);
+  if (!subsResponse.ok) {
+    const detail = await subsResponse.text();
+    return json(500, {
+      error: `Lecture des abonnés impossible (${subsResponse.status}). La table push_subscriptions existe-t-elle ? ${detail.slice(0, 200)}`,
+    });
   }
 
-  if (!subscriptions || subscriptions.length === 0) {
+  const subscriptions = await subsResponse.json();
+  if (!Array.isArray(subscriptions) || subscriptions.length === 0) {
     return json(200, { sent: 0, failed: 0, removed: 0, message: 'Aucun abonné à notifier.' });
   }
 
+  // 4. Envoyer
   webpush.setVapidDetails(`mailto:${CONTACT_EMAIL}`, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
-
   const payload = JSON.stringify({ title, body: message, url });
 
   const results = await Promise.allSettled(
@@ -139,9 +154,13 @@ export default async (req) => {
     }
   });
 
-  // Nettoyage des abonnements devenus invalides.
-  if (expiredEndpoints.length > 0) {
-    await supabase.from('push_subscriptions').delete().in('endpoint', expiredEndpoints);
+  // 5. Nettoyer les abonnements devenus invalides
+  for (const endpoint of expiredEndpoints) {
+    await supabaseFetch(
+      `/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(endpoint)}`,
+      token,
+      { method: 'DELETE' }
+    ).catch(() => {});
   }
 
   return json(200, { sent, failed, removed: expiredEndpoints.length });
