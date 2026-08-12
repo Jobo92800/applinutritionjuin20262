@@ -2,7 +2,20 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import ErrorBoundary from './components/ErrorBoundary.tsx';
+import InstallPrompt from './components/InstallPrompt.tsx';
 import './index.css';
+
+// Capture l'événement d'installation PWA le plus tôt possible (il peut se
+// déclencher avant le montage de React). Le composant InstallPrompt le récupère.
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  (window as any).__deferredInstallPrompt = e;
+  window.dispatchEvent(new Event('pwa:installable'));
+});
+window.addEventListener('appinstalled', () => {
+  (window as any).__deferredInstallPrompt = null;
+  window.dispatchEvent(new Event('pwa:installed'));
+});
 
 // Gestion des erreurs globales
 window.addEventListener('error', (event) => {
@@ -25,6 +38,7 @@ if (!rootElement) {
       <StrictMode>
         <ErrorBoundary>
           <App />
+          <InstallPrompt />
         </ErrorBoundary>
       </StrictMode>
     );
