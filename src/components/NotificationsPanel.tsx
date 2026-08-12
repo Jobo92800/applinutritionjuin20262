@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Send, Bell, Loader2, CheckCircle, AlertCircle, Users } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { sendPush } from '../lib/webpush';
+import ScheduledNotifications from './ScheduledNotifications';
 
 export default function NotificationsPanel() {
   const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
@@ -177,6 +178,11 @@ export default function NotificationsPanel() {
           <p className="text-sm text-red-800 break-words">{error}</p>
         </div>
       )}
+
+      {/* Messages programmés */}
+      <div className="pt-6 border-t border-gray-200">
+        <ScheduledNotifications />
+      </div>
     </div>
   );
 }

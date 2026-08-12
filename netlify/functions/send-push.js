@@ -1,43 +1,18 @@
-// Envoi des notifications push (Web Push standard, sans service tiers).
+// Envoi manuel d'une notification push (déclenché depuis l'application).
 //
 // Sécurité :
 //   - Envoi à TOUS les abonnés : réservé aux comptes administrateurs.
 //   - Envoi à soi-même : autorisé pour tout utilisateur connecté
 //     (sert à confirmer l'activation des notifications).
-//
-// On interroge Supabase via son API REST (fetch) plutôt qu'avec le client JS :
-// ce dernier initialise un client temps-réel qui exige des WebSockets natifs,
-// absents de l'environnement Node 20 de Netlify (échec au démarrage).
-import webpush from 'web-push';
-
-// Clé publique VAPID (publique par nature, identique à celle du client).
-const VAPID_PUBLIC_KEY =
-  'BEPFLGt8dxvt2kJhNi6sPlBKV_ajUjBMMS2v1AcHDdVsssXP5YytuEx3aISQG8I0gSR_qS2ItWlXPxf_f3WdLis';
-
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
-const CONTACT_EMAIL = process.env.VAPID_CONTACT_EMAIL || 'contact@mabeautyplus.fr';
-
-const json = (status, payload) =>
-  new Response(JSON.stringify(payload), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
-
-/** Appel à l'API Supabase au nom de l'utilisateur (les règles RLS s'appliquent). */
-async function supabaseFetch(path, token, options = {}) {
-  const response = await fetch(`${SUPABASE_URL}${path}`, {
-    ...options,
-    headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
-    },
-  });
-  return response;
-}
+import {
+  json,
+  supabaseFetch,
+  sendToSubscriptions,
+  removeExpired,
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY,
+  VAPID_PRIVATE_KEY,
+} from '../lib/push-core.js';
 
 export default async (req) => {
   if (req.method !== 'POST') {
@@ -122,46 +97,14 @@ export default async (req) => {
     return json(200, { sent: 0, failed: 0, removed: 0, message: 'Aucun abonné à notifier.' });
   }
 
-  // 4. Envoyer
-  webpush.setVapidDetails(`mailto:${CONTACT_EMAIL}`, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
-  const payload = JSON.stringify({ title, body: message, url });
-
-  const results = await Promise.allSettled(
-    subscriptions.map((sub) =>
-      webpush.sendNotification(
-        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-        payload
-      )
-    )
-  );
-
-  let sent = 0;
-  let failed = 0;
-  const expiredEndpoints = [];
-
-  results.forEach((result, index) => {
-    if (result.status === 'fulfilled') {
-      sent++;
-      return;
-    }
-    failed++;
-    const statusCode = result.reason?.statusCode;
-    // 404 / 410 : l'abonnement n'existe plus (app désinstallée, cache vidé).
-    if (statusCode === 404 || statusCode === 410) {
-      expiredEndpoints.push(subscriptions[index].endpoint);
-    } else {
-      console.error('Échec envoi push:', statusCode, result.reason?.body || result.reason?.message);
-    }
+  // 4. Envoyer, puis nettoyer les abonnements expirés
+  const { sent, failed, expiredEndpoints } = await sendToSubscriptions(subscriptions, {
+    title,
+    body: message,
+    url,
   });
 
-  // 5. Nettoyer les abonnements devenus invalides
-  for (const endpoint of expiredEndpoints) {
-    await supabaseFetch(
-      `/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(endpoint)}`,
-      token,
-      { method: 'DELETE' }
-    ).catch(() => {});
-  }
+  await removeExpired(expiredEndpoints, token);
 
   return json(200, { sent, failed, removed: expiredEndpoints.length });
 };

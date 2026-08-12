@@ -46,13 +46,41 @@ La clé privée VAPID signe les envois : elle ne doit **jamais** figurer dans le
 
 ---
 
+## Étape 3 — Notifications programmées (optionnel)
+
+Pour les envois automatiques récurrents (ex. « rappel de pesée tous les lundis »).
+
+**3a. Créer la table** : dans le SQL Editor Supabase, exécuter le contenu de
+`MIGRATION_NOTIFICATIONS_PROGRAMMEES.sql`.
+
+**3b. Ajouter la clé de service sur Netlify** : la tâche planifiée s'exécute sans
+session utilisateur, elle a donc besoin d'un accès de service.
+
+1. Supabase → **Settings → API → Project API keys** → copier la clé **`service_role`**
+2. Netlify → Environment variables → ajouter :
+   - **Key** : `SUPABASE_SERVICE_ROLE_KEY`
+   - **Value** : la clé `service_role`
+3. Redéployer le site.
+
+> ⚠️ La clé `service_role` contourne toutes les règles de sécurité de la base.
+> Elle ne doit exister **que** dans les variables Netlify (côté serveur), jamais
+> dans le code ni dans le navigateur.
+
+La fonction `scheduled-push` s'exécute **toutes les heures**. Elle envoie les
+messages dont l'heure et le jour correspondent (heure de Paris, changement
+d'heure géré), et ne les envoie qu'une fois par jour.
+
+---
+
 ## Utilisation
 
 **Côté utilisateur** : Mon compte → Notifications → « Activer les notifications ».
 Une notification de confirmation est envoyée immédiatement.
 
 **Côté administrateur** : Administration → onglet **Notifications**.
-Le nombre d'appareils abonnés est affiché, avec un aperçu avant envoi.
+- Envoi immédiat : nombre d'abonnés, aperçu, confirmation avant envoi.
+- **Messages programmés** : créer, mettre en pause ou supprimer des envois
+  automatiques (chaque jour ou un jour précis, à une heure donnée).
 
 ---
 
@@ -75,3 +103,4 @@ Ordre à communiquer aux utilisatrices :
 | « Lecture des abonnés impossible » | Étape 1 non faite (table absente) |
 | « Aucun abonné à notifier » | Personne n'a encore activé les notifications |
 | Rien ne se passe sur iPhone | Application non installée sur l'écran d'accueil |
+| Les messages programmés ne partent pas | Étape 3 non faite (table ou `SUPABASE_SERVICE_ROLE_KEY` manquante) — voir les logs de `scheduled-push` dans Netlify → Functions |
