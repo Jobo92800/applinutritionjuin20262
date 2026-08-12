@@ -14,6 +14,23 @@ const SW_SCOPE = '/push/onesignal/';
 
 let initPromise: Promise<any> | null = null;
 
+/** Empêche toute opération réseau de bloquer l'interface indéfiniment. */
+export function withTimeout<T>(promise: Promise<T>, ms: number, message = 'Délai dépassé'): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
+}
+
 /** Le navigateur supporte-t-il les notifications push ? */
 export function isPushSupported(): boolean {
   return (
@@ -70,12 +87,12 @@ export function initOneSignal(): Promise<any> {
       throw new Error('Notifications non supportées par ce navigateur');
     }
 
-    await loadSdk();
+    await withTimeout(loadSdk(), 10000, 'Chargement du SDK OneSignal trop long');
 
     const w = window as any;
     w.OneSignalDeferred = w.OneSignalDeferred || [];
 
-    return new Promise((resolve, reject) => {
+    const ready = new Promise((resolve, reject) => {
       w.OneSignalDeferred.push(async (OneSignal: any) => {
         try {
           await OneSignal.init({
@@ -90,6 +107,10 @@ export function initOneSignal(): Promise<any> {
         }
       });
     });
+
+    // Sans ce garde-fou, une initialisation qui n'aboutit jamais laisserait
+    // l'interface bloquée sur « Vérification… ».
+    return withTimeout(ready, 15000, 'Initialisation OneSignal trop longue');
   })();
 
   // En cas d'échec, autoriser une nouvelle tentative plus tard.

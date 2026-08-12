@@ -9,6 +9,7 @@ import {
   unsubscribeFromPush,
   permissionState,
   linkUser,
+  withTimeout,
 } from '../lib/onesignal';
 
 type Status = 'loading' | 'unsupported' | 'ios-install' | 'denied' | 'on' | 'off';
@@ -17,6 +18,7 @@ export default function PushNotificationSettings() {
   const { user } = useAuth();
   const [status, setStatus] = useState<Status>('loading');
   const [busy, setBusy] = useState(false);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -30,13 +32,31 @@ export default function PushNotificationSettings() {
         if (!cancelled) setStatus('ios-install');
         return;
       }
-      if (permissionState() === 'denied') {
+
+      const permission = permissionState();
+
+      if (permission === 'denied') {
         if (!cancelled) setStatus('denied');
         return;
       }
 
-      const subscribed = await isSubscribed();
-      if (!cancelled) setStatus(subscribed ? 'on' : 'off');
+      // Autorisation jamais demandée : inutile de charger le SDK OneSignal,
+      // on affiche directement le bouton d'activation.
+      if (permission !== 'granted') {
+        if (!cancelled) setStatus('off');
+        return;
+      }
+
+      // Autorisation déjà accordée : on confirme l'abonnement, sans jamais
+      // laisser l'interface bloquée si le SDK ne répond pas.
+      try {
+        const subscribed = await withTimeout(isSubscribed(), 6000);
+        if (!cancelled) setStatus(subscribed ? 'on' : 'off');
+      } catch {
+        // L'autorisation a été accordée depuis cette page : on considère
+        // les notifications actives plutôt que d'afficher un état bloqué.
+        if (!cancelled) setStatus('on');
+      }
     };
 
     check();
@@ -47,17 +67,22 @@ export default function PushNotificationSettings() {
 
   const handleEnable = async () => {
     setBusy(true);
+    setErrorDetail(null);
     try {
-      const ok = await subscribeToPush();
+      const ok = await withTimeout(subscribeToPush(), 30000);
       if (ok) {
-        if (user?.id) await linkUser(user.id, user.email);
+        if (user?.id) {
+          // Le ciblage est optionnel : il ne doit pas retarder la confirmation.
+          withTimeout(linkUser(user.id, user.email), 8000).catch(() => {});
+        }
         setStatus('on');
       } else {
         setStatus(permissionState() === 'denied' ? 'denied' : 'off');
       }
     } catch (error) {
       console.error('Erreur activation des notifications:', error);
-      alert("Les notifications n'ont pas pu être activées. Réessayez dans un instant.");
+      setStatus(permissionState() === 'denied' ? 'denied' : 'off');
+      setErrorDetail(error instanceof Error ? error.message : String(error));
     } finally {
       setBusy(false);
     }
@@ -106,14 +131,25 @@ export default function PushNotificationSettings() {
             )}
 
             {status === 'off' && (
-              <button
-                onClick={handleEnable}
-                disabled={busy}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors disabled:opacity-60"
-              >
-                {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <Bell className="w-5 h-5" />}
-                Activer les notifications
-              </button>
+              <div className="space-y-3">
+                <button
+                  onClick={handleEnable}
+                  disabled={busy}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors disabled:opacity-60"
+                >
+                  {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <Bell className="w-5 h-5" />}
+                  {busy ? 'Activation en cours…' : 'Activer les notifications'}
+                </button>
+
+                {errorDetail && (
+                  <div className="bg-red-50 border border-red-100 rounded-lg px-4 py-3">
+                    <p className="text-sm text-red-800">
+                      L'activation a échoué. Vérifiez votre connexion et réessayez.
+                    </p>
+                    <p className="text-xs text-red-500 mt-1 break-words">Détail : {errorDetail}</p>
+                  </div>
+                )}
+              </div>
             )}
 
             {status === 'on' && (
