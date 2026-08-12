@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Target, User, Activity, Save } from 'lucide-react';
+import { Target, User, Activity, Save, Sparkles, Flame, Beef, Wheat, Droplets } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { getNutritionRecommendations } from '../utils/nutritionCalculator';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -47,8 +48,18 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
     { value: 'ralentissement', label: 'Ralentissement', description: 'Ménopause, SOPK, hypothyroïdie, diabète T2, perte musculaire...' }
   ];
 
+  // Objectifs nutritionnels calculés en direct à partir des réponses (étape finale).
+  const targets = getNutritionRecommendations({
+    gender: formData.gender,
+    age: formData.age,
+    activityLevel: formData.activityLevel,
+    metabolism: formData.metabolism,
+  }).dailyTargets;
+
+  const TOTAL_STEPS = 6;
+
   const nextStep = () => {
-    if (currentStep < 5) {
+    if (currentStep < TOTAL_STEPS) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -73,7 +84,7 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold">Bienvenue, {user?.name} ! 👋</h1>
             <div className="text-sm bg-white/20 px-3 py-1 rounded-full">
-              Étape {currentStep} sur 5
+              Étape {currentStep} sur {TOTAL_STEPS}
             </div>
           </div>
           <p className="text-green-100">
@@ -85,7 +96,7 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
             <div className="w-full bg-white/20 rounded-full h-2">
               <div
                 className="bg-white h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(currentStep / 5) * 100}%` }}
+                style={{ width: `${(currentStep / TOTAL_STEPS) * 100}%` }}
               />
             </div>
           </div>
@@ -387,6 +398,57 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
             </div>
           )}
 
+          {currentStep === 6 && (
+            <div className="space-y-6">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="w-8 h-8 text-green-600" />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-800 mb-2">Vos objectifs personnalisés 🎉</h2>
+                <p className="text-gray-600">
+                  Voici vos cibles quotidiennes, calculées d'après votre profil.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-orange-50 rounded-xl p-4 text-center">
+                  <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <Flame className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div className="text-2xl font-bold text-gray-800">{targets.calories}</div>
+                  <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">kcal / jour</div>
+                </div>
+                <div className="bg-red-50 rounded-xl p-4 text-center">
+                  <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <Beef className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div className="text-2xl font-bold text-gray-800">{targets.protein} g</div>
+                  <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Protéines</div>
+                </div>
+                <div className="bg-amber-50 rounded-xl p-4 text-center">
+                  <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <Wheat className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div className="text-2xl font-bold text-gray-800">{targets.carbs} g</div>
+                  <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Glucides</div>
+                </div>
+                <div className="bg-blue-50 rounded-xl p-4 text-center">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <Droplets className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="text-2xl font-bold text-gray-800">{targets.fat} g</div>
+                  <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Lipides</div>
+                </div>
+              </div>
+
+              <div className="bg-green-50 border border-green-100 rounded-xl p-4 text-center">
+                <p className="text-sm text-green-800">
+                  🎯 Vous retrouverez ces objectifs dans votre calendrier de repas. C'est parti !
+                </p>
+              </div>
+            </div>
+          )}
+
         </div>
 
         {/* Footer */}
@@ -400,12 +462,12 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
               Précédent
             </button>
 
-            {currentStep < 5 ? (
+            {currentStep < TOTAL_STEPS ? (
               <button
                 onClick={nextStep}
                 className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
-                Suivant
+                {currentStep === TOTAL_STEPS - 1 ? 'Voir mes objectifs' : 'Suivant'}
               </button>
             ) : (
               <button
