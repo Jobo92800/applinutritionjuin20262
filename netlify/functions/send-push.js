@@ -27,19 +27,15 @@ export default async (req) => {
     return json(405, { error: 'Méthode non autorisée' });
   }
 
-  if (!VAPID_PRIVATE_KEY) {
-    return json(500, {
-      error:
-        "La clé VAPID_PRIVATE_KEY n'est pas configurée sur Netlify. Ajoutez-la dans les variables d'environnement du site.",
-    });
-  }
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    return json(500, { error: 'Configuration Supabase manquante côté serveur.' });
-  }
-
+  // L'authentification est vérifiée en premier : un appelant anonyme ne doit rien
+  // apprendre de la configuration du serveur.
   const token = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
   if (!token) {
     return json(401, { error: 'Authentification requise.' });
+  }
+
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    return json(500, { error: 'Configuration Supabase manquante côté serveur.' });
   }
 
   let body;
@@ -86,6 +82,14 @@ export default async (req) => {
     if (profile?.role !== 'admin') {
       return json(403, { error: 'Seuls les administrateurs peuvent envoyer une notification.' });
     }
+  }
+
+  // Appelant légitime : on peut maintenant signaler un éventuel défaut de configuration.
+  if (!VAPID_PRIVATE_KEY) {
+    return json(500, {
+      error:
+        "La clé VAPID_PRIVATE_KEY n'est pas configurée sur Netlify. Ajoutez-la dans les variables d'environnement du site, puis redéployez.",
+    });
   }
 
   let query = supabase.from('push_subscriptions').select('id, endpoint, p256dh, auth');
