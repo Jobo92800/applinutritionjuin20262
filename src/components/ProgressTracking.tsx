@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { TrendingUp, Plus, Target, Calendar, Weight, CheckCircle, Award, Star, CreditCard as Edit2, Trash2 } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
+import Achievements from './Achievements';
 
 export default function ProgressTracking() {
   const {
@@ -12,8 +13,7 @@ export default function ProgressTracking() {
     weeklyGoals,
     getCurrentWeekProgress,
     updateWeeklyProgress,
-    updateWeeklyGoal,
-    getUserBadges
+    updateWeeklyGoal
   } = useData();
   const { user } = useAuth();
   const [showAddEntry, setShowAddEntry] = useState(false);
@@ -36,7 +36,6 @@ export default function ProgressTracking() {
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // Tri par date croissante pour le graphique
 
   const currentWeekProgress = user ? getCurrentWeekProgress(user.id) : null;
-  const userBadges = user ? getUserBadges(user.id) : [];
 
   const handleAddEntry = async () => {
     if (!newEntry.weight || !user) return;
@@ -861,28 +860,8 @@ export default function ProgressTracking() {
         </div>
       </div>
 
-      {/* Badges obtenus */}
-      {userBadges.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-            <Award className="w-6 h-6 text-yellow-600 mr-3" />
-            Mes badges
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {userBadges.map((badge) => (
-              <div key={badge.id} className={`p-4 rounded-lg border-2 ${badge.color} border-opacity-50`}>
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl">{badge.icon}</span>
-                  <div>
-                    <h3 className="font-semibold">{badge.name}</h3>
-                    <p className="text-sm opacity-75">{badge.description}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Séries et badges */}
+      <Achievements />
 
       {/* Entry History */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

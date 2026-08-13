@@ -15,6 +15,7 @@ import ProgressTracking from './components/ProgressTracking';
 import AdminPanel from './components/AdminPanel';
 import AccountProfile from './components/AccountProfile';
 import FoodAnalysis from './components/FoodAnalysis';
+import BadgeCelebration from './components/BadgeCelebration';
 
 function AppContent() {
   const { user, isLoading, completeOnboarding } = useAuth();
@@ -112,6 +113,9 @@ function AppContent() {
         isOpen={showOnboarding}
         onComplete={handleOnboardingComplete}
       />
+
+      {/* Félicitations à l'obtention d'un badge */}
+      <BadgeCelebration />
     </>
   );
 }

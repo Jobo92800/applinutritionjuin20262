@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { Recipe, Podcast, MealPlan, WeightEntry, ShoppingItem, WeeklyGoal, WeeklyProgress, Badge, Message } from '../types';
+import { computeStreaks, computeEarnedBadgeIds, Streaks } from '../utils/achievements';
 
 interface DataContextType {
   recipes: Recipe[];
@@ -33,6 +34,10 @@ interface DataContextType {
   updateWeeklyGoal: (userId: string, goalId: string, completed: boolean) => Promise<void>;
   getCurrentWeekProgress: (userId: string) => WeeklyProgress | null;
   getUserBadges: (userId: string) => Badge[];
+  getStreaks: (userId: string) => Streaks;
+  /** Badges tout juste débloqués, à célébrer puis à effacer. */
+  newBadges: Badge[];
+  clearNewBadges: () => void;
   uploadPodcastAudio: (file: File) => Promise<string>;
   uploadRecipeImage: (file: File) => Promise<string>;
   uploadPodcastImage: (file: File) => Promise<string>;
@@ -137,6 +142,22 @@ const AVAILABLE_BADGES: Badge[] = [
     icon: '🎧',
     color: 'bg-purple-100 text-purple-800',
     condition: 'podcast_weekly'
+  },
+  {
+    id: 'streak_7',
+    name: 'Série de 7 jours',
+    description: '7 jours parfaits d\'affilée',
+    icon: '🔥',
+    color: 'bg-orange-100 text-orange-800',
+    condition: 'streak_7'
+  },
+  {
+    id: 'streak_30',
+    name: 'Série de 30 jours',
+    description: '30 jours parfaits d\'affilée : l\'habitude est installée !',
+    icon: '💎',
+    color: 'bg-cyan-100 text-cyan-800',
+    condition: 'streak_30'
   }
 ];
 
@@ -195,6 +216,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>(DEMO_WEEKLY_GOALS);
   const [weeklyProgress, setWeeklyProgress] = useState<WeeklyProgress[]>([]);
   const [badges] = useState<Badge[]>(AVAILABLE_BADGES);
+  const [earnedBadgeIds, setEarnedBadgeIds] = useState<string[]>([]);
+  const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -274,8 +297,28 @@ export function DataProvider({ children }: { children: ReactNode }) {
       loadFavorites(),
       loadWeeklyGoals(),
       loadWeeklyProgress(),
+      loadUserBadges(),
       loadMessages()
     ]);
+  };
+
+  /** Badges déjà obtenus, conservés définitivement en base. */
+  const loadUserBadges = async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('user_badges')
+        .select('badge_id')
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Erreur lors du chargement des badges:', error.message);
+        return;
+      }
+      setEarnedBadgeIds((data || []).map((row: any) => row.badge_id));
+    } catch (error) {
+      console.error('Erreur lors du chargement des badges:', error);
+    }
   };
 
   const loadRecipes = async () => {
@@ -1584,18 +1627,47 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   // Obtenir les badges d'un utilisateur
-  const getUserBadges = (userId: string): Badge[] => {
-    const userProgress = weeklyProgress.filter(p => p.userId === userId);
-    const earnedBadgeIds = new Set<string>();
+  // Attribue les badges mérités dès qu'un objectif est coché.
+  // Un badge obtenu reste acquis : on n'ajoute que ceux qui manquent.
+  useEffect(() => {
+    if (!user || weeklyGoals.length === 0) return;
 
-    userProgress.forEach(progress => {
-      if (progress.badgeEarned) {
-        earnedBadgeIds.add(progress.badgeEarned);
+    const userProgress = weeklyProgress.filter(p => p.userId === user.id);
+    const streaks = computeStreaks(userProgress, weeklyGoals);
+    const deserved = computeEarnedBadgeIds(userProgress, weeklyGoals, streaks);
+    const missing = deserved.filter(id => !earnedBadgeIds.includes(id));
+
+    if (missing.length === 0) return;
+
+    const award = async () => {
+      if (isSupabaseConfigured) {
+        const { error } = await supabase
+          .from('user_badges')
+          .upsert(
+            missing.map(badge_id => ({ user_id: user.id, badge_id })),
+            { onConflict: 'user_id,badge_id', ignoreDuplicates: true }
+          );
+
+        if (error) {
+          console.error('Erreur lors de l\'attribution des badges:', error.message);
+          return;
+        }
       }
-    });
 
-    return badges.filter(badge => earnedBadgeIds.has(badge.id));
-  };
+      setEarnedBadgeIds(prev => Array.from(new Set([...prev, ...missing])));
+      setNewBadges(badges.filter(badge => missing.includes(badge.id)));
+    };
+
+    award();
+  }, [weeklyProgress, weeklyGoals, user, earnedBadgeIds, badges]);
+
+  const getUserBadges = (_userId: string): Badge[] =>
+    badges.filter(badge => earnedBadgeIds.includes(badge.id));
+
+  const getStreaks = (userId: string): Streaks =>
+    computeStreaks(weeklyProgress.filter(p => p.userId === userId), weeklyGoals);
+
+  const clearNewBadges = () => setNewBadges([]);
 
   const sendMessage = async (message: Omit<Message, 'id' | 'status' | 'createdAt' | 'updatedAt'>) => {
     try {
@@ -1730,6 +1802,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       updateWeeklyGoal,
       getCurrentWeekProgress,
       getUserBadges,
+      getStreaks,
+      newBadges,
+      clearNewBadges,
       uploadPodcastAudio,
       uploadRecipeImage,
       uploadPodcastImage,
