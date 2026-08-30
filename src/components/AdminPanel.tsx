@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, CreditCard as Edit, Trash2, Clock, Users, GripVertical, MessageCircle, Bell } from 'lucide-react';
+import { Plus, CreditCard as Edit, Trash2, Clock, Users, GripVertical, MessageCircle, Bell, Download } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Recipe, Podcast } from '../types';
@@ -68,6 +68,28 @@ export default function AdminPanel() {
   const handleNewPodcast = () => {
     setEditingPodcast(null);
     setShowPodcastForm(true);
+  };
+
+  const handleDownloadPodcast = async (podcast: Podcast) => {
+    try {
+      const response = await fetch(podcast.audioUrl);
+      if (!response.ok) {
+        throw new Error('Le téléchargement a échoué');
+      }
+
+      const audioBlob = await response.blob();
+      const downloadUrl = URL.createObjectURL(audioBlob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `${podcast.title.replace(/[^a-z0-9À-ÿ]+/gi, '-').replace(/^-|-$/g, '') || 'podcast'}.mp3`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Erreur lors du téléchargement du podcast:', error);
+      window.alert('Le téléchargement de ce podcast est impossible pour le moment.');
+    }
   };
 
   const handleDragStart = (e: React.DragEvent, podcastId: string) => {
@@ -288,6 +310,14 @@ export default function AdminPanel() {
                         >
                           <Edit className="w-3 h-3" />
                           <span>Modifier</span>
+                        </button>
+                        <button
+                          onClick={() => handleDownloadPodcast(podcast)}
+                          className="flex items-center space-x-1 bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 transition-colors"
+                          title="Télécharger le podcast"
+                        >
+                          <Download className="w-3 h-3" />
+                          <span>Télécharger</span>
                         </button>
                         <button
                           onClick={() => {
