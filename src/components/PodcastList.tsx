@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Clock, Search, Volume2, SkipBack, SkipForward, GripVertical } from 'lucide-react';
+import { Play, Pause, Clock, Search, Volume2, SkipBack, SkipForward, GripVertical, Download } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Podcast } from '../types';
@@ -476,6 +476,18 @@ export default function PodcastList() {
                     >
                       <span className="text-xs">Détails</span>
                     </button>
+
+                    {user?.role === 'admin' && (
+                      <a
+                        href={podcast.audioUrl}
+                        download={`${podcast.title}.mp3`}
+                        className="flex items-center justify-center space-x-2 px-3 py-2 border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition-all duration-200 font-medium text-sm flex-1"
+                        title="Télécharger l'audio"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span className="text-xs">Télécharger</span>
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>
