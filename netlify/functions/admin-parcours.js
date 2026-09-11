@@ -1,0 +1,255 @@
+/*
+  Administration du parcours audio.
+  POST { action, ... } avec l'en-tête x-mbp-code.
+
+  C'est cette route que l'application thérapeute (V2) appelle à la signature
+  d'un contrat pour créer le compte de la cliente : l'action `creer` garde
+  exactement la forme d'appel de « Mon Parcours », pour qu'il n'y ait qu'une
+  adresse à changer côté V2.
+
+  Le code est un garde-fou, pas une authentification forte : protéger aussi
+  cette route par le mot de passe de site Netlify si elle sort du seul usage
+  serveur-à-serveur.
+*/
+import {
+  json, configManquante, corpsJson, db, auth, ADMIN_CODE, APPAREILS_MAX,
+  CURES, CODES_PARCOURS, etapesDeLaCure, indexDisponible, urlEnvoi, urlSignee,
+  journaliser, ipDe,
+} from '../lib/parcours-core.js';
+
+const ok = (donnees) => json(200, { ok: true, ...donnees });
+const nettoyerEmail = (v) => String(v || '').trim().toLowerCase();
+const emailValide = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+const MDP_MIN = 8;
+
+/** 'B' / 'C' (codes historiques) ou '3_month' / '6_month' -> cure, ou null. */
+function cureDemandee(valeur) {
+  const v = String(valeur || '').trim();
+  if (CURES[v]) return v;
+  return CODES_PARCOURS[v.toUpperCase()] || null;
+}
+
+/**
+ * Crée le compte avec son mot de passe déjà défini et l'e-mail confirmé.
+ * La cliente est dans le centre au moment de la signature : lui faire faire
+ * un aller-retour par sa boîte mail pendant que la thérapeute attend n'a pas
+ * de sens. Le compte fonctionne immédiatement.
+ *
+ * Le profil est créé par le trigger `handle_new_user`, qui lit `name` dans
+ * les métadonnées.
+ */
+async function creerAvecMotDePasse(email, name, motDePasse) {
+  const r = await auth('/admin/users', {
+    method: 'POST',
+    body: JSON.stringify({ email, password: motDePasse, email_confirm: true, user_metadata: { name } }),
+  });
+  if (r.ok) return { envoye: false, motDePasseDefini: true, utilisateur: r.corps };
+  const message = String(r.corps?.msg || r.corps?.message || r.corps?.error_description || '');
+  return { envoye: false, motDePasseDefini: false, raison: 'creation-refusee', detail: message.slice(0, 160) };
+}
+
+async function redefinirMotDePasse(userId, motDePasse) {
+  const r = await auth(`/admin/users/${userId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ password: motDePasse, email_confirm: true }),
+  });
+  return r.ok;
+}
+
+/** Envoie l'e-mail d'invitation qui permet de choisir son mot de passe. */
+async function inviter(email, name) {
+  const r = await auth('/invite', {
+    method: 'POST',
+    body: JSON.stringify({ email, data: { name } }),
+  });
+  if (r.ok) return { envoye: true, utilisateur: r.corps };
+  const message = String(r.corps?.msg || r.corps?.error_description || r.corps?.message || '');
+  console.error('Invitation refusée :', r.statut, message);
+  return { envoye: false, raison: 'invitation-refusee', detail: message.slice(0, 160) };
+}
+
+/** Attend que le trigger ait créé le profil, puis y écrit la cure et le nom. */
+async function completerProfil(userId, champs) {
+  for (let essai = 0; essai < 5; essai++) {
+    const lignes = await db.majSur('profiles', `id=eq.${userId}`, champs);
+    if (lignes && lignes.length) return lignes[0];
+    await new Promise((r) => setTimeout(r, 150));
+  }
+  return null;
+}
+
+export default async (req) => {
+  if (req.method !== 'POST') return json(405, { erreur: 'Méthode non autorisée.' });
+  const manque = configManquante();
+  if (manque) return manque;
+  if (!ADMIN_CODE) return json(500, { erreur: 'Service indisponible.' });
+
+  if ((req.headers.get('x-mbp-code') || '') !== ADMIN_CODE) {
+    await journaliser('admin-refuse', { ip: ipDe(req) });
+    return json(401, { erreur: 'code-invalide' });
+  }
+
+  const corps = await corpsJson(req);
+  if (!corps || !corps.action) return json(400, { erreur: 'Requête invalide.' });
+
+  try {
+    switch (corps.action) {
+      /* --------------------------------------------------- créer un compte --- */
+      case 'creer': {
+        const prenom = (corps.prenom || '').trim();
+        const nom = (corps.nom || '').trim();
+        const email = nettoyerEmail(corps.email);
+        if (!prenom) return json(400, { erreur: 'prenom-requis' });
+        if (!emailValide(email)) return json(400, { erreur: 'email-invalide' });
+
+        const cure = cureDemandee(corps.parcours);
+        if (!cure) return json(400, { erreur: 'parcours-inconnu' });
+
+        const motDePasse = String(corps.motDePasse || '');
+        if (motDePasse && motDePasse.length < MDP_MIN) return json(400, { erreur: 'mot-de-passe-court' });
+
+        const name = [prenom, nom].filter(Boolean).join(' ');
+        const existant = await db.un(
+          'profiles',
+          `select=id,name,subscription_tier,parcours_statut&email=eq.${encodeURIComponent(email)}`
+        );
+
+        // Compte déjà là : avec un mot de passe fourni, on le redéfinit et on met
+        // la cure à jour plutôt que de refuser. C'est ce que la thérapeute veut
+        // quand elle reprend une cliente au comptoir.
+        if (existant) {
+          if (!motDePasse) return json(409, { erreur: 'email-deja-utilise', prenom: existant.name });
+          const redefini = await redefinirMotDePasse(existant.id, motDePasse);
+          if (!redefini) return json(502, { erreur: 'mot-de-passe-refuse' });
+          await db.majSur('profiles', `id=eq.${existant.id}`, {
+            subscription_tier: cure, parcours_statut: 'actif',
+          });
+          await journaliser('cliente-mdp-redefini', { userId: existant.id, ip: ipDe(req) });
+          return ok({
+            cliente: { id: existant.id, prenom: existant.name, email },
+            invitation: { envoye: false, motDePasseDefini: true },
+            existante: true,
+          });
+        }
+
+        const invitation = motDePasse
+          ? await creerAvecMotDePasse(email, name, motDePasse)
+          : await inviter(email, name);
+        const userId = invitation.utilisateur?.id;
+        if (!userId) return json(502, { erreur: invitation.raison || 'creation-refusee', detail: invitation.detail });
+
+        const profil = await completerProfil(userId, { name, subscription_tier: cure, parcours_statut: 'actif' });
+        if (!profil) return json(502, { erreur: 'profil-absent' });
+
+        await journaliser('cliente-creee', { userId, ip: ipDe(req), detail: email });
+        return ok({ cliente: { id: userId, prenom, email }, invitation });
+      }
+
+      case 'renvoyer-invitation': {
+        const profil = await db.un('profiles', `select=id,email,name&id=eq.${corps.id}`);
+        if (!profil) return json(404, { erreur: 'cliente-inconnue' });
+        // Compte existant : Supabase refuse une seconde invitation, on passe par
+        // l'e-mail de réinitialisation, qui aboutit au même écran.
+        await auth('/recover', { method: 'POST', body: JSON.stringify({ email: profil.email }) });
+        await journaliser('invitation-renvoyee', { userId: profil.id, ip: ipDe(req) });
+        return ok({ invitation: { envoye: true, deja: true } });
+      }
+
+      /* ------------------------------------------------------- les clientes --- */
+      case 'liste': {
+        const profils = await db.lire(
+          'profiles',
+          'select=id,email,name,subscription_tier,parcours_statut,parcours_debloque_manuel,created_at,parcours_progression(terminee),parcours_appareils(id)&order=created_at.desc&limit=500'
+        );
+        const totaux = {};
+        for (const cure of Object.keys(CURES)) totaux[cure] = (await etapesDeLaCure(cure)).length;
+        return ok({
+          clientes: profils
+            .filter((p) => CURES[p.subscription_tier])
+            .map((p) => ({
+              id: p.id,
+              prenom: p.name,
+              email: p.email,
+              cure: p.subscription_tier,
+              cureNom: CURES[p.subscription_tier],
+              statut: p.parcours_statut,
+              terminees: (p.parcours_progression || []).filter((x) => x.terminee).length,
+              total: totaux[p.subscription_tier] || 0,
+              appareils: (p.parcours_appareils || []).length,
+              appareilsMax: APPAREILS_MAX,
+            })),
+        });
+      }
+
+      case 'modifier': {
+        const profil = await db.un('profiles', `select=id&id=eq.${corps.id}`);
+        if (!profil) return json(404, { erreur: 'cliente-inconnue' });
+        const champs = {};
+        if (corps.statut === 'actif' || corps.statut === 'suspendu') champs.parcours_statut = corps.statut;
+        if (corps.cure && CURES[corps.cure]) champs.subscription_tier = corps.cure;
+        if (Object.keys(champs).length) await db.majSur('profiles', `id=eq.${profil.id}`, champs);
+        if (corps.reinitialiserAppareils) {
+          await db.supprimer('parcours_appareils', `user_id=eq.${profil.id}`);
+          await journaliser('appareils-reinitialises', { userId: profil.id, ip: ipDe(req) });
+        }
+        return ok({});
+      }
+
+      /* Validation manuelle : le centre débloque l'étape suivante. */
+      case 'valider-etape': {
+        const profil = await db.un(
+          'profiles',
+          `select=id,subscription_tier,parcours_debloque_manuel&id=eq.${corps.id}`
+        );
+        if (!profil || !CURES[profil.subscription_tier]) return json(404, { erreur: 'cliente-inconnue' });
+        const etapes = await etapesDeLaCure(profil.subscription_tier);
+        const avancement = await db.lire(
+          'parcours_progression',
+          `select=podcast_id,terminee&user_id=eq.${profil.id}`
+        );
+        const terminees = new Set(avancement.filter((x) => x.terminee).map((x) => x.podcast_id));
+        const dispo = indexDisponible(etapes, terminees, profil.parcours_debloque_manuel);
+        const suivant = Math.min(dispo + 1, etapes.length - 1);
+        await db.majSur('profiles', `id=eq.${profil.id}`, { parcours_debloque_manuel: suivant });
+        await journaliser('validation-manuelle', {
+          userId: profil.id, ip: ipDe(req), detail: `étape ${suivant + 1}`,
+        });
+        return ok({ numero: suivant + 1 });
+      }
+
+      /* ---------------------------------------------------------- les étapes --- */
+      case 'url-envoi': {
+        const chemin = String(corps.chemin || '').replace(/[^A-Za-z0-9/._-]/g, '');
+        if (!/^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+\.(mp3|m4a|aac|wav)$/i.test(chemin)) {
+          return json(400, { erreur: 'chemin-invalide' });
+        }
+        return ok({ url: await urlEnvoi(chemin), chemin });
+      }
+
+      /* Rattache un fichier déposé à une étape, avec sa durée réelle. */
+      case 'etape-maj': {
+        if (!corps.id) return json(400, { erreur: 'etape-incomplete' });
+        const champs = {};
+        if (corps.fichier !== undefined) champs.fichier = corps.fichier;
+        if (corps.dureeSec !== undefined) champs.duration = Math.floor(Number(corps.dureeSec)) || 0;
+        if (corps.actif !== undefined) champs.actif = !!corps.actif;
+        await db.majSur('podcasts', `id=eq.${corps.id}`, champs);
+        return ok({});
+      }
+
+      /* Écoute de contrôle : même adresse signée que pour une cliente, sans condition. */
+      case 'ecouter': {
+        const etape = await db.un('podcasts', `select=id,title,fichier&id=eq.${corps.id}`);
+        if (!etape) return json(404, { erreur: 'etape-inconnue' });
+        if (!etape.fichier) return json(404, { erreur: 'audio-absent' });
+        return ok({ url: await urlSignee(etape.fichier, 3600), titre: etape.title });
+      }
+
+      default:
+        return json(400, { erreur: 'action-inconnue' });
+    }
+  } catch (e) {
+    console.error('admin-parcours :', e.message);
+    return json(500, { erreur: 'Service momentanément indisponible.' });
+  }
+};

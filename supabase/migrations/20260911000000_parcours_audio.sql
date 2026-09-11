@@ -7,11 +7,11 @@
   fonctionner à l'identique pendant que la branche `parcours` se construit.
 
   1. `podcasts` devient la table des étapes
-     - `fichier`   : chemin dans le bucket privé (null tant que rien n'est déposé)
-     - `duree_sec` : durée réelle lue dans le MP3 au dépôt, base du seuil des 90 %
-     - `actif`     : une étape désactivée n'apparaît plus dans le parcours
-     Les colonnes `display_order` (numéro d'étape) et `access_tiers` (cure)
-     existent déjà et jouent leur rôle tel quel.
+     - `fichier` : chemin dans le bucket privé (null tant que rien n'est déposé)
+     - `actif`   : une étape désactivée n'apparaît plus dans le parcours
+     Les colonnes `display_order` (numéro d'étape), `access_tiers` (cure) et
+     `duration` (durée réelle en secondes, lue dans le MP3 par le formulaire
+     d'admin, base du seuil des 90 %) existent déjà et jouent leur rôle tel quel.
 
   2. `profiles` porte l'état d'accès au parcours
      - `parcours_statut`          : 'actif' ou 'suspendu' (la thérapeute peut couper)
@@ -36,9 +36,8 @@
 -- ---------------------------------------------------------------------------
 -- 1. podcasts : les colonnes du parcours
 -- ---------------------------------------------------------------------------
-ALTER TABLE podcasts ADD COLUMN IF NOT EXISTS fichier   text;
-ALTER TABLE podcasts ADD COLUMN IF NOT EXISTS duree_sec integer;
-ALTER TABLE podcasts ADD COLUMN IF NOT EXISTS actif     boolean NOT NULL DEFAULT true;
+ALTER TABLE podcasts ADD COLUMN IF NOT EXISTS fichier text;
+ALTER TABLE podcasts ADD COLUMN IF NOT EXISTS actif   boolean NOT NULL DEFAULT true;
 
 -- Ces deux-là ont été ajoutées à la main (MIGRATION_PODCAST_ORDER.sql et
 -- MIGRATION_TO_RUN.sql à la racine du dépôt). On s'assure qu'elles sont là.

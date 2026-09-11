@@ -120,13 +120,13 @@ exige des WebSockets natifs, absents de l'environnement Node de Netlify.
 
 ## Le chantier « parcours »
 
-État au 11 septembre 2026 — **phase 0 en cours.**
+État au 11 septembre 2026 — **phases 0 à 2 faites, phase 3 à commencer.**
 
 | Phase | Contenu | État |
 |---|---|---|
 | 0 | Branche `parcours`, ce fichier, vérifier que l'app tourne en local | fait — sauf le serveur local, bloqué par une permission macOS (voir Pièges) |
-| 1 | Migration SQL : colonnes sur `podcasts`, tables `progression` / `appareils` / `acces_log`, bucket privé, RLS | **écrite** (`20260911000000_parcours_audio.sql`, syntaxe vérifiée), **à passer par Jonathan** dans l'éditeur SQL avant les tests de la phase 3 |
-| 2 | Fonctions Netlify + API admin pour la V2 + banc d'essai porté | à faire |
+| 1 | Migration SQL : `fichier` et `actif` sur `podcasts` (`duration` sert déjà de durée réelle), tables `progression` / `appareils` / `acces_log`, bucket privé, RLS | **écrite** (`20260911000000_parcours_audio.sql`, syntaxe vérifiée), **à passer par Jonathan** dans l'éditeur SQL avant les tests de la phase 3 |
+| 2 | Fonctions Netlify + API admin pour la V2 + banc d'essai porté | **fait** — `parcours-core.js`, 4 fonctions, 4 routes dans `netlify.toml`, 56 contrôles (`npm run test:parcours`). Jamais exécuté contre la vraie base : ça viendra avec la phase 3 |
 | 3 | Écrans React : frise du parcours, lecteur avec comptage, reprise | à faire |
 | 4 | Bascule : MP3 en 96 kbps mono dans le bucket privé, migration des clientes de Mon Parcours, repointage V2, redirection du domaine, retraite de Mon Parcours | à faire, **avec Jonathan, étape par étape** |
 
@@ -134,10 +134,17 @@ Ce qui existe déjà ici et sert de socle : la table `podcasts` et son admin
 (`PodcastList`, `PodcastFormModal`, `PodcastModal` — 1 800 lignes), le
 `subscription_tier` sur `profiles`, Supabase Auth, la PWA.
 
-Ce qui vient de Mon Parcours et se porte : `netlify/lib/core.js` (274 lignes,
-la logique), les 5 fonctions, `index.html` (la logique du lecteur : bitset,
-envoi toutes les 30 s et à la fermeture, intention de lecture iOS), le banc
-d'essai `tests/run.mjs` (52 contrôles sur une base simulée).
+Ce qui vient de Mon Parcours : la logique serveur est portée (phase 2). Reste
+à porter pour la phase 3 la logique du lecteur d'`index.html` : bitset des
+secondes écoutées, envoi toutes les 30 s et à la fermeture (`sendBeacon` avec
+le jeton dans le corps), intention de lecture iOS, empreinte d'appareil retenue
+dans `localStorage`.
+
+**Contrat de l'API cliente** (les trois routes, `Authorization: Bearer <jeton Supabase>`) :
+`POST /api/parcours { appareil }` → `{ cliente, etapes[], total, terminees, disponible, seuil }` ;
+`POST /api/audio { numero, appareil }` → `{ url, expireDans, dureeSec }` ;
+`POST /api/progression { numero, appareil, couverture, position, duree, acces? }` → `{ taux, terminee }`.
+Les étapes verrouillées n'ont que `numero`, `terminee`, `accessible`.
 
 ---
 
@@ -179,6 +186,7 @@ npm install                 # une fois
 npm run dev                 # Vite sur le port 5173 (occupé par la V2 ? → --port 5174)
 npm run build               # tsc --noEmit + vite build : le minimum avant un commit
 npm run lint
+npm run test:parcours       # 56 contrôles des fonctions du parcours sur une base simulée
 ```
 
 Variables (`.env`, jamais commité) : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
