@@ -1,0 +1,187 @@
+# MAbeautyplus Nutrition — mémoire du projet
+
+Ce fichier est lu au début de chaque session. Il porte les décisions et les
+conventions qui ne se déduisent pas du code. **Le tenir à jour à chaque
+changement de cap.**
+
+---
+
+## Ce qu'on construit
+
+**L'application des clientes MAbeautyplus**, celle qu'elles ouvrent chez elles
+entre deux rendez-vous : recettes, planning des repas, liste de courses, suivi du
+poids, badges, messages au centre, notifications… et le **parcours audio de
+leur cure**.
+
+Depuis le 11 septembre 2026, ce dépôt absorbe l'application « Mon Parcours »
+(`Jobo92800/Applipodcast`) : le parcours audio à déblocage séquentiel y entre,
+et remplace les podcasts en accès libre qui existaient ici. À terme, **une
+cliente = un compte = une adresse.**
+
+**Interlocuteur : Jonathan, non développeur.** Expliquer en français, sans
+jargon, et donner les manipulations pas à pas avec les endroits exacts où
+cliquer. Ne jamais supposer qu'une étape technique est évidente.
+
+**Rien ne part sans sa demande explicite** : ni `git push`, ni déploiement
+Netlify, ni exécution SQL sur Supabase. On travaille en local, on commit sur la
+branche, et on dit « prêt à pousser ».
+
+---
+
+## Les quatre applications MAbeautyplus
+
+| | Rôle | Dépôt | Supabase | Site |
+|---|---|---|---|---|
+| Ancienne app | legacy, encore en service, ne rien casser | `MABEAUTYPLUS` | Bolt + Firebase | — |
+| **V2 thérapeute** | fiches clientes, BioPortrait, contrats, stock, Airtable | `Th-rapeute-Appli-2026` (`~/Desktop/mabeautyplus-v2`, son `CLAUDE.md` fait foi) | `kefvxglmybbbcdcautcm` | pas encore aux thérapeutes |
+| **Nutrition (ce dépôt)** | l'app des clientes | `applinutritionjuin20262` | `epokhtkwibgabwvobusl` | applinutrition.netlify.app |
+| Mon Parcours | parcours audio, **en service avec de vraies clientes** | `Applipodcast` (`~/Downloads/files (8)/Applipodcast`) | `oiolujqwdcbhvlyqkyyg` | applipodcast.netlify.app → parcours.mabeautyplus.fr |
+
+Le seul lien qui existe : **la V2 crée le compte Mon Parcours** d'une cliente à
+la signature du contrat (`PODCAST_API_URL` + `PODCAST_ADMIN_CODE` → action
+`creer` de l'API admin), avec la cure choisie par la thérapeute. Une fois la
+fusion faite, ce lien pointera ici.
+
+---
+
+## Décisions prises (ne pas les rouvrir sans raison)
+
+| Sujet | Décision |
+|---|---|
+| Sens de la fusion | **Le parcours entre dans ce dépôt** (React), pas l'inverse. Mon Parcours disparaît en tant qu'app séparée quand la bascule est faite. La V2 reste séparée. |
+| Cures | **Deux seulement : 3 mois et 6 mois.** La cure 1 mois n'a jamais servi côté V2, on l'abandonne. Les codes `3_month` / `6_month` de `subscription_tier` restent tels quels. |
+| Table des étapes | **On réutilise `podcasts`**, pas de table `etapes` à côté. Elle est plus riche (description, points clés, défis, PDF, boutons) et a déjà son formulaire d'admin. `display_order` joue le rôle du numéro, `access_tiers` celui de la cure. |
+| Fichiers audio | **Bucket privé**, adresses signées 2 h, jamais d'adresse permanente. Le bucket `podcast-audio` actuel est public : il sera abandonné. Pas de bouton « télécharger ». |
+| Déblocage | **Le serveur décide.** Le navigateur envoie les secondes réellement écoutées (bitset), le serveur compte, seuil 90 %. Faire glisser le curseur ne coche rien. |
+| Appareils | 4 par cliente ; au-delà, le plus ancien laisse sa place. Jamais de blocage. |
+| Base | Tout dans le Supabase nutrition `epokhtkwibgabwvobusl`. Il n'a que **quelques testeuses** : on peut restructurer sans rattrapage de données. |
+| Comptes | Supabase Auth email + mot de passe, comme aujourd'hui. Les clientes de Mon Parcours seront migrées (comptes + progression) à la bascule. |
+| Branche | Tout le chantier vit sur la branche **`parcours`**. `main` reste ce qui est en ligne. |
+| Vocabulaire | Devant la cliente : « parcours », « étapes », « votre accompagnement ». Le mot « podcast » reste dans le code et l'admin. |
+
+---
+
+## Conventions de code
+
+Héritées de ce qui existe — le dépôt a été généré avec Bolt puis repris à la main.
+
+- **Identifiants en anglais** (`loadPodcasts`, `updatePodcastOrder`), **textes,
+  commentaires et messages d'erreur en français.**
+- React 18 + TypeScript strict, Vite 5, Tailwind 3 sans palette de marque
+  (classes utilitaires directes), icônes `lucide-react`.
+- Deux contextes et c'est tout : `AuthContext` (session, profil, rôle) et
+  `DataContext` (toutes les données, 1 800 lignes — ne pas en créer un troisième
+  sans raison, mais ne pas y entasser le parcours non plus : voir Architecture).
+- Un composant = un fichier dans `src/components/`, nommé en PascalCase.
+- Les types de données vivent dans `src/types/index.ts`, les types Supabase
+  générés dans `src/lib/supabase.ts`.
+- Les migrations SQL sont dans `supabase/migrations/`, nommées
+  `AAAAMMJJHHMMSS_description.sql`. Les fichiers `MIGRATION_*.sql` à la racine
+  sont des restes de Bolt, à ne pas prendre pour référence.
+- `npm run build` fait `tsc --noEmit` puis `vite build` : **un build qui passe
+  est le minimum avant tout commit.**
+
+---
+
+## Architecture
+
+**Le navigateur parle directement à Supabase** avec la clé publique et les
+règles RLS. C'est le modèle d'origine, il reste valable pour les recettes, les
+repas, le poids, etc.
+
+**Le parcours, lui, exige un serveur** : décider qu'une étape est débloquée,
+signer l'adresse d'un fichier privé, compter les secondes écoutées — rien de
+tout ça ne peut être confié au navigateur. D'où des fonctions Netlify
+(`netlify/functions/`), qui seules détiennent la clé secrète. Il en existe déjà
+deux pour les notifications push (`send-push`, `scheduled-push`, logique
+partagée dans `netlify/lib/push-core.js`).
+
+Le parcours s'organise ainsi :
+
+```
+netlify/lib/parcours-core.js     accès Supabase avec la clé secrète, couverture
+                                 d'écoute, appareils, adresses signées
+netlify/functions/parcours.js    POST /api/parcours     état du parcours de la cliente
+netlify/functions/audio.js       POST /api/audio        adresse signée d'une étape débloquée
+netlify/functions/progression.js POST /api/progression  secondes écoutées → validation
+netlify/functions/admin-parcours.js  POST /api/admin-parcours   ce que la V2 appelle
+src/components/Parcours*.tsx     les écrans cliente
+```
+
+L'identification des appels : le navigateur envoie son jeton Supabase
+(`Authorization: Bearer`), le serveur le vérifie auprès de l'API Auth. Pas de
+session parallèle.
+
+**Dépendance :** les fonctions Netlify appellent l'API REST de Supabase
+directement (`fetch`), pas `@supabase/supabase-js` — son client temps réel
+exige des WebSockets natifs, absents de l'environnement Node de Netlify.
+
+---
+
+## Le chantier « parcours »
+
+État au 11 septembre 2026 — **phase 0 en cours.**
+
+| Phase | Contenu | État |
+|---|---|---|
+| 0 | Branche `parcours`, ce fichier, vérifier que l'app tourne en local | fait — sauf le serveur local, bloqué par une permission macOS (voir Pièges) |
+| 1 | Migration SQL : colonnes sur `podcasts`, tables `progression` / `appareils` / `acces_log`, bucket privé, RLS | **écrite** (`20260911000000_parcours_audio.sql`, syntaxe vérifiée), **à passer par Jonathan** dans l'éditeur SQL avant les tests de la phase 3 |
+| 2 | Fonctions Netlify + API admin pour la V2 + banc d'essai porté | à faire |
+| 3 | Écrans React : frise du parcours, lecteur avec comptage, reprise | à faire |
+| 4 | Bascule : MP3 en 96 kbps mono dans le bucket privé, migration des clientes de Mon Parcours, repointage V2, redirection du domaine, retraite de Mon Parcours | à faire, **avec Jonathan, étape par étape** |
+
+Ce qui existe déjà ici et sert de socle : la table `podcasts` et son admin
+(`PodcastList`, `PodcastFormModal`, `PodcastModal` — 1 800 lignes), le
+`subscription_tier` sur `profiles`, Supabase Auth, la PWA.
+
+Ce qui vient de Mon Parcours et se porte : `netlify/lib/core.js` (274 lignes,
+la logique), les 5 fonctions, `index.html` (la logique du lecteur : bitset,
+envoi toutes les 30 s et à la fermeture, intention de lecture iOS), le banc
+d'essai `tests/run.mjs` (52 contrôles sur une base simulée).
+
+---
+
+## Pièges rencontrés
+
+Tous vérifiés en production sur Mon Parcours. Ne pas les redécouvrir.
+
+- **La clé `sb_secret_…` n'est pas un JWT.** L'API Storage exige l'en-tête
+  `apikey` en plus de `Authorization: Bearer`, sinon « Invalid Compact JWS ».
+  L'API REST, elle, tolère l'absence. Envoyer toujours les deux.
+- **`/storage/v1/object/upload/sign` refuse tout corps de requête.** Le
+  remplacement se demande par l'en-tête `x-upsert: true`, corps `{}`. Un
+  `{ upsert: true }` dans le corps vaut un 400.
+- **iOS ignore `preload`.** Rien n'est chargé avant un geste ; le premier
+  `play()` est rejeté. Mémoriser l'intention et relancer sur `canplay`. Et un
+  `currentTime = …` (reprise de position) interrompt une lecture en cours : la
+  relancer après.
+- **Le banc d'essai simule Supabase, il ne le remplace pas.** Il a laissé
+  passer les deux bugs Storage ci-dessus parce que son serveur factice ignore
+  le corps des requêtes. Toute nouvelle route Storage se vérifie en vrai.
+- **`pbcopy` sans `LC_CTYPE=UTF-8` corrompt les accents** dans le presse-papier
+  (« R√©int√©grer »). Et `pbpaste` refait la conversion inverse, donc la
+  vérification en terminal ne voit rien. Toujours `LC_CTYPE=UTF-8 pbcopy`.
+- **Le lanceur de prévisualisation de l'app Claude n'a pas accès au Bureau**
+  (« getcwd: Operation not permitted ») alors que le terminal l'a. Les deux
+  projets sont sur le Bureau. Réglage à faire par Jonathan : Réglages Système →
+  Confidentialité et sécurité → Fichiers et dossiers → Claude → Dossier Bureau.
+  La config `nutrition` dans `.claude/launch.json` (port 5174) est prête.
+- Le service worker (`vite-plugin-pwa`, `generateSW`) précache : après un
+  changement d'icône ou d'asset statique, vérifier que la version du cache
+  bouge, sinon les appareils installés gardent l'ancien.
+
+---
+
+## Commandes
+
+```bash
+npm install                 # une fois
+npm run dev                 # Vite sur le port 5173 (occupé par la V2 ? → --port 5174)
+npm run build               # tsc --noEmit + vite build : le minimum avant un commit
+npm run lint
+```
+
+Variables (`.env`, jamais commité) : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
+Les fonctions Netlify liront en plus `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_CODE`,
+`SEUIL_DEBLOCAGE` (0.9), `APPAREILS_MAX` (4) — à définir dans Netlify le jour
+de la bascule, pas avant.
