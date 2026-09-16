@@ -332,8 +332,10 @@ export default async (req) => {
         passe hachés), recrée chaque compte ici avec le même hachage — la
         cliente garde son mot de passe — et recopie la progression en faisant
         correspondre les étapes par cure et numéro. Ré-exécutable : un compte
-        déjà présent est complété, jamais recréé ; une progression déjà là est
-        laissée telle quelle.
+        déjà présent est complété, jamais recréé ; une progression déjà là
+        n'est remplacée que si celle de Mon Parcours est plus récente — ce qui
+        permet de relancer l'import juste avant la bascule pour rattraper les
+        dernières écoutes.
       */
       case 'importer-clientes': {
         if (!relaisActif() || !EXPORT_CODE) return json(400, { erreur: 'import-non-configure' });
@@ -380,17 +382,22 @@ export default async (req) => {
               parcours_debloque_manuel: Number(c.debloque_manuel) || 0,
             });
 
-            const deja = new Set((await db.lire('parcours_progression', `select=podcast_id&user_id=eq.${userId}`)).map((x) => x.podcast_id));
+            const deja = Object.fromEntries(
+              (await db.lire('parcours_progression', `select=podcast_id,updated_at,terminee&user_id=eq.${userId}`)).map((x) => [x.podcast_id, x])
+            );
             for (const p of progParCliente[c.id] || []) {
               const cureP = CODES_PARCOURS[String(p.parcours_code || '').toUpperCase()];
               const podcast = cureP && etapesParCure[cureP][Number(p.numero) - 1];
-              if (!podcast || deja.has(podcast.id)) continue;
-              await db.creer('parcours_progression', {
+              if (!podcast) continue;
+              const locale = deja[podcast.id];
+              // Déjà là et au moins aussi récente ici : on ne touche pas.
+              if (locale && !(locale.terminee === false && (p.terminee || String(p.updated_at || '') > String(locale.updated_at || '')))) continue;
+              await db.fusionner('parcours_progression', {
                 user_id: userId, podcast_id: podcast.id,
                 couverture: p.couverture || '', position_sec: p.position_sec || 0,
                 taux: Number(p.taux || 0), terminee: !!p.terminee, terminee_le: p.terminee_le || null,
                 updated_at: p.updated_at || new Date().toISOString(),
-              });
+              }, 'user_id,podcast_id');
               bilan.progressions++;
             }
           } catch (e) {

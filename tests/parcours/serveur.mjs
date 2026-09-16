@@ -67,7 +67,7 @@ process.env.MON_PARCOURS_ADMIN_CODE = 'code-podcast-test';
 process.env.MON_PARCOURS_EXPORT_CODE = 'export-test';
 const clientesRelais = new Map();   // email -> id
 /* Ce que Mon Parcours exporte pour la migration. */
-const EXPORT = {
+export const EXPORT = {
   clientes: [
     { id: 'mp-1', prenom: 'Anaïs', nom: 'Roux', email: 'anais@exemple.fr', parcours_code: 'B', statut: 'actif', debloque_manuel: 0, auth_user_id: 'x1', hachage: '$2a$10$hache-anais' },
     { id: 'mp-2', prenom: 'Léa', nom: 'Martin', email: 'lea@exemple.fr', parcours_code: 'C', statut: 'suspendu', debloque_manuel: 1, auth_user_id: 'x2', hachage: '$2a$10$hache-lea' },

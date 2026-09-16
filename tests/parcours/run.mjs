@@ -2,7 +2,7 @@
   Contrôles du parcours audio : node tests/parcours/run.mjs
   Aucune connexion à Supabase. Voir serveur.mjs pour ce qui est simulé.
 */
-import { journal, connecter, tables, parEmail, PORT } from './serveur.mjs';
+import { journal, connecter, tables, parEmail, EXPORT, PORT } from './serveur.mjs';
 await new Promise((r) => setTimeout(r, 300));
 
 const B = `http://localhost:${PORT}`;
@@ -184,6 +184,12 @@ r = await post('admin-parcours', { action: 'importer-clientes' }, ADMIN);
 p('import relancé : rien de recréé, rien de doublé', r.crees === 0 && r.completes === 2 && r.progressions === 0);
 r = await post('parcours', { appareil: 'an1' }, auth(connecter('anais@exemple.fr')));
 p('Anaïs ouvre son parcours là où elle en était', r.statut === 200 && r.disponible === 1 && r.etapes[1].position === 120);
+// Anaïs a continué d'écouter sur Mon Parcours : l'import relancé rattrape, sans toucher au reste.
+EXPORT.progression[1] = { ...EXPORT.progression[1], position_sec: 540, taux: 0.9, terminee: true, terminee_le: '2026-09-20T10:00:00Z', updated_at: '2026-09-20T10:00:00Z' };
+r = await post('admin-parcours', { action: 'importer-clientes' }, ADMIN);
+p('import relancé : l\'écoute plus récente de Mon Parcours remplace l\'ancienne', r.progressions === 1 && tables.parcours_progression.find((x) => x.user_id === anais.id && x.podcast_id === 'p2')?.terminee === true);
+r = await post('parcours', { appareil: 'an1' }, auth(connecter('anais@exemple.fr')));
+p('Anaïs voit l\'étape 3 débloquée', r.disponible === 2);
 
 // --- rapatriement des anciens audios ---
 r = await post('admin-parcours', { action: 'migrer-audio' }, ADMIN);
