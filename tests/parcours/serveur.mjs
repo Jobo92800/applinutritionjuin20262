@@ -18,6 +18,15 @@ process.env.SUPABASE_URL = FAUX;
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'cle-de-service-test';
 process.env.ADMIN_CODE = 'test-2026';
 
+/*
+  BANC_UI=1 : le banc sert de serveur à l'application en mode démo (sans .env),
+  derrière le proxy de Vite. Tout appel sans jeton est traité comme la cliente
+  démo, admin et en cure 3 mois — de quoi voir tous les écrans tourner sans
+  identifiants ni vraie base.
+*/
+const BANC_UI = !!process.env.BANC_UI;
+const JETON_DEMO = 'banc-demo';
+
 /* ------------------------------------------------- base simulée --- */
 export const tables = {
   profiles: [],
@@ -66,6 +75,17 @@ function ouvrirSession(compte) {
   comptes.set(acces, compte);
   return { access_token: acces, refresh_token: 'ref-' + compte.id, expires_in: 3600, user: compte };
 }
+if (BANC_UI) {
+  const demo = nouveauCompte('demo@nutrition.com', { name: 'Utilisateur Démo' });
+  Object.assign(tables.profiles.find((x) => x.id === demo.id), { role: 'admin', subscription_tier: '3_month' });
+  comptes.set(JETON_DEMO, demo);
+  // Deux clientes pour peupler l'onglet Clientes.
+  for (const [email, name, tier] of [['marie@exemple.fr', 'Marie Dupont', '3_month'], ['lea@exemple.fr', 'Léa Martin', '6_month']]) {
+    const c = nouveauCompte(email, { name });
+    tables.profiles.find((x) => x.id === c.id).subscription_tier = tier;
+  }
+}
+
 /** Ce que fait supabase-js dans le navigateur : ouvrir une session pour un compte. */
 export function connecter(email) {
   const c = parEmail.get(email);
@@ -250,6 +270,7 @@ http.createServer(async (req, res) => {
 
   const morceaux = [];
   for await (const m of req) morceaux.push(m);
+  if (BANC_UI && !req.headers.authorization) req.headers.authorization = `Bearer ${JETON_DEMO}`;
   const requete = new Request(`http://localhost:${PORT}${req.url}`, {
     method: req.method,
     headers: req.headers,

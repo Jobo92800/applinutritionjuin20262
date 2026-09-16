@@ -9,7 +9,8 @@
     "build:no-check": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:parcours": "node tests/parcours/run.mjs"
+    "test:parcours": "node tests/parcours/run.mjs",
+    "dev:banc": "BANC_UI=1 node tests/parcours/serveur.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

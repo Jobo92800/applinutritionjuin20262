@@ -59,5 +59,8 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
+    // En dev, /api va au banc d'essai du parcours (npm run dev:banc) ; en
+    // production, ce sont les redirections de netlify.toml.
+    proxy: { '/api': 'http://localhost:8124' },
   },
 });

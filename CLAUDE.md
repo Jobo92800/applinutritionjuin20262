@@ -171,10 +171,13 @@ Tous vérifiés en production sur Mon Parcours. Ne pas les redécouvrir.
   (« R√©int√©grer »). Et `pbpaste` refait la conversion inverse, donc la
   vérification en terminal ne voit rien. Toujours `LC_CTYPE=UTF-8 pbcopy`.
 - **Le lanceur de prévisualisation de l'app Claude n'a pas accès au Bureau**
-  (« getcwd: Operation not permitted ») alors que le terminal l'a. Les deux
-  projets sont sur le Bureau. Réglage à faire par Jonathan : Réglages Système →
-  Confidentialité et sécurité → Fichiers et dossiers → Claude → Dossier Bureau.
-  La config `nutrition` dans `.claude/launch.json` (port 5174) est prête.
+  (« getcwd: Operation not permitted »), même une fois « Claude » autorisé
+  dans Fichiers et dossiers : ce sont les processus auxiliaires `claude`
+  (huit entrées) qui lancent les serveurs, chacun avec sa propre permission.
+  Contournement en place : **un worktree git hors du Bureau**,
+  `~/.claude-worktrees/nutrition-parcours`, sur la branche `parcours` (le
+  dossier du Bureau reste sur `main`). C'est là qu'on développe et qu'on
+  commite ; les commits vont dans le même dépôt.
 - Le service worker (`vite-plugin-pwa`, `generateSW`) précache : après un
   changement d'icône ou d'asset statique, vérifier que la version du cache
   bouge, sinon les appareils installés gardent l'ancien.
@@ -188,7 +191,18 @@ npm install                 # une fois
 npm run dev                 # Vite sur le port 5173 (occupé par la V2 ? → --port 5174)
 npm run build               # tsc --noEmit + vite build : le minimum avant un commit
 npm run lint
-npm run test:parcours       # 56 contrôles des fonctions du parcours sur une base simulée
+npm run test:parcours       # contrôles des fonctions du parcours sur une base simulée
+npm run dev:banc            # le banc en serveur (port 8124) pour faire tourner l'app en local
+```
+
+**Voir l'application tourner sans identifiants ni vraie base :** retirer `.env`
+(l'app passe en mode démo, compte admin fictif), lancer `npm run dev:banc`
+dans un terminal et `npm run dev` dans un autre. Vite envoie `/api` au banc,
+qui traite tout appel sans jeton comme la cliente démo (admin, cure 3 mois) et
+peuple l'onglet Clientes de deux fiches. Le worktree est dans cet état
+(`.env` renommé `.env.hors-service`).
+
+```bash
 ```
 
 Variables (`.env`, jamais commité) : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.

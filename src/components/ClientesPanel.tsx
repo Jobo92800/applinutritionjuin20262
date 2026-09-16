@@ -184,14 +184,14 @@ export default function ClientesPanel() {
             const occupe = enCours === c.id;
             const suspendue = c.statut === 'suspendu';
             return (
-              <div key={c.id} className={`p-4 flex flex-col md:flex-row md:items-center gap-4 ${suspendue ? 'bg-amber-50' : 'bg-white'}`}>
+              <div key={c.id} className={`p-4 flex flex-col xl:flex-row xl:items-center gap-4 ${suspendue ? 'bg-amber-50' : 'bg-white'}`}>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium text-gray-800 truncate">{c.prenom}</span>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">{c.cureNom}</span>
-                    {suspendue && <span className="text-xs px-2 py-0.5 rounded-full bg-amber-200 text-amber-800">Accès suspendu</span>}
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="font-medium text-gray-800">{c.prenom}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 whitespace-nowrap">{c.cureNom}</span>
+                    {suspendue && <span className="text-xs px-2 py-0.5 rounded-full bg-amber-200 text-amber-800 whitespace-nowrap">Accès suspendu</span>}
                   </div>
-                  <div className="text-sm text-gray-500 truncate">{c.email}</div>
+                  <div className="text-sm text-gray-500 break-all">{c.email}</div>
                   <div className="text-sm text-gray-600 mt-1 flex items-center space-x-4">
                     <span>{c.terminees} / {c.total} étape{c.total > 1 ? 's' : ''}</span>
                     <span className="flex items-center space-x-1">
