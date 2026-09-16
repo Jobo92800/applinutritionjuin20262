@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Toute variante de .env (copies, renommages) reste locale
+.env.*
