@@ -106,4 +106,6 @@ export const adminParcoursApi = {
   etapeMaj: (id: string, champs: { fichier?: string; dureeSec?: number; actif?: boolean }) =>
     appeler<object>('admin-parcours', { action: 'etape-maj', id, ...champs }),
   ecouter: (id: string) => appeler<{ url: string; titre: string }>('admin-parcours', { action: 'ecouter', id }),
+  migrerAudio: () =>
+    appeler<{ copies: number; ignores: number; echecs: { id: string; titre: string; raison: string }[] }>('admin-parcours', { action: 'migrer-audio' }),
 };

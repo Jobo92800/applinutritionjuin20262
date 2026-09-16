@@ -17,7 +17,8 @@ export default function AdminPanel() {
     messages,
     deleteRecipe,
     deletePodcast,
-    updatePodcastOrder
+    updatePodcastOrder,
+    refreshPodcasts
   } = useData();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'recipes' | 'podcasts' | 'clientes' | 'messages' | 'notifications'>('recipes');
@@ -27,6 +28,27 @@ export default function AdminPanel() {
   const [showPodcastForm, setShowPodcastForm] = useState(false);
   const [draggedPodcast, setDraggedPodcast] = useState<string | null>(null);
   const [ecoute, setEcoute] = useState<{ id: string; url: string } | null>(null);
+  const [rapatriement, setRapatriement] = useState<string>('repos');   // 'repos' | 'en-cours' | message
+  const aRapatrier = podcasts.filter((p) => !p.fichier && p.audioUrl).length;
+
+  /*
+    Une fois : les épisodes déposés avant la fusion sont dans l'ancien bucket
+    public. Le serveur les copie dans le bucket privé. Le bandeau disparaît
+    quand il n'y a plus rien à rapatrier.
+  */
+  const rapatrier = async () => {
+    setRapatriement('en-cours');
+    try {
+      const r = await adminParcoursApi.migrerAudio();
+      setRapatriement(
+        `${r.copies} épisode${r.copies > 1 ? 's' : ''} rapatrié${r.copies > 1 ? 's' : ''}.` +
+        (r.echecs.length ? ` ${r.echecs.length} en échec : ${r.echecs.map((e) => e.titre).join(', ')}.` : '')
+      );
+      await refreshPodcasts();
+    } catch {
+      setRapatriement('Le rapatriement a échoué. Réessayez.');
+    }
+  };
 
   const newMessagesCount = messages.filter(msg => msg.status === 'new').length;
 
@@ -270,6 +292,22 @@ export default function AdminPanel() {
                   <span>Nouveau podcast</span>
                 </button>
               </div>
+
+              {(aRapatrier > 0 || (rapatriement !== 'repos' && rapatriement !== 'en-cours')) && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                  <p className="text-sm text-amber-800">
+                    {rapatriement !== 'repos' && rapatriement !== 'en-cours'
+                      ? rapatriement
+                      : `${aRapatrier} épisode${aRapatrier > 1 ? 's sont' : ' est'} encore dans l'ancien espace public. Le parcours ne lit que le bucket privé.`}
+                  </p>
+                  {aRapatrier > 0 && (
+                    <button onClick={rapatrier} disabled={rapatriement === 'en-cours'}
+                      className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 disabled:opacity-50 text-sm whitespace-nowrap">
+                      {rapatriement === 'en-cours' ? 'Rapatriement…' : 'Rapatrier dans le bucket privé'}
+                    </button>
+                  )}
+                </div>
+              )}
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                 <p className="text-sm text-blue-800">

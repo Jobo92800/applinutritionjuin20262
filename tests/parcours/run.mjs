@@ -156,6 +156,14 @@ p('accès rétabli', r.statut === 200);
 r = await post('admin-parcours', { action: 'renvoyer-invitation', id: marie.id }, ADMIN);
 p('renvoi vers un compte existant = e-mail de réinitialisation', r.statut === 200 && journal.emails.at(-1)?.type === 'recovery');
 
+// --- rapatriement des anciens audios ---
+r = await post('admin-parcours', { action: 'migrer-audio' }, ADMIN);
+p('rapatriement : 1 copié, 1 échec (fichier absent), les autres ignorés', r.copies === 1 && r.echecs.length === 1 && r.echecs[0].id === 'p10' && r.ignores === 8);
+p('copie demandée vers le bucket privé', journal.copies.some((c) => c.destinationBucket === 'parcours-audio' && c.sourceKey === '1700000000-semaine.mp3'));
+p('chemin privé enregistré', tables.podcasts.find((x) => x.id === 'p9').fichier === 'episodes/1700000000-semaine.mp3');
+r = await post('admin-parcours', { action: 'migrer-audio' }, ADMIN);
+p('relancer ne recopie rien', r.copies === 0 && r.ignores === 9);
+
 // --- dépôt et écoute de contrôle ---
 r = await post('admin-parcours', { action: 'url-envoi', chemin: '3_month/S01-1234.mp3' }, ADMIN);
 p('URL d\'envoi signée', r.statut === 200 && r.url.includes('token=faux'));

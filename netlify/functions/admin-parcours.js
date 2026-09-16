@@ -13,7 +13,7 @@
 import {
   json, configManquante, corpsJson, db, auth, ADMIN_CODE, APPAREILS_MAX,
   CURES, CODES_PARCOURS, etapesDeLaCure, indexDisponible, urlEnvoi, urlSignee,
-  journaliser, ipDe, utilisateurDuJeton, jetonDeRequete,
+  copierVersPrive, journaliser, ipDe, utilisateurDuJeton, jetonDeRequete,
 } from '../lib/parcours-core.js';
 
 const ok = (donnees) => json(200, { ok: true, ...donnees });
@@ -243,6 +243,33 @@ export default async (req) => {
         if (corps.actif !== undefined) champs.actif = !!corps.actif;
         await db.majSur('podcasts', `id=eq.${corps.id}`, champs);
         return ok({});
+      }
+
+      /*
+        Rapatriement, une fois : les épisodes déposés avant la fusion ont une
+        adresse publique dans l'ancien bucket `podcast-audio`. On copie chaque
+        fichier dans le bucket privé et on enregistre son chemin. Ré-exécutable :
+        un épisode déjà rapatrié est ignoré.
+      */
+      case 'migrer-audio': {
+        const podcasts = await db.lire('podcasts', 'select=id,title,audio_url,fichier&order=display_order.asc');
+        const resultat = { copies: 0, ignores: 0, echecs: [] };
+        for (const p of podcasts) {
+          if (p.fichier) { resultat.ignores++; continue; }
+          const m = /\/object\/public\/([^/]+)\/(.+)$/.exec(p.audio_url || '');
+          if (!m) { resultat.echecs.push({ id: p.id, titre: p.title, raison: 'adresse-inconnue' }); continue; }
+          const [, bucketSource, cle] = m;
+          const destination = `episodes/${decodeURIComponent(cle).replace(/[^A-Za-z0-9._-]/g, '-')}`;
+          try {
+            await copierVersPrive(bucketSource, decodeURIComponent(cle), destination);
+            await db.majSur('podcasts', `id=eq.${p.id}`, { fichier: destination });
+            resultat.copies++;
+          } catch (e) {
+            resultat.echecs.push({ id: p.id, titre: p.title, raison: e.message.slice(0, 120) });
+          }
+        }
+        await journaliser('audio-rapatrie', { ip: ipDe(req), detail: `${resultat.copies} copié(s), ${resultat.echecs.length} échec(s)` });
+        return ok(resultat);
       }
 
       /* Écoute de contrôle : même adresse signée que pour une cliente, sans condition. */

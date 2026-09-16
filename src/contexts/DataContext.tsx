@@ -40,6 +40,7 @@ interface DataContextType {
   newBadges: Badge[];
   clearNewBadges: () => void;
   uploadPodcastAudio: (file: File) => Promise<string>;
+  refreshPodcasts: () => Promise<void>;
   uploadRecipeImage: (file: File) => Promise<string>;
   uploadPodcastImage: (file: File) => Promise<string>;
   uploadPodcastPdf: (file: File) => Promise<string>;
@@ -1803,6 +1804,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       newBadges,
       clearNewBadges,
       uploadPodcastAudio,
+      refreshPodcasts: loadPodcasts,
       uploadRecipeImage,
       uploadPodcastImage,
       uploadPodcastPdf,

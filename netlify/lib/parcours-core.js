@@ -130,6 +130,19 @@ export async function urlEnvoi(chemin) {
   return `${SUPABASE_URL}/storage/v1${url}`;
 }
 
+/** Copie un fichier de l'ancien bucket public vers le bucket privé. */
+export async function copierVersPrive(bucketSource, cle, destination) {
+  const r = await fetch(`${SUPABASE_URL}/storage/v1/object/copy`, {
+    method: 'POST',
+    headers: enTetesSupabase(),
+    body: JSON.stringify({ bucketId: bucketSource, sourceKey: cle, destinationBucket: BUCKET, destinationKey: destination }),
+  });
+  if (!r.ok) {
+    const detail = (await r.text()).slice(0, 200);
+    throw new Error(`Copie refusée pour ${cle} : ${r.status} ${detail}`);
+  }
+}
+
 /* ------------------------------------------------------------ Couverture --- */
 
 /**

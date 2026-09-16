@@ -54,9 +54,12 @@ tables.podcasts.push(
   podcast('p6', 'Vieille cure 1 m',  ['1_month'],            6),
   podcast('p7', 'Désactivée',        ['3_month'],            7, { actif: false }),
   podcast('p8', 'Sans durée connue', ['6_month'],            8, { duration: 0 }),
+  // Déposés avant la fusion : une adresse publique, pas encore de fichier privé.
+  podcast('p9',  'Ancien épisode',   ['1_month'],            9, { fichier: null, audio_url: `${FAUX}/storage/v1/object/public/podcast-audio/1700000000-semaine.mp3` }),
+  podcast('p10', 'Ancien perdu',     ['1_month'],           10, { fichier: null, audio_url: `${FAUX}/storage/v1/object/public/podcast-audio/absent.mp3` }),
 );
 
-export const journal = { emails: [], signatures: [] };
+export const journal = { emails: [], signatures: [], copies: [] };
 
 /* Comptes simulés de Supabase Auth, et le trigger qui crée le profil. */
 export const comptes = new Map();   // jeton d'accès -> compte
@@ -212,6 +215,12 @@ globalThis.fetch = async (url, options = {}) => {
     const chemin = apres.replace('/storage/v1/object/sign/parcours-audio/', '');
     journal.signatures.push(chemin);
     return repondre({ signedURL: `/object/sign/parcours-audio/${chemin}?token=faux` });
+  }
+  if (apres === '/storage/v1/object/copy') {
+    const corps = JSON.parse(options.body);
+    journal.copies.push(corps);
+    if (corps.sourceKey.includes('absent')) return repondre({ message: 'Object not found' }, 404);
+    return repondre({ Key: `${corps.destinationBucket}/${corps.destinationKey}` });
   }
   if (apres.startsWith('/storage/v1/object/upload/sign/')) {
     const chemin = apres.replace('/storage/v1/object/upload/sign/parcours-audio/', '');
