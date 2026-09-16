@@ -254,6 +254,16 @@ Les fonctions Netlify lisent en plus `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 (déjà là pour les push), `ADMIN_CODE` (posé le 16/09), `SEUIL_DEBLOCAGE` (0.9),
 `APPAREILS_MAX` (4).
 
+**E-mails (16/09/2026)** : Supabase Auth envoie par le **SMTP Brevo**
+(`smtp-relay.brevo.com`, login = l'e-mail du compte Brevo, clé SMTP « Mot de
+passe oublié »), expéditeur `contact@mabeautyplus.fr` — le seul expéditeur
+Brevo dont le domaine est authentifié (DKIM + DMARC) ; ne jamais utiliser
+l'expéditeur Gmail, il part en indésirables. Le blocage d'IP de Brevo doit
+rester **désactivé pour les clés SMTP** (Supabase envoie depuis des adresses
+changeantes). Modèles « Reset password » et « Invite user » en français,
+Site URL et Redirect URLs sur l'adresse de production, plafond d'envoi à 30/h.
+Testé : « Mot de passe oublié » arrive et fonctionne.
+
 **Relais de transition** — `MON_PARCOURS_API_URL` (`https://applipodcast.netlify.app/api/admin`)
 et `MON_PARCOURS_ADMIN_CODE` (le code de Mon Parcours) : tant qu'ils sont
 posés, chaque compte créé ici (par la V2 ou l'onglet Clientes) est aussi créé
