@@ -61,14 +61,12 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl font-bold text-green-600">M</span>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-800">MAbeautyplus Nutrition</h1>
+            <img src="/logo.svg" alt="MAbeautyplus" className="h-16 w-auto mx-auto mb-5" />
+            <h1 className="text-2xl font-light text-ardoise-900">Votre espace <b className="font-semibold">nutrition</b></h1>
             <p className="text-gray-600 mt-2">
               {showForgotPassword ? 'Réinitialiser votre mot de passe' : 'Connectez-vous à votre compte'}
             </p>
@@ -114,7 +112,7 @@ export default function LoginForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-marine-600 text-white py-3 rounded-full font-semibold hover:bg-marine-700 hover:-translate-y-px transition-all focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Envoi en cours...' : 'Envoyer le lien de réinitialisation'}
               </button>
@@ -193,7 +191,7 @@ export default function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-marine-600 text-white py-3 rounded-full font-semibold hover:bg-marine-700 hover:-translate-y-px transition-all focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Chargement...' : 'Se connecter'}
             </button>

@@ -119,7 +119,7 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-green-500 to-blue-600 rounded-2xl p-8 text-white">
+      <div className="bg-gradient-to-r from-marine-600 to-rose-500 rounded-2xl p-8 text-white shadow-carte">
         <div>
           <h1 className="text-3xl font-bold mb-2">
             Bonjour, {user?.name} ! 👋
@@ -330,18 +330,18 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
 
       {/* Admin Quick Access */}
       {user?.role === 'admin' && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-6">
+        <div className="bg-marine-50 border border-marine-200 rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-amber-800">Administration</h2>
+            <h2 className="text-xl font-semibold text-marine-900">Administration</h2>
             <button
               onClick={() => onPageChange('admin')}
-              className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors flex items-center space-x-2"
+              className="bg-marine-600 text-white px-4 py-2 rounded-full hover:bg-marine-700 transition-colors flex items-center space-x-2"
             >
               <Plus className="w-4 h-4" />
               <span>Gérer le contenu</span>
             </button>
           </div>
-          <p className="text-amber-700">
+          <p className="text-marine-800">
             Vous avez accès aux fonctionnalités d'administration pour gérer les recettes et podcasts.
           </p>
         </div>

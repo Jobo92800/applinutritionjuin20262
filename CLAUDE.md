@@ -61,14 +61,34 @@ fusion faite, ce lien pointera ici.
 
 ---
 
+## Charte graphique
+
+Celle de l'application thérapeute (V2), reprise à l'identique le 16 septembre
+2026 : **teal** (`#3BBFBF`) pour l'interface, **magenta** (`#E8318A`) réservé
+aux gestes qui engagent — commencer, valider, ouvrir un accès. Typographie
+**Poppins** (chargée dans `index.html`), titres en maigre avec le mot important
+en gras. Coins généreux, boutons en pilule, fond blanc lavé d'un halo de teal
+(`src/index.css`). Le logo recadré est dans `public/logo.svg`, copié de la V2.
+
+**Comment ça tient sans avoir réécrit trente écrans :** l'application avait
+été écrite avec les palettes par défaut de Tailwind. `tailwind.config.js`
+**redéfinit ces noms** — `green`, `blue`, `indigo`, `cyan`, `emerald`
+deviennent le teal ; `purple`, `pink`, `orange`, `violet` le magenta ; `gray`
+l'ardoise. Un `bg-green-600` écrit en 2025 est donc teal aujourd'hui. Les
+teintes sémantiques (`red`, `amber`, `yellow`) restent : erreurs et
+avertissements. Pour un nouvel écran, préférer les vrais noms — `marine`,
+`rose`, `ardoise` — comme dans la V2.
+
+---
+
 ## Conventions de code
 
 Héritées de ce qui existe — le dépôt a été généré avec Bolt puis repris à la main.
 
 - **Identifiants en anglais** (`loadPodcasts`, `updatePodcastOrder`), **textes,
   commentaires et messages d'erreur en français.**
-- React 18 + TypeScript strict, Vite 5, Tailwind 3 sans palette de marque
-  (classes utilitaires directes), icônes `lucide-react`.
+- React 18 + TypeScript strict, Vite 5, Tailwind 3 avec la palette de marque
+  (voir Charte graphique), icônes `lucide-react`.
 - Deux contextes et c'est tout : `AuthContext` (session, profil, rôle) et
   `DataContext` (toutes les données, 1 800 lignes — ne pas en créer un troisième
   sans raison, mais ne pas y entasser le parcours non plus : voir Architecture).

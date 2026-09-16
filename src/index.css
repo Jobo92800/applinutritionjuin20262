@@ -2,6 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /*
+    Le fond n'est pas plat : un halo de teal très pâle en haut de page, repris
+    du diagnostic BioPortrait et de l'application thérapeute. De la profondeur
+    sans rien coûter en lisibilité.
+  */
+  body {
+    @apply bg-ardoise-100 text-ardoise-900;
+    background-image: radial-gradient(
+      1000px 480px at 50% -220px,
+      theme('colors.marine.100') 0%,
+      rgba(234, 247, 247, 0) 72%
+    );
+    background-attachment: fixed;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-marine-500 ring-offset-2 ring-offset-white;
+  }
+}
+
 /* Animation pour le prompt d'installation PWA */
 @keyframes slide-up {
   from {
