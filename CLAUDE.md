@@ -153,7 +153,19 @@ exige des WebSockets natifs, absents de l'environnement Node de Netlify.
 | 3a | Comptes : inscription libre fermée (`LoginForm`), onglet **Clientes** de l'admin (`ClientesPanel`, via `src/lib/parcoursApi.ts`), l'API admin accepte le jeton d'un profil `role = 'admin'` en plus du code | **fait** — 58 contrôles. Reste côté Supabase : désactiver « Allow new users to sign up » (Authentication → Providers → Email), sinon l'inscription reste possible par l'API |
 | 3b | Écrans cliente : frise du parcours, lecteur avec comptage, reprise | **fait** — `Parcours.tsx`, `ParcoursLecteur.tsx`, `lib/parcoursEcoute.ts` ; `PodcastList` / `PodcastModal` supprimés ; l'entrée de menu s'appelle « Mon parcours ». Vérifié de bout en bout sur le banc UI (lecture, sauts, validation sans coupure, célébration à la fin, enchaînement) |
 | 3c | Dépôt des MP3 dans le bucket privé depuis `PodcastFormModal` | **fait** — adresse d'envoi signée par le serveur, durée lue dans le fichier, plus de champ URL ; « Écouter » (adresse signée 1 h) remplace « Télécharger » dans la liste d'admin ; la cure 1 mois n'est plus proposée. `audio_url` devient facultatif dans la migration |
-| 4 | Bascule, **avec Jonathan, étape par étape** | **4a fait** : migration SQL passée sur `epokht…` le 16/09 (32 podcasts, bucket privé créé). **4b prêt** : action `migrer-audio` + bandeau « Rapatrier dans le bucket privé » dans l'admin (copie serveur depuis l'ancien bucket public, un clic, ré-exécutable). Restent : déploiement de branche pour tester sur la vraie base, rapatriement, migration des clientes de Mon Parcours, repointage V2, `ADMIN_CODE` dans Netlify, inscription libre désactivée dans Supabase Auth, redirection du domaine, fusion dans `main` |
+| 4 | Bascule, **avec Jonathan, étape par étape** | **4a fait** : migration SQL passée sur `epokht…` le 16/09 (32 podcasts, bucket privé créé). **4b prêt** : action `migrer-audio` + bandeau « Rapatrier dans le bucket privé » dans l'admin (copie serveur depuis l'ancien bucket public, un clic, ré-exécutable). Faits le 16/09 : déploiement de branche (`parcours--applinutritonjuin2026.netlify.app`), `ADMIN_CODE` posé, rapatriement des 32 audios, V2 repointée sur la branche avec le relais de transition, charte graphique. **Prêt** : import des clientes de Mon Parcours (voir ci-dessous). Restent : import réel, inscription libre désactivée dans Supabase Auth, V2 repointée sur la production, redirection du domaine, fusion dans `main`, retrait du relais et de l'export |
+
+**Procédure d'import des clientes de Mon Parcours** (une fois, avec Jonathan) :
+1. Mon Parcours : passer `supabase/migrations/20260916_export_hachages.sql` dans son
+   Supabase (`oioluj…`), poser `EXPORT_CODE` (phrase longue) dans Netlify
+   *applipodcast*, déployer le commit qui porte l'action `exporter`.
+2. Nutrition : poser `MON_PARCOURS_EXPORT_CODE` (la même phrase) dans Netlify,
+   reconstruire la branche.
+3. Administration → Clientes → **« Importer depuis Mon Parcours »**. Ré-exécutable.
+   Les comptes gardent leur mot de passe (hachage transféré), la progression est
+   recopiée par cure et numéro d'étape. Les cures A et les comptes jamais activés
+   sont ignorés et listés.
+4. Refermer : retirer `EXPORT_CODE` des deux côtés, `drop function export_hachages()`.
 
 Ce qui existe déjà ici et sert de socle : la table `podcasts` et son admin
 (`PodcastList`, `PodcastFormModal`, `PodcastModal` — 1 800 lignes), le

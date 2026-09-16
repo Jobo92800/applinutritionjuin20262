@@ -2,7 +2,7 @@
   Contrôles du parcours audio : node tests/parcours/run.mjs
   Aucune connexion à Supabase. Voir serveur.mjs pour ce qui est simulé.
 */
-import { journal, connecter, tables, PORT } from './serveur.mjs';
+import { journal, connecter, tables, parEmail, PORT } from './serveur.mjs';
 await new Promise((r) => setTimeout(r, 300));
 
 const B = `http://localhost:${PORT}`;
@@ -172,6 +172,18 @@ p('liste des étapes au format V2 (B = 3 mois, C = 6 mois)', r.statut === 200 &&
 p('numéros et fichiers présents', r.etapes.find((e) => e.parcours_code === 'C' && e.numero === 1)?.fichier === '3_month/p1.mp3');
 r = await post('admin-parcours', { action: 'liste' }, ADMIN);
 p('champs V2 sur la liste (parcoursCode, compteActive, derniereActivite)', fiche && r.clientes.find((c) => c.email === 'marie@exemple.fr').parcoursCode === 'B' && r.clientes.every((c) => c.compteActive === true) && !!r.clientes.find((c) => c.email === 'marie@exemple.fr').derniereActivite);
+
+// --- migration des clientes de Mon Parcours ---
+r = await post('admin-parcours', { action: 'importer-clientes' }, ADMIN);
+const anais = tables.profiles.find((x) => x.email === 'anais@exemple.fr');
+p('import : comptes créés avec le hachage du mot de passe', r.statut === 200 && r.crees === 1 && parEmail.get('anais@exemple.fr')?.hachage === '$2a$10$hache-anais' && anais?.subscription_tier === '3_month');
+p('import : compte déjà présent complété (Léa → cure 6 mois, suspendue, 1 étape débloquée à la main)', r.completes === 1 && tables.profiles.find((x) => x.email === 'lea@exemple.fr')?.parcours_statut === 'suspendu' && tables.profiles.find((x) => x.email === 'lea@exemple.fr')?.parcours_debloque_manuel === 1);
+p('import : progression recopiée sur les bons épisodes, sans écraser l\'existant', r.progressions === 2 && tables.parcours_progression.some((x) => x.user_id === anais.id && x.podcast_id === 'p1' && x.terminee === true) && tables.parcours_progression.some((x) => x.user_id === anais.id && x.podcast_id === 'p2' && x.position_sec === 120));
+p('import : cure 1 mois et compte jamais activé ignorés', r.ignores.length === 2 && r.echecs.length === 0);
+r = await post('admin-parcours', { action: 'importer-clientes' }, ADMIN);
+p('import relancé : rien de recréé, rien de doublé', r.crees === 0 && r.completes === 2 && r.progressions === 0);
+r = await post('parcours', { appareil: 'an1' }, auth(connecter('anais@exemple.fr')));
+p('Anaïs ouvre son parcours là où elle en était', r.statut === 200 && r.disponible === 1 && r.etapes[1].position === 120);
 
 // --- rapatriement des anciens audios ---
 r = await post('admin-parcours', { action: 'migrer-audio' }, ADMIN);

@@ -31,14 +31,17 @@ export const RELAIS_URL = process.env.MON_PARCOURS_API_URL || '';
 export const RELAIS_CODE = process.env.MON_PARCOURS_ADMIN_CODE || '';
 export const relaisActif = () => !!(RELAIS_URL && RELAIS_CODE);
 
-export async function relais(corps) {
+export async function relais(corps, enTetes = {}) {
   const r = await fetch(RELAIS_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-mbp-code': RELAIS_CODE },
+    headers: { 'Content-Type': 'application/json', 'x-mbp-code': RELAIS_CODE, ...enTetes },
     body: JSON.stringify(corps),
   });
   return { ok: r.ok, statut: r.status, corps: await r.json().catch(() => ({})) };
 }
+
+/** Le second code de l'export de Mon Parcours, posé le temps de la migration. */
+export const EXPORT_CODE = process.env.MON_PARCOURS_EXPORT_CODE || '';
 
 /** Les cures qui ont un parcours. La cure 1 mois est abandonnée (décision du 11/09/2026). */
 export const CURES = {

@@ -14,7 +14,7 @@ import {
   json, configManquante, corpsJson, db, auth, ADMIN_CODE, APPAREILS_MAX,
   CURES, CODES_PARCOURS, etapesDeLaCure, indexDisponible, urlEnvoi, urlSignee,
   copierVersPrive, journaliser, ipDe, utilisateurDuJeton, jetonDeRequete,
-  relaisActif, relais,
+  relaisActif, relais, EXPORT_CODE,
 } from '../lib/parcours-core.js';
 
 const ok = (donnees) => json(200, { ok: true, ...donnees });
@@ -323,6 +323,83 @@ export default async (req) => {
         }
         await journaliser('audio-rapatrie', { ip: ipDe(req), detail: `${resultat.copies} copié(s), ${resultat.echecs.length} échec(s)` });
         return ok(resultat);
+      }
+
+      /*
+        Migration des clientes de Mon Parcours, une fois.
+
+        Lit l'export de l'ancienne application (comptes, progression, mots de
+        passe hachés), recrée chaque compte ici avec le même hachage — la
+        cliente garde son mot de passe — et recopie la progression en faisant
+        correspondre les étapes par cure et numéro. Ré-exécutable : un compte
+        déjà présent est complété, jamais recréé ; une progression déjà là est
+        laissée telle quelle.
+      */
+      case 'importer-clientes': {
+        if (!relaisActif() || !EXPORT_CODE) return json(400, { erreur: 'import-non-configure' });
+        const exp = await relais({ action: 'exporter' }, { 'x-export-code': EXPORT_CODE });
+        if (!exp.ok) return json(502, { erreur: 'export-refuse', detail: exp.corps?.erreur || `Mon Parcours a répondu ${exp.statut}` });
+
+        const etapesParCure = {};
+        for (const cure of Object.keys(CURES)) etapesParCure[cure] = await etapesDeLaCure(cure);
+        const profils = await db.lire('profiles', 'select=id,email&limit=2000');
+        const profilParEmail = Object.fromEntries(profils.map((p) => [String(p.email || '').toLowerCase(), p.id]));
+
+        const bilan = { crees: 0, completes: 0, progressions: 0, ignores: [], echecs: [] };
+        const progParCliente = {};
+        for (const p of exp.corps.progression || []) (progParCliente[p.cliente_id] ||= []).push(p);
+
+        for (const c of exp.corps.clientes || []) {
+          const email = nettoyerEmail(c.email);
+          const cure = CODES_PARCOURS[String(c.parcours_code || '').toUpperCase()];
+          if (!emailValide(email)) { bilan.ignores.push({ email: c.email, raison: 'email-invalide' }); continue; }
+          if (!cure) { bilan.ignores.push({ email, raison: `cure ${c.parcours_code} sans parcours ici` }); continue; }
+          if (!c.auth_user_id) { bilan.ignores.push({ email, raison: 'jamais activée sur Mon Parcours' }); continue; }
+
+          try {
+            const name = [c.prenom, c.nom].filter(Boolean).join(' ').trim() || 'Cliente';
+            let userId = profilParEmail[email];
+            if (!userId) {
+              const r = await auth('/admin/users', {
+                method: 'POST',
+                body: JSON.stringify({
+                  email, email_confirm: true, user_metadata: { name },
+                  ...(c.hachage ? { password_hash: c.hachage } : {}),
+                }),
+              });
+              if (!r.ok || !r.corps?.id) throw new Error(r.corps?.msg || r.corps?.message || `Auth ${r.statut}`);
+              userId = r.corps.id;
+              profilParEmail[email] = userId;
+              bilan.crees++;
+            } else {
+              bilan.completes++;
+            }
+            await completerProfil(userId, {
+              name, subscription_tier: cure,
+              parcours_statut: c.statut === 'suspendu' ? 'suspendu' : 'actif',
+              parcours_debloque_manuel: Number(c.debloque_manuel) || 0,
+            });
+
+            const deja = new Set((await db.lire('parcours_progression', `select=podcast_id&user_id=eq.${userId}`)).map((x) => x.podcast_id));
+            for (const p of progParCliente[c.id] || []) {
+              const cureP = CODES_PARCOURS[String(p.parcours_code || '').toUpperCase()];
+              const podcast = cureP && etapesParCure[cureP][Number(p.numero) - 1];
+              if (!podcast || deja.has(podcast.id)) continue;
+              await db.creer('parcours_progression', {
+                user_id: userId, podcast_id: podcast.id,
+                couverture: p.couverture || '', position_sec: p.position_sec || 0,
+                taux: Number(p.taux || 0), terminee: !!p.terminee, terminee_le: p.terminee_le || null,
+                updated_at: p.updated_at || new Date().toISOString(),
+              });
+              bilan.progressions++;
+            }
+          } catch (e) {
+            bilan.echecs.push({ email, raison: String(e.message).slice(0, 120) });
+          }
+        }
+
+        await journaliser('import-clientes', { ip: ipDe(req), detail: `${bilan.crees} créées, ${bilan.completes} complétées, ${bilan.progressions} progressions, ${bilan.echecs.length} échecs` });
+        return ok({ ...bilan, hachages: !!exp.corps.hachagesDisponibles });
       }
 
       /* Écoute de contrôle : même adresse signée que pour une cliente, sans condition. */

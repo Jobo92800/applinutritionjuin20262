@@ -64,7 +64,23 @@ export const journal = { emails: [], signatures: [], copies: [], relais: [] };
 const RELAIS = 'http://fauxmonparcours.local/api/admin';
 process.env.MON_PARCOURS_API_URL = RELAIS;
 process.env.MON_PARCOURS_ADMIN_CODE = 'code-podcast-test';
+process.env.MON_PARCOURS_EXPORT_CODE = 'export-test';
 const clientesRelais = new Map();   // email -> id
+/* Ce que Mon Parcours exporte pour la migration. */
+const EXPORT = {
+  clientes: [
+    { id: 'mp-1', prenom: 'Anaïs', nom: 'Roux', email: 'anais@exemple.fr', parcours_code: 'B', statut: 'actif', debloque_manuel: 0, auth_user_id: 'x1', hachage: '$2a$10$hache-anais' },
+    { id: 'mp-2', prenom: 'Léa', nom: 'Martin', email: 'lea@exemple.fr', parcours_code: 'C', statut: 'suspendu', debloque_manuel: 1, auth_user_id: 'x2', hachage: '$2a$10$hache-lea' },
+    { id: 'mp-3', prenom: 'Vieille', nom: 'Cure', email: 'vieille@exemple.fr', parcours_code: 'A', statut: 'actif', debloque_manuel: 0, auth_user_id: 'x3', hachage: null },
+    { id: 'mp-4', prenom: 'Jamais', nom: 'Activée', email: 'jamais@exemple.fr', parcours_code: 'B', statut: 'actif', debloque_manuel: 0, auth_user_id: null, hachage: null },
+  ],
+  progression: [
+    { cliente_id: 'mp-1', parcours_code: 'B', numero: 1, couverture: '', position_sec: 900, taux: 1, terminee: true, terminee_le: '2026-09-01T10:00:00Z', updated_at: '2026-09-01T10:00:00Z' },
+    { cliente_id: 'mp-1', parcours_code: 'B', numero: 2, couverture: 'AAAA', position_sec: 120, taux: 0.2, terminee: false, terminee_le: null, updated_at: '2026-09-02T10:00:00Z' },
+    { cliente_id: 'mp-2', parcours_code: 'C', numero: 1, couverture: '', position_sec: 900, taux: 1, terminee: true, terminee_le: '2026-09-03T10:00:00Z', updated_at: '2026-09-03T10:00:00Z' },
+  ],
+  hachagesDisponibles: true,
+};
 
 /* Comptes simulés de Supabase Auth, et le trigger qui crée le profil. */
 export const comptes = new Map();   // jeton d'accès -> compte
@@ -181,6 +197,10 @@ globalThis.fetch = async (url, options = {}) => {
       return repondre({ ok: true, cliente: { id: clientesRelais.get(corps.email) }, invitation: { motDePasseDefini: !!corps.motDePasse } });
     }
     if (corps.action === 'liste') return repondre({ ok: true, clientes: [...clientesRelais].map(([email, id]) => ({ id, email })) });
+    if (corps.action === 'exporter') {
+      if (options.headers['x-export-code'] !== 'export-test') return repondre({ erreur: 'code-export-invalide' }, 401);
+      return repondre({ ok: true, ...EXPORT });
+    }
     if (corps.action === 'renvoyer-invitation') return repondre({ ok: true });
     return repondre({ erreur: 'action-inconnue' }, 400);
   }
@@ -209,9 +229,10 @@ globalThis.fetch = async (url, options = {}) => {
       if (parEmail.has(corps.email)) {
         return repondre({ msg: 'A user with this email address has already been registered' }, 422);
       }
-      if ((corps.password || '').length < 8) return repondre({ msg: 'weak password' }, 422);
+      if (!corps.password_hash && (corps.password || '').length < 8) return repondre({ msg: 'weak password' }, 422);
       const c = nouveauCompte(corps.email, corps.user_metadata || {});
-      c.motDePasse = corps.password;
+      c.motDePasse = corps.password || null;
+      c.hachage = corps.password_hash || null;
       journal.emails.push({ type: 'creation-directe', email: corps.email });
       return repondre(c);
     }

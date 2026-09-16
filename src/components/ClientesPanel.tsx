@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { UserPlus, Loader2, AlertCircle, CheckCircle, Smartphone, Pause, Play, RotateCcw, Mail, ChevronRight } from 'lucide-react';
+import { UserPlus, Loader2, AlertCircle, CheckCircle, Smartphone, Pause, Play, RotateCcw, Mail, ChevronRight, Download } from 'lucide-react';
 import { adminParcoursApi, ClienteParcours, Cure, ParcoursApiError } from '../lib/parcoursApi';
 
 /*
@@ -23,6 +23,8 @@ const MESSAGES: Record<string, string> = {
   'creation-refusee': 'Supabase a refusé la création du compte.',
   'invitation-refusee': "L'invitation n'a pas pu être envoyée.",
   'code-invalide': "Vous n'êtes pas autorisé à faire cette action.",
+  'import-non-configure': "L'import n'est pas configuré : il manque MON_PARCOURS_EXPORT_CODE côté Netlify.",
+  'export-refuse': "Mon Parcours a refusé l'export : vérifiez EXPORT_CODE des deux côtés.",
 };
 const libelle = (e: unknown) =>
   e instanceof ParcoursApiError ? (MESSAGES[e.code] || `Erreur : ${e.code}`) : 'Une erreur est survenue.';
@@ -36,6 +38,31 @@ export default function ClientesPanel() {
   const [formulaire, setFormulaire] = useState(false);
   const [nouvelle, setNouvelle] = useState({ prenom: '', nom: '', email: '', parcours: '3_month' as Cure, motDePasse: '' });
   const [envoi, setEnvoi] = useState(false);
+  const [importation, setImportation] = useState(false);
+
+  /* Migration, une fois : les clientes de Mon Parcours, avec leur mot de passe et leur progression. */
+  const importer = async () => {
+    if (!window.confirm('Importer les clientes de Mon Parcours ? Les comptes déjà présents sont complétés, jamais recréés.')) return;
+    setImportation(true);
+    setErreur('');
+    setInfo('');
+    try {
+      const b = await adminParcoursApi.importerClientes();
+      const lignes = [
+        `${b.crees} compte${b.crees > 1 ? 's' : ''} créé${b.crees > 1 ? 's' : ''}${b.hachages ? ' avec leur mot de passe' : ' — sans mot de passe : la fonction export_hachages() manque côté Mon Parcours'}`,
+        `${b.completes} déjà présent${b.completes > 1 ? 's' : ''}, complété${b.completes > 1 ? 's' : ''}`,
+        `${b.progressions} progression${b.progressions > 1 ? 's' : ''} recopiée${b.progressions > 1 ? 's' : ''}`,
+      ];
+      if (b.ignores.length) lignes.push(`Ignorées : ${b.ignores.map((i) => `${i.email} (${i.raison})`).join(', ')}`);
+      if (b.echecs.length) lignes.push(`Échecs : ${b.echecs.map((e) => `${e.email} (${e.raison})`).join(', ')}`);
+      setInfo(lignes.join(' · '));
+      await charger();
+    } catch (e) {
+      setErreur(libelle(e));
+    } finally {
+      setImportation(false);
+    }
+  };
 
   const charger = useCallback(async () => {
     setChargement(true);
@@ -106,13 +133,24 @@ export default function ClientesPanel() {
             L'accès s'ouvre normalement à la signature du contrat. Ici, on répare : cure, mot de passe, appareils.
           </p>
         </div>
-        <button
-          onClick={() => setFormulaire(!formulaire)}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
-        >
-          <UserPlus className="w-4 h-4" />
-          <span>Ajouter une cliente</span>
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={importer}
+            disabled={importation}
+            title="Recrée ici les clientes de Mon Parcours, avec leur mot de passe et leur progression"
+            className="bg-marine-100 text-marine-800 px-4 py-2 rounded-full hover:bg-marine-200 disabled:opacity-50 transition-colors flex items-center space-x-2"
+          >
+            {importation ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            <span>{importation ? 'Import en cours…' : 'Importer depuis Mon Parcours'}</span>
+          </button>
+          <button
+            onClick={() => setFormulaire(!formulaire)}
+            className="bg-rose-500 text-white px-4 py-2 rounded-full hover:bg-rose-600 transition-colors flex items-center space-x-2"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>Ajouter une cliente</span>
+          </button>
+        </div>
       </div>
 
       {erreur && (
