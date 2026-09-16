@@ -7,6 +7,7 @@ import RecipeFormModal from './RecipeFormModal';
 import PodcastFormModal from './PodcastFormModal';
 import MessagesPanel from './MessagesPanel';
 import NotificationsPanel from './NotificationsPanel';
+import ClientesPanel from './ClientesPanel';
 
 export default function AdminPanel() {
   const {
@@ -18,7 +19,7 @@ export default function AdminPanel() {
     updatePodcastOrder
   } = useData();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'recipes' | 'podcasts' | 'messages' | 'notifications'>('recipes');
+  const [activeTab, setActiveTab] = useState<'recipes' | 'podcasts' | 'clientes' | 'messages' | 'notifications'>('recipes');
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [editingPodcast, setEditingPodcast] = useState<Podcast | null>(null);
   const [showRecipeForm, setShowRecipeForm] = useState(false);
@@ -164,6 +165,17 @@ export default function AdminPanel() {
               }`}
             >
               Podcasts ({podcasts.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('clientes')}
+              className={`px-6 py-4 font-medium text-sm flex items-center space-x-2 ${
+                activeTab === 'clientes'
+                  ? 'border-b-2 border-pink-500 text-pink-600 bg-pink-50'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              <span>Clientes</span>
             </button>
             <button
               onClick={() => setActiveTab('messages')}
@@ -335,6 +347,10 @@ export default function AdminPanel() {
                 ))}
               </div>
             </div>
+          )}
+
+          {activeTab === 'clientes' && (
+            <ClientesPanel />
           )}
 
           {activeTab === 'messages' && (

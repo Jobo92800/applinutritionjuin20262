@@ -1,20 +1,19 @@
 /*
   Administration du parcours audio.
-  POST { action, ... } avec l'en-tête x-mbp-code.
+  POST { action, ... }, autorisé de deux façons :
+    - l'en-tête x-mbp-code (ADMIN_CODE) : de serveur à serveur, c'est ce que
+      l'application thérapeute (V2) envoie à la signature d'un contrat ;
+    - Authorization: Bearer <jeton Supabase> d'un compte dont le profil a
+      role = 'admin' : c'est l'onglet Clientes de l'administration, qui n'a
+      donc aucun code à retaper.
 
-  C'est cette route que l'application thérapeute (V2) appelle à la signature
-  d'un contrat pour créer le compte de la cliente : l'action `creer` garde
-  exactement la forme d'appel de « Mon Parcours », pour qu'il n'y ait qu'une
-  adresse à changer côté V2.
-
-  Le code est un garde-fou, pas une authentification forte : protéger aussi
-  cette route par le mot de passe de site Netlify si elle sort du seul usage
-  serveur-à-serveur.
+  L'action `creer` garde exactement la forme d'appel de « Mon Parcours », pour
+  qu'il n'y ait qu'une adresse à changer côté V2.
 */
 import {
   json, configManquante, corpsJson, db, auth, ADMIN_CODE, APPAREILS_MAX,
   CURES, CODES_PARCOURS, etapesDeLaCure, indexDisponible, urlEnvoi, urlSignee,
-  journaliser, ipDe,
+  journaliser, ipDe, utilisateurDuJeton, jetonDeRequete,
 } from '../lib/parcours-core.js';
 
 const ok = (donnees) => json(200, { ok: true, ...donnees });
@@ -78,13 +77,22 @@ async function completerProfil(userId, champs) {
   return null;
 }
 
+/** Le code partagé, ou un compte administrateur connecté. */
+async function autorise(req) {
+  if ((req.headers.get('x-mbp-code') || '') === ADMIN_CODE) return true;
+  const utilisateur = await utilisateurDuJeton(jetonDeRequete(req));
+  if (!utilisateur) return false;
+  const profil = await db.un('profiles', `select=role&id=eq.${utilisateur.id}`);
+  return profil?.role === 'admin';
+}
+
 export default async (req) => {
   if (req.method !== 'POST') return json(405, { erreur: 'Méthode non autorisée.' });
   const manque = configManquante();
   if (manque) return manque;
   if (!ADMIN_CODE) return json(500, { erreur: 'Service indisponible.' });
 
-  if ((req.headers.get('x-mbp-code') || '') !== ADMIN_CODE) {
+  if (!(await autorise(req))) {
     await journaliser('admin-refuse', { ip: ipDe(req) });
     return json(401, { erreur: 'code-invalide' });
   }

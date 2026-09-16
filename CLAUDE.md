@@ -52,7 +52,7 @@ fusion faite, ce lien pointera ici.
 | Cures | **Deux seulement : 3 mois et 6 mois.** La cure 1 mois n'a jamais servi côté V2, on l'abandonne. Les codes `3_month` / `6_month` de `subscription_tier` restent tels quels. |
 | Table des étapes | **On réutilise `podcasts`**, pas de table `etapes` à côté. Elle est plus riche (description, points clés, défis, PDF, boutons) et a déjà son formulaire d'admin. `display_order` joue le rôle du numéro, `access_tiers` celui de la cure. |
 | Fichiers audio | **Bucket privé**, adresses signées 2 h, jamais d'adresse permanente. Le bucket `podcast-audio` actuel est public : il sera abandonné. Pas de bouton « télécharger ». |
-| Déblocage | **Le serveur décide.** Le navigateur envoie les secondes réellement écoutées (bitset), le serveur compte, seuil 90 %. Faire glisser le curseur ne coche rien. |
+| Déblocage | **Le serveur décide.** Le navigateur envoie les secondes traversées (bitset), le serveur compte, seuil 90 %. **Avancer compte comme écouté** (décision du 15/09/2026 : souplesse plutôt que contrôle), reculer ne décoche rien. La validation à 90 % ne coupe jamais l'épisode : la célébration attend la fin. |
 | Appareils | 4 par cliente ; au-delà, le plus ancien laisse sa place. Jamais de blocage. |
 | Base | Tout dans le Supabase nutrition `epokhtkwibgabwvobusl`. Il n'a que **quelques testeuses** : on peut restructurer sans rattrapage de données. |
 | Comptes | Supabase Auth email + mot de passe, comme aujourd'hui. Les clientes de Mon Parcours seront migrées (comptes + progression) à la bascule. |
@@ -120,14 +120,16 @@ exige des WebSockets natifs, absents de l'environnement Node de Netlify.
 
 ## Le chantier « parcours »
 
-État au 11 septembre 2026 — **phases 0 à 2 faites, phase 3 à commencer.**
+État au 16 septembre 2026 — **phases 0 à 3a faites, 3b (écrans cliente) à commencer.**
 
 | Phase | Contenu | État |
 |---|---|---|
 | 0 | Branche `parcours`, ce fichier, vérifier que l'app tourne en local | fait — sauf le serveur local, bloqué par une permission macOS (voir Pièges) |
 | 1 | Migration SQL : `fichier` et `actif` sur `podcasts` (`duration` sert déjà de durée réelle), tables `progression` / `appareils` / `acces_log`, bucket privé, RLS | **écrite** (`20260911000000_parcours_audio.sql`, syntaxe vérifiée), **à passer par Jonathan** dans l'éditeur SQL avant les tests de la phase 3 |
 | 2 | Fonctions Netlify + API admin pour la V2 + banc d'essai porté | **fait** — `parcours-core.js`, 4 fonctions, 4 routes dans `netlify.toml`, 56 contrôles (`npm run test:parcours`). Jamais exécuté contre la vraie base : ça viendra avec la phase 3 |
-| 3 | Écrans React : frise du parcours, lecteur avec comptage, reprise | à faire |
+| 3a | Comptes : inscription libre fermée (`LoginForm`), onglet **Clientes** de l'admin (`ClientesPanel`, via `src/lib/parcoursApi.ts`), l'API admin accepte le jeton d'un profil `role = 'admin'` en plus du code | **fait** — 58 contrôles. Reste côté Supabase : désactiver « Allow new users to sign up » (Authentication → Providers → Email), sinon l'inscription reste possible par l'API |
+| 3b | Écrans cliente : frise du parcours, lecteur avec comptage, reprise | à faire |
+| 3c | Dépôt des MP3 dans le bucket privé depuis `PodcastFormModal` | à faire |
 | 4 | Bascule : MP3 en 96 kbps mono dans le bucket privé, migration des clientes de Mon Parcours, repointage V2, redirection du domaine, retraite de Mon Parcours | à faire, **avec Jonathan, étape par étape** |
 
 Ce qui existe déjà ici et sert de socle : la table `podcasts` et son admin

@@ -23,6 +23,15 @@ p('admin sans code refusé', r.statut === 401);
 r = await post('admin-parcours', { action: 'liste' }, { 'x-mbp-code': 'faux' });
 p('admin code erroné refusé', r.statut === 401);
 
+// --- un administrateur connecté n'a pas de code à retaper ---
+r = await post('admin-parcours', { action: 'creer', prenom: 'Admin', email: 'admin@exemple.fr', parcours: 'B', motDePasse: 'motdepasse-long' }, ADMIN);
+tables.profiles.find((x) => x.email === 'admin@exemple.fr').role = 'admin';
+r = await post('admin-parcours', { action: 'liste' }, auth(connecter('admin@exemple.fr')));
+p('jeton d\'un compte admin accepté', r.statut === 200 && Array.isArray(r.clientes));
+r = await post('admin-parcours', { action: 'creer', prenom: 'Simple', email: 'simple@exemple.fr', parcours: 'B', motDePasse: 'motdepasse-long' }, ADMIN);
+r = await post('admin-parcours', { action: 'liste' }, auth(connecter('simple@exemple.fr')));
+p('jeton d\'un compte non admin refusé', r.statut === 401);
+
 // --- création de compte, comme la V2 le fait à la signature ---
 r = await post('admin-parcours', { action: 'creer', prenom: 'Marie', nom: 'Dupont', email: 'MARIE@Exemple.FR', parcours: 'B', motDePasse: 'motdepasse-long' }, ADMIN);
 p('création avec mot de passe (code B)', r.statut === 200 && r.invitation?.motDePasseDefini === true);
