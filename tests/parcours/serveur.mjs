@@ -59,7 +59,12 @@ tables.podcasts.push(
   podcast('p10', 'Ancien perdu',     ['1_month'],           10, { fichier: null, audio_url: `${FAUX}/storage/v1/object/public/podcast-audio/absent.mp3` }),
 );
 
-export const journal = { emails: [], signatures: [], copies: [] };
+export const journal = { emails: [], signatures: [], copies: [], relais: [] };
+/* Un « Mon Parcours » simulé pour le relais de transition. */
+const RELAIS = 'http://fauxmonparcours.local/api/admin';
+process.env.MON_PARCOURS_API_URL = RELAIS;
+process.env.MON_PARCOURS_ADMIN_CODE = 'code-podcast-test';
+const clientesRelais = new Map();   // email -> id
 
 /* Comptes simulés de Supabase Auth, et le trigger qui crée le profil. */
 export const comptes = new Map();   // jeton d'accès -> compte
@@ -165,6 +170,20 @@ const DEFAUTS = {
 const vraiFetch = globalThis.fetch;
 globalThis.fetch = async (url, options = {}) => {
   const u = String(url);
+  if (u === RELAIS) {
+    const corps = JSON.parse(options.body);
+    journal.relais.push({ ...corps, code: options.headers['x-mbp-code'] });
+    if (options.headers['x-mbp-code'] !== 'code-podcast-test') return repondre({ erreur: 'code-invalide' }, 401);
+    if (corps.action === 'creer') {
+      if (corps.email === 'refus@exemple.fr') return repondre({ erreur: 'parcours-inconnu' }, 400);
+      if (clientesRelais.has(corps.email) && !corps.motDePasse) return repondre({ erreur: 'email-deja-utilise' }, 409);
+      if (!clientesRelais.has(corps.email)) clientesRelais.set(corps.email, 'mp-' + clientesRelais.size);
+      return repondre({ ok: true, cliente: { id: clientesRelais.get(corps.email) }, invitation: { motDePasseDefini: !!corps.motDePasse } });
+    }
+    if (corps.action === 'liste') return repondre({ ok: true, clientes: [...clientesRelais].map(([email, id]) => ({ id, email })) });
+    if (corps.action === 'renvoyer-invitation') return repondre({ ok: true });
+    return repondre({ erreur: 'action-inconnue' }, 400);
+  }
   if (!u.startsWith(FAUX)) return vraiFetch(url, options);
   const apres = u.slice(FAUX.length);
 

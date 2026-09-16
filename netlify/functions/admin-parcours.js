@@ -14,6 +14,7 @@ import {
   json, configManquante, corpsJson, db, auth, ADMIN_CODE, APPAREILS_MAX,
   CURES, CODES_PARCOURS, etapesDeLaCure, indexDisponible, urlEnvoi, urlSignee,
   copierVersPrive, journaliser, ipDe, utilisateurDuJeton, jetonDeRequete,
+  relaisActif, relais,
 } from '../lib/parcours-core.js';
 
 const ok = (donnees) => json(200, { ok: true, ...donnees });
@@ -119,6 +120,23 @@ export default async (req) => {
         if (motDePasse && motDePasse.length < MDP_MIN) return json(400, { erreur: 'mot-de-passe-court' });
 
         const name = [prenom, nom].filter(Boolean).join(' ');
+
+        // Transition : Mon Parcours d'abord, puisque c'est lui que les
+        // clientes utilisent encore. S'il refuse, la thérapeute le voit,
+        // comme aujourd'hui. « Déjà là » (409) n'est pas un refus.
+        let relaye = null;
+        if (relaisActif()) {
+          const r = await relais({
+            action: 'creer', prenom, nom, email, telephone: corps.telephone, centre: corps.centre,
+            parcours: CODE_DE_CURE[cure], ...(motDePasse ? { motDePasse } : {}),
+          });
+          if (!r.ok && r.statut !== 409) {
+            await journaliser('relais-refuse', { ip: ipDe(req), detail: `${r.statut} ${r.corps?.erreur || ''}` });
+            return json(502, { erreur: 'relais-refuse', detail: r.corps?.erreur || `Mon Parcours a répondu ${r.statut}` });
+          }
+          relaye = { statut: r.statut, dejaLa: r.statut === 409 };
+        }
+
         const existant = await db.un(
           'profiles',
           `select=id,name,subscription_tier,parcours_statut&email=eq.${encodeURIComponent(email)}`
@@ -139,6 +157,7 @@ export default async (req) => {
             cliente: { id: existant.id, prenom: existant.name, email },
             invitation: { envoye: false, motDePasseDefini: true },
             existante: true,
+            relaye,
           });
         }
 
@@ -152,7 +171,7 @@ export default async (req) => {
         if (!profil) return json(502, { erreur: 'profil-absent' });
 
         await journaliser('cliente-creee', { userId, ip: ipDe(req), detail: email });
-        return ok({ cliente: { id: userId, prenom, email }, invitation });
+        return ok({ cliente: { id: userId, prenom, email }, invitation, relaye });
       }
 
       case 'renvoyer-invitation': {
@@ -161,6 +180,16 @@ export default async (req) => {
         // Compte existant : Supabase refuse une seconde invitation, on passe par
         // l'e-mail de réinitialisation, qui aboutit au même écran.
         await auth('/recover', { method: 'POST', body: JSON.stringify({ email: profil.email }) });
+        // Transition : Mon Parcours renvoie aussi la sienne, si le compte y existe.
+        if (relaisActif()) {
+          try {
+            const liste = await relais({ action: 'liste' });
+            const la = (liste.corps?.clientes || []).find((c) => (c.email || '').toLowerCase() === profil.email.toLowerCase());
+            if (la) await relais({ action: 'renvoyer-invitation', id: la.id });
+          } catch (e) {
+            console.error('Relais du renvoi impossible :', e.message);
+          }
+        }
         await journaliser('invitation-renvoyee', { userId: profil.id, ip: ipDe(req) });
         return ok({ invitation: { envoye: true, deja: true } });
       }

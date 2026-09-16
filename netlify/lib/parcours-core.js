@@ -21,6 +21,25 @@ export const SEUIL = Number(process.env.SEUIL_DEBLOCAGE || 0.9);
 export const APPAREILS_MAX = Number(process.env.APPAREILS_MAX || 4);
 export const BUCKET = 'parcours-audio';
 
+/*
+  Relais vers « Mon Parcours » pendant la transition : tant que l'ancienne
+  application sert les clientes, chaque compte créé ici lui est aussi
+  transmis, avec le même mot de passe. Les deux variables se retirent le jour
+  de la bascule, et le relais disparaît de lui-même.
+*/
+export const RELAIS_URL = process.env.MON_PARCOURS_API_URL || '';
+export const RELAIS_CODE = process.env.MON_PARCOURS_ADMIN_CODE || '';
+export const relaisActif = () => !!(RELAIS_URL && RELAIS_CODE);
+
+export async function relais(corps) {
+  const r = await fetch(RELAIS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-mbp-code': RELAIS_CODE },
+    body: JSON.stringify(corps),
+  });
+  return { ok: r.ok, statut: r.status, corps: await r.json().catch(() => ({})) };
+}
+
 /** Les cures qui ont un parcours. La cure 1 mois est abandonnée (décision du 11/09/2026). */
 export const CURES = {
   '3_month': 'Cure 3 mois',

@@ -215,6 +215,14 @@ peuple l'onglet Clientes de deux fiches. Le worktree est dans cet état
 ```
 
 Variables (`.env`, jamais commité) : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
-Les fonctions Netlify liront en plus `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_CODE`,
-`SEUIL_DEBLOCAGE` (0.9), `APPAREILS_MAX` (4) — à définir dans Netlify le jour
-de la bascule, pas avant.
+Les fonctions Netlify lisent en plus `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+(déjà là pour les push), `ADMIN_CODE` (posé le 16/09), `SEUIL_DEBLOCAGE` (0.9),
+`APPAREILS_MAX` (4).
+
+**Relais de transition** — `MON_PARCOURS_API_URL` (`https://applipodcast.netlify.app/api/admin`)
+et `MON_PARCOURS_ADMIN_CODE` (le code de Mon Parcours) : tant qu'ils sont
+posés, chaque compte créé ici (par la V2 ou l'onglet Clientes) est aussi créé
+sur Mon Parcours avec le même mot de passe, et un renvoi d'invitation part des
+deux côtés. Mon Parcours est appelé **en premier** : s'il refuse, la
+thérapeute voit l'erreur (`relais-refuse`) et rien n'est créé ici. **À retirer
+le jour de la bascule** : le relais disparaît de lui-même.

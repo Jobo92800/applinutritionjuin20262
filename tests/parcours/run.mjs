@@ -57,6 +57,16 @@ p('e-mail invalide refusé', r.statut === 400);
 r = await post('admin-parcours', { action: 'creer', prenom: 'X', email: 'y@exemple.fr', parcours: 'B', motDePasse: 'court' }, ADMIN);
 p('mot de passe trop court refusé', r.statut === 400 && r.erreur === 'mot-de-passe-court');
 
+// --- relais de transition vers Mon Parcours ---
+const relaisMarie = journal.relais.find((x) => x.action === 'creer' && x.email === 'marie@exemple.fr');
+p('création relayée à Mon Parcours, même mot de passe, code B', relaisMarie?.motDePasse === 'motdepasse-long' && relaisMarie?.parcours === 'B' && relaisMarie?.code === 'code-podcast-test');
+r = await post('admin-parcours', { action: 'creer', prenom: 'Nina', email: 'nina@exemple.fr', parcours: 'C', motDePasse: 'motdepasse-long' }, ADMIN);
+p('relais signalé dans la réponse', r.statut === 200 && r.relaye?.statut === 200 && r.relaye?.dejaLa === false);
+r = await post('admin-parcours', { action: 'creer', prenom: 'Refus', email: 'refus@exemple.fr', parcours: 'B', motDePasse: 'motdepasse-long' }, ADMIN);
+p('Mon Parcours refuse → la thérapeute le voit, rien n\'est créé ici', r.statut === 502 && r.erreur === 'relais-refuse' && !tables.profiles.some((x) => x.email === 'refus@exemple.fr'));
+r = await post('admin-parcours', { action: 'renvoyer-invitation', id: marie.id }, ADMIN);
+p('renvoi relayé à Mon Parcours', r.statut === 200 && journal.relais.some((x) => x.action === 'renvoyer-invitation'));
+
 // --- ouverture du parcours ---
 r = await post('parcours', { appareil: 'ap1' });
 p('parcours sans session refusé', r.statut === 401);
