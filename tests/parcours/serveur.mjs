@@ -12,7 +12,11 @@ import http from 'node:http';
 import { randomUUID } from 'node:crypto';
 
 const RACINE = new URL('../..', import.meta.url).pathname;
-const FAUX = 'http://fauxsupabase.local';
+const BANC_UI = !!process.env.BANC_UI;
+export const PORT = BANC_UI ? 8124 : 8125;   // les tests et le mode UI peuvent tourner ensemble
+// En mode UI, le « Supabase » simulé est ce serveur lui-même : le navigateur
+// peut alors réellement charger les adresses signées, qui servent un son de test.
+const FAUX = BANC_UI ? `http://localhost:${PORT}` : 'http://fauxsupabase.local';
 
 process.env.SUPABASE_URL = FAUX;
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'cle-de-service-test';
@@ -24,7 +28,6 @@ process.env.ADMIN_CODE = 'test-2026';
   démo, admin et en cure 3 mois — de quoi voir tous les écrans tourner sans
   identifiants ni vraie base.
 */
-const BANC_UI = !!process.env.BANC_UI;
 const JETON_DEMO = 'banc-demo';
 
 /* ------------------------------------------------- base simulée --- */
@@ -260,10 +263,31 @@ for (const nom of ['parcours', 'audio', 'progression', 'admin-parcours']) {
   FONCTIONS[nom] = (await import(`${RACINE}/netlify/functions/${nom}.js`)).default;
 }
 
-export const PORT = 8124;
+/** Un son de test : 60 s de tonalité douce, en WAV 8 kHz mono, généré ici. */
+function sonDeTest(secondes = 60) {
+  const freq = 8000, n = freq * secondes;
+  const donnees = Buffer.alloc(n * 2);
+  for (let i = 0; i < n; i++) {
+    const t = i / freq;
+    const v = Math.sin(2 * Math.PI * 220 * t) * 0.15 * (0.6 + 0.4 * Math.sin(2 * Math.PI * 0.5 * t));
+    donnees.writeInt16LE(Math.round(v * 32767), i * 2);
+  }
+  const entete = Buffer.alloc(44);
+  entete.write('RIFF', 0); entete.writeUInt32LE(36 + donnees.length, 4); entete.write('WAVE', 8);
+  entete.write('fmt ', 12); entete.writeUInt32LE(16, 16); entete.writeUInt16LE(1, 20); entete.writeUInt16LE(1, 22);
+  entete.writeUInt32LE(freq, 24); entete.writeUInt32LE(freq * 2, 28); entete.writeUInt16LE(2, 32); entete.writeUInt16LE(16, 34);
+  entete.write('data', 36); entete.writeUInt32LE(donnees.length, 40);
+  return Buffer.concat([entete, donnees]);
+}
+const SON = BANC_UI ? sonDeTest() : null;
+if (BANC_UI) for (const p of tables.podcasts) p.duration = 60;   // la durée du son de test
 
 http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
+  if (SON && url.pathname.startsWith('/storage/v1/object/sign/')) {
+    res.writeHead(200, { 'Content-Type': 'audio/wav', 'Content-Length': SON.length, 'Accept-Ranges': 'bytes', 'Access-Control-Allow-Origin': '*' });
+    return res.end(SON);
+  }
   const nom = url.pathname.replace(/^\/api\//, '');
   const fn = FONCTIONS[nom];
   if (!fn) { res.writeHead(404); return res.end('route inconnue'); }

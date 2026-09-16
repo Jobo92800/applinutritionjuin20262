@@ -8,7 +8,7 @@ import OnboardingModal from './components/OnboardingModal';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import RecipeList from './components/RecipeList';
-import PodcastList from './components/PodcastList';
+import Parcours from './components/Parcours';
 import MealCalendar from './components/MealCalendar';
 import ShoppingList from './components/ShoppingList';
 import ProgressTracking from './components/ProgressTracking';
@@ -84,7 +84,7 @@ function AppContent() {
       case 'recipes':
         return <RecipeList />;
       case 'podcasts':
-        return <PodcastList />;
+        return <Parcours />;
       case 'calendar':
         return <MealCalendar />;
       case 'shopping':

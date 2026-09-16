@@ -11,7 +11,7 @@ interface DashboardProps {
 
 export default function Dashboard({ onPageChange }: DashboardProps) {
   const { user } = useAuth();
-  const { recipes, podcasts, mealPlans, weightEntries, addWeightEntry } = useData();
+  const { recipes, mealPlans, weightEntries, addWeightEntry } = useData();
   const [selectedRecipe, setSelectedRecipe] = React.useState<Recipe | null>(null);
   const [showWeightModal, setShowWeightModal] = React.useState(false);
   const [newWeight, setNewWeight] = React.useState('');
@@ -94,8 +94,8 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
       action: () => onPageChange('recipes')
     },
     {
-      title: 'Écouter un podcast',
-      description: `${podcasts.length} épisodes disponibles`,
+      title: 'Mon parcours audio',
+      description: 'Une étape à la fois, à votre rythme',
       icon: Headphones,
       color: 'bg-purple-500',
       action: () => onPageChange('podcasts')

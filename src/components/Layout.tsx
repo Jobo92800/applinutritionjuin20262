@@ -16,7 +16,7 @@ export default function Layout({ children, currentPage, onPageChange }: LayoutPr
   const navigationItems = [
     { id: 'dashboard', name: 'Accueil', icon: Home },
     { id: 'recipes', name: 'Recettes', icon: Book },
-    { id: 'podcasts', name: 'Podcasts', icon: Headphones },
+    { id: 'podcasts', name: 'Mon parcours', icon: Headphones },
     { id: 'calendar', name: 'Calendrier', icon: Calendar },
     { id: 'shopping', name: 'Courses', icon: ShoppingCart },
     { id: 'progress', name: 'Suivi', icon: TrendingUp },
