@@ -74,9 +74,12 @@ en gras. Coins généreux, boutons en pilule, fond blanc lavé d'un halo de teal
 été écrite avec les palettes par défaut de Tailwind. `tailwind.config.js`
 **redéfinit ces noms** — `green`, `blue`, `indigo`, `cyan`, `emerald`
 deviennent le teal ; `purple`, `pink`, `orange`, `violet` le magenta ; `gray`
-l'ardoise. Un `bg-green-600` écrit en 2025 est donc teal aujourd'hui. Les
-teintes sémantiques (`red`, `amber`, `yellow`) restent : erreurs et
-avertissements. Pour un nouvel écran, préférer les vrais noms — `marine`,
+l'ardoise ; `yellow` aussi devient teal pâle (Jonathan ne veut pas de jaune).
+Un `bg-green-600` écrit en 2025 est donc teal aujourd'hui. `red` reste aux
+erreurs et suppressions, adouci vers le rosé ; `amber` aux avertissements.
+**Pastel plutôt que plein** : les grandes surfaces (barres d'action, rubriques)
+sont en teinte `-100` avec texte `-800`, jamais en `-600` plein — seul le geste
+qui engage a droit au magenta plein. Pour un nouvel écran, préférer les vrais noms — `marine`,
 `rose`, `ardoise` — comme dans la V2.
 
 ---

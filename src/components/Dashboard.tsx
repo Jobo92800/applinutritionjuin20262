@@ -119,7 +119,7 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-marine-600 to-rose-500 rounded-2xl p-8 text-white shadow-carte">
+      <div className="bg-gradient-to-r from-marine-500 to-rose-400 rounded-2xl p-8 text-white shadow-carte">
         <div>
           <h1 className="text-3xl font-bold mb-2">
             Bonjour, {user?.name} ! 👋

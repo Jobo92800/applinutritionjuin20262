@@ -274,7 +274,7 @@ export default function ShoppingList() {
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={markAllAsDone}
-              className="flex items-center justify-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex-1"
+              className="flex items-center justify-center space-x-2 bg-marine-100 text-marine-800 px-4 py-2.5 rounded-full hover:bg-marine-200 transition-colors flex-1 font-medium"
             >
               <CheckCheck className="w-4 h-4" />
               <span>J'ai fait mes courses</span>
@@ -282,7 +282,7 @@ export default function ShoppingList() {
             
             <button
               onClick={clearAllItems}
-              className="flex items-center justify-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex-1"
+              className="flex items-center justify-center space-x-2 bg-white border border-red-200 text-red-600 px-4 py-2.5 rounded-full hover:bg-red-50 transition-colors flex-1 font-medium"
             >
               <X className="w-4 h-4" />
               <span>Tout supprimer</span>
