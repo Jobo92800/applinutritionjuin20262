@@ -156,6 +156,13 @@ p('accès rétabli', r.statut === 200);
 r = await post('admin-parcours', { action: 'renvoyer-invitation', id: marie.id }, ADMIN);
 p('renvoi vers un compte existant = e-mail de réinitialisation', r.statut === 200 && journal.emails.at(-1)?.type === 'recovery');
 
+// --- ce que la V2 thérapeute lit ---
+r = await post('admin-parcours', { action: 'parcours' }, ADMIN);
+p('liste des étapes au format V2 (B = 3 mois, C = 6 mois)', r.statut === 200 && r.etapes.filter((e) => e.parcours_code === 'B').length === 5 && r.etapes.filter((e) => e.parcours_code === 'C').length === 4);
+p('numéros et fichiers présents', r.etapes.find((e) => e.parcours_code === 'C' && e.numero === 1)?.fichier === '3_month/p1.mp3');
+r = await post('admin-parcours', { action: 'liste' }, ADMIN);
+p('champs V2 sur la liste (parcoursCode, compteActive, derniereActivite)', fiche && r.clientes.find((c) => c.email === 'marie@exemple.fr').parcoursCode === 'B' && r.clientes.every((c) => c.compteActive === true) && !!r.clientes.find((c) => c.email === 'marie@exemple.fr').derniereActivite);
+
 // --- rapatriement des anciens audios ---
 r = await post('admin-parcours', { action: 'migrer-audio' }, ADMIN);
 p('rapatriement : 1 copié, 1 échec (fichier absent), les autres ignorés', r.copies === 1 && r.echecs.length === 1 && r.echecs[0].id === 'p10' && r.ignores === 8);

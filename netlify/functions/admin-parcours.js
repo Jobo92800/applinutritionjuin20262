@@ -21,6 +21,8 @@ const nettoyerEmail = (v) => String(v || '').trim().toLowerCase();
 const emailValide = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
 const MDP_MIN = 8;
 
+const CODE_DE_CURE = Object.fromEntries(Object.entries(CODES_PARCOURS).map(([code, cure]) => [cure, code]));
+
 /** 'B' / 'C' (codes historiques) ou '3_month' / '6_month' -> cure, ou null. */
 function cureDemandee(valeur) {
   const v = String(valeur || '').trim();
@@ -167,7 +169,7 @@ export default async (req) => {
       case 'liste': {
         const profils = await db.lire(
           'profiles',
-          'select=id,email,name,subscription_tier,parcours_statut,parcours_debloque_manuel,created_at,parcours_progression(terminee),parcours_appareils(id)&order=created_at.desc&limit=500'
+          'select=id,email,name,subscription_tier,parcours_statut,parcours_debloque_manuel,created_at,parcours_progression(terminee,updated_at),parcours_appareils(id)&order=created_at.desc&limit=500'
         );
         const totaux = {};
         for (const cure of Object.keys(CURES)) totaux[cure] = (await etapesDeLaCure(cure)).length;
@@ -185,6 +187,10 @@ export default async (req) => {
               total: totaux[p.subscription_tier] || 0,
               appareils: (p.parcours_appareils || []).length,
               appareilsMax: APPAREILS_MAX,
+              // Champs lus par la V2 thérapeute, hérités de Mon Parcours.
+              parcoursCode: CODE_DE_CURE[p.subscription_tier],
+              compteActive: true,
+              derniereActivite: (p.parcours_progression || []).map((x) => x.updated_at).filter(Boolean).sort().pop() || null,
             })),
         });
       }
@@ -243,6 +249,24 @@ export default async (req) => {
         if (corps.actif !== undefined) champs.actif = !!corps.actif;
         await db.majSur('podcasts', `id=eq.${corps.id}`, champs);
         return ok({});
+      }
+
+      /*
+        La liste des étapes par cure, dans la forme héritée de Mon Parcours
+        (parcours_code B/C, numero) : c'est ce que la V2 lit pour proposer
+        l'écoute d'un épisode depuis la fiche d'une cliente.
+      */
+      case 'parcours': {
+        const etapes = [];
+        for (const [code, cure] of Object.entries(CODES_PARCOURS)) {
+          (await etapesDeLaCure(cure)).forEach((e, i) => etapes.push({
+            id: e.id, parcours_code: code, numero: i + 1, titre: e.title, fichier: e.fichier || null, actif: true,
+          }));
+        }
+        return ok({
+          parcours: Object.entries(CODES_PARCOURS).map(([code, cure]) => ({ code, nom_commercial: CURES[cure] })),
+          etapes,
+        });
       }
 
       /*
