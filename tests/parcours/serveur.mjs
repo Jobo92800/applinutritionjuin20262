@@ -284,6 +284,16 @@ if (BANC_UI) for (const p of tables.podcasts) p.duration = 60;   // la durée du
 
 http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
+  // Dépôt depuis l'admin en mode UI : on accepte le fichier et on l'oublie.
+  if (BANC_UI && req.method === 'PUT' && url.pathname.startsWith('/storage/v1/object/upload/sign/')) {
+    for await (const _ of req) { /* on vide le flux */ }
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    return res.end('{"Key":"parcours-audio/test"}');
+  }
+  if (BANC_UI && req.method === 'OPTIONS') {
+    res.writeHead(204, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'PUT, POST, GET', 'Access-Control-Allow-Headers': 'content-type, x-upsert' });
+    return res.end();
+  }
   if (SON && url.pathname.startsWith('/storage/v1/object/sign/')) {
     res.writeHead(200, { 'Content-Type': 'audio/wav', 'Content-Length': SON.length, 'Accept-Ranges': 'bytes', 'Access-Control-Allow-Origin': '*' });
     return res.end(SON);

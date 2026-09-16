@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { adminParcoursApi } from '../lib/parcoursApi';
 import { useAuth } from './AuthContext';
 import { Recipe, Podcast, MealPlan, WeightEntry, ShoppingItem, WeeklyGoal, WeeklyProgress, Badge, Message } from '../types';
 import { computeStreaks, computeEarnedBadgeIds, Streaks } from '../utils/achievements';
@@ -388,7 +389,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         description: podcast.description || '',
         keyPoints: podcast.key_points || [],
         weekChallenges: podcast.week_challenges || [],
-        audioUrl: podcast.audio_url,
+        audioUrl: podcast.audio_url || '',
+        fichier: podcast.fichier || null,
         duration: podcast.duration,
         category: podcast.category,
         thumbnail: podcast.thumbnail || '',
@@ -635,30 +637,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return weeklyProgress.find(p => p.userId === userId && p.weekStart === weekStart) || null;
   };
 
-  // Upload de fichier audio pour podcast
+  /*
+    Dépôt d'un fichier audio dans le bucket privé du parcours. Le navigateur
+    n'a aucun droit d'écriture sur ce bucket : il demande au serveur une
+    adresse d'envoi signée, puis y envoie le fichier. Renvoie le chemin
+    (`fichier`), pas une adresse : il n'en existe pas de permanente.
+  */
   const uploadPodcastAudio = async (file: File): Promise<string> => {
-    if (!isSupabaseConfigured) {
-      // Mode démo - retourner une URL fictive
-      return '/audio/demo.mp3';
-    }
-
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}.${fileExt}`;
-    const filePath = `${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('podcast-audio')
-      .upload(filePath, file);
-
-    if (uploadError) {
-      throw new Error(`Erreur lors du téléchargement: ${uploadError.message}`);
-    }
-
-    const { data } = supabase.storage
-      .from('podcast-audio')
-      .getPublicUrl(filePath);
-
-    return data.publicUrl;
+    const ext = (file.name.split('.').pop() || 'mp3').toLowerCase().replace(/[^a-z0-9]/g, '') || 'mp3';
+    const chemin = `episodes/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { url, chemin: cheminRetenu } = await adminParcoursApi.urlEnvoi(chemin);
+    const envoi = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type || 'audio/mpeg' },
+      body: file,
+    });
+    if (!envoi.ok) throw new Error(`Envoi refusé : ${envoi.status}`);
+    return cheminRetenu;
   };
 
   const uploadPodcastPdf = async (file: File): Promise<string> => {
@@ -985,7 +980,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const insertData: any = {
         title: podcast.title,
         description: podcast.description,
-        audio_url: podcast.audioUrl,
+        audio_url: podcast.audioUrl || null,
+        fichier: podcast.fichier || null,
         duration: podcast.duration,
         category: podcast.category,
         thumbnail: podcast.thumbnail,
@@ -1051,7 +1047,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (podcast.weekChallenges !== undefined) {
         updateData.week_challenges = podcast.weekChallenges.length > 0 ? podcast.weekChallenges : null;
       }
-      if (podcast.audioUrl !== undefined) updateData.audio_url = podcast.audioUrl;
+      if (podcast.audioUrl !== undefined) updateData.audio_url = podcast.audioUrl || null;
+      if (podcast.fichier !== undefined) updateData.fichier = podcast.fichier;
       if (podcast.duration !== undefined) updateData.duration = podcast.duration;
       if (podcast.category !== undefined) updateData.category = podcast.category;
       if (podcast.thumbnail !== undefined) updateData.thumbnail = podcast.thumbnail;

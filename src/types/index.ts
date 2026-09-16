@@ -60,7 +60,10 @@ export interface Podcast {
   description: string;
   keyPoints?: string[];
   weekChallenges?: string[];
+  /** Champ hérité : adresse publique de l'ancien bucket. Ne sert plus au parcours. */
   audioUrl: string;
+  /** Chemin dans le bucket privé `parcours-audio`, servi par adresse signée. */
+  fichier?: string | null;
   duration: number;
   category: string;
   thumbnail: string;

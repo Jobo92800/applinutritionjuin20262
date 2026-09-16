@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Plus, CreditCard as Edit, Trash2, Clock, Users, GripVertical, MessageCircle, Bell, Download } from 'lucide-react';
+import { Plus, CreditCard as Edit, Trash2, Clock, Users, GripVertical, MessageCircle, Bell, Headphones } from 'lucide-react';
+import { adminParcoursApi } from '../lib/parcoursApi';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Recipe, Podcast } from '../types';
@@ -25,6 +26,7 @@ export default function AdminPanel() {
   const [showRecipeForm, setShowRecipeForm] = useState(false);
   const [showPodcastForm, setShowPodcastForm] = useState(false);
   const [draggedPodcast, setDraggedPodcast] = useState<string | null>(null);
+  const [ecoute, setEcoute] = useState<{ id: string; url: string } | null>(null);
 
   const newMessagesCount = messages.filter(msg => msg.status === 'new').length;
 
@@ -71,25 +73,16 @@ export default function AdminPanel() {
     setShowPodcastForm(true);
   };
 
-  const handleDownloadPodcast = async (podcast: Podcast) => {
+  // Écoute de contrôle : l'adresse est signée pour une heure, comme pour une
+  // cliente. Il n'existe pas d'adresse permanente, donc pas de téléchargement.
+  const handleEcouterPodcast = async (podcast: Podcast) => {
+    if (ecoute?.id === podcast.id) { setEcoute(null); return; }
     try {
-      const response = await fetch(podcast.audioUrl);
-      if (!response.ok) {
-        throw new Error('Le téléchargement a échoué');
-      }
-
-      const audioBlob = await response.blob();
-      const downloadUrl = URL.createObjectURL(audioBlob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `${podcast.title.replace(/[^a-z0-9À-ÿ]+/gi, '-').replace(/^-|-$/g, '') || 'podcast'}.mp3`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(downloadUrl);
+      const { url } = await adminParcoursApi.ecouter(podcast.id);
+      setEcoute({ id: podcast.id, url });
     } catch (error) {
-      console.error('Erreur lors du téléchargement du podcast:', error);
-      window.alert('Le téléchargement de ce podcast est impossible pour le moment.');
+      console.error("Erreur lors de l'ouverture du podcast:", error);
+      window.alert("Cet épisode n'a pas d'audio en ligne, ou l'adresse n'a pas pu être signée.");
     }
   };
 
@@ -313,7 +306,13 @@ export default function AdminPanel() {
                         <div className="flex items-center space-x-4 text-sm text-gray-500">
                           <span>{Math.floor(podcast.duration / 60)} min</span>
                           <span>{(podcast.access_tiers || []).join(', ')}</span>
+                          <span className={podcast.fichier ? 'text-green-600' : 'text-amber-600'}>
+                            {podcast.fichier ? 'Audio en ligne' : 'Audio à déposer'}
+                          </span>
                         </div>
+                        {ecoute?.id === podcast.id && (
+                          <audio src={ecoute.url} controls autoPlay className="w-full h-9 mt-3" />
+                        )}
                       </div>
                       <div className="flex space-x-2">
                         <button 
@@ -324,12 +323,12 @@ export default function AdminPanel() {
                           <span>Modifier</span>
                         </button>
                         <button
-                          onClick={() => handleDownloadPodcast(podcast)}
+                          onClick={() => handleEcouterPodcast(podcast)}
                           className="flex items-center space-x-1 bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 transition-colors"
-                          title="Télécharger le podcast"
+                          title="Écoute de contrôle"
                         >
-                          <Download className="w-3 h-3" />
-                          <span>Télécharger</span>
+                          <Headphones className="w-3 h-3" />
+                          <span>{ecoute?.id === podcast.id ? 'Masquer' : 'Écouter'}</span>
                         </button>
                         <button
                           onClick={() => {

@@ -120,7 +120,7 @@ exige des WebSockets natifs, absents de l'environnement Node de Netlify.
 
 ## Le chantier « parcours »
 
-État au 16 septembre 2026 — **phases 0 à 3b faites, 3c (dépôt des MP3) à faire.**
+État au 16 septembre 2026 — **phases 0 à 3 faites. Reste la phase 4, la bascule, avec Jonathan.**
 
 | Phase | Contenu | État |
 |---|---|---|
@@ -129,7 +129,7 @@ exige des WebSockets natifs, absents de l'environnement Node de Netlify.
 | 2 | Fonctions Netlify + API admin pour la V2 + banc d'essai porté | **fait** — `parcours-core.js`, 4 fonctions, 4 routes dans `netlify.toml`, 56 contrôles (`npm run test:parcours`). Jamais exécuté contre la vraie base : ça viendra avec la phase 3 |
 | 3a | Comptes : inscription libre fermée (`LoginForm`), onglet **Clientes** de l'admin (`ClientesPanel`, via `src/lib/parcoursApi.ts`), l'API admin accepte le jeton d'un profil `role = 'admin'` en plus du code | **fait** — 58 contrôles. Reste côté Supabase : désactiver « Allow new users to sign up » (Authentication → Providers → Email), sinon l'inscription reste possible par l'API |
 | 3b | Écrans cliente : frise du parcours, lecteur avec comptage, reprise | **fait** — `Parcours.tsx`, `ParcoursLecteur.tsx`, `lib/parcoursEcoute.ts` ; `PodcastList` / `PodcastModal` supprimés ; l'entrée de menu s'appelle « Mon parcours ». Vérifié de bout en bout sur le banc UI (lecture, sauts, validation sans coupure, célébration à la fin, enchaînement) |
-| 3c | Dépôt des MP3 dans le bucket privé depuis `PodcastFormModal` | à faire |
+| 3c | Dépôt des MP3 dans le bucket privé depuis `PodcastFormModal` | **fait** — adresse d'envoi signée par le serveur, durée lue dans le fichier, plus de champ URL ; « Écouter » (adresse signée 1 h) remplace « Télécharger » dans la liste d'admin ; la cure 1 mois n'est plus proposée. `audio_url` devient facultatif dans la migration |
 | 4 | Bascule : MP3 en 96 kbps mono dans le bucket privé, migration des clientes de Mon Parcours, repointage V2, redirection du domaine, retraite de Mon Parcours | à faire, **avec Jonathan, étape par étape** |
 
 Ce qui existe déjà ici et sert de socle : la table `podcasts` et son admin

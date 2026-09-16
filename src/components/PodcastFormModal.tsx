@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Save, Upload } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
+import { adminParcoursApi } from '../lib/parcoursApi';
 import { Podcast } from '../types';
 
 interface PodcastFormModalProps {
@@ -13,12 +14,25 @@ export default function PodcastFormModal({ podcast, isOpen, onClose }: PodcastFo
   const { addPodcast, updatePodcast, uploadPodcastAudio, uploadPodcastImage, uploadPodcastPdf } = useData();
   const [loading, setLoading] = useState(false);
   const [uploadingAudio, setUploadingAudio] = useState(false);
+  const [apercu, setApercu] = useState<string | null>(null);
+
+  /** Écoute de contrôle : même adresse signée que pour une cliente. */
+  const ecouter = async () => {
+    if (!podcast?.id) return;
+    try {
+      const { url } = await adminParcoursApi.ecouter(podcast.id);
+      setApercu(url);
+    } catch {
+      alert("L'audio n'a pas pu être ouvert.");
+    }
+  };
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingPdf, setUploadingPdf] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     audioUrl: '',
+    fichier: '' as string | null,
     duration: 0,
     category: 'Nutrition',
     thumbnail: '',
@@ -48,11 +62,12 @@ export default function PodcastFormModal({ podcast, isOpen, onClose }: PodcastFo
     'Lifestyle'
   ];
 
+  // La cure 1 mois est abandonnée (décision du 11/09/2026) : on ne la propose
+  // plus, mais un ancien épisode qui la porte encore reste lisible.
   const accessTiers = [
-    { value: 'all', label: 'Accessible à tous' },
-    { value: '1_month', label: 'Abonnement 1 mois' },
-    { value: '3_month', label: 'Abonnement 3 mois' },
-    { value: '6_month', label: 'Abonnement 6 mois' }
+    { value: 'all', label: 'Toutes les cures' },
+    { value: '3_month', label: 'Cure 3 mois' },
+    { value: '6_month', label: 'Cure 6 mois' }
   ];
 
   useEffect(() => {
@@ -61,6 +76,7 @@ export default function PodcastFormModal({ podcast, isOpen, onClose }: PodcastFo
         title: podcast.title,
         description: podcast.description || '',
         audioUrl: podcast.audioUrl,
+        fichier: podcast.fichier || null,
         duration: podcast.duration,
         category: podcast.category,
         thumbnail: podcast.thumbnail || '',
@@ -77,6 +93,7 @@ export default function PodcastFormModal({ podcast, isOpen, onClose }: PodcastFo
         title: '',
         description: '',
         audioUrl: '',
+        fichier: null,
         duration: 0,
         category: 'Nutrition',
         thumbnail: '',
@@ -135,14 +152,19 @@ export default function PodcastFormModal({ podcast, isOpen, onClose }: PodcastFo
 
     setUploadingAudio(true);
     try {
-      const audioUrl = await uploadPodcastAudio(file);
-      setFormData({ ...formData, audioUrl });
-      
-      // Essayer de récupérer la durée du fichier audio
-      const audio = new Audio(audioUrl);
-      audio.addEventListener('loadedmetadata', () => {
-        setFormData(prev => ({ ...prev, duration: Math.round(audio.duration) }));
+      // La durée réelle se lit dans le fichier, avant même l'envoi : c'est elle
+      // qui fixe le seuil des 90 % du parcours.
+      const duree = await new Promise<number>((resolve) => {
+        const url = URL.createObjectURL(file);
+        const a = new Audio();
+        const finir = (v: number) => { URL.revokeObjectURL(url); resolve(v); };
+        a.onloadedmetadata = () => finir(Math.round(a.duration) || 0);
+        a.onerror = () => finir(0);
+        setTimeout(() => finir(Math.round(a.duration) || 0), 8000);
+        a.src = url;
       });
+      const fichier = await uploadPodcastAudio(file);
+      setFormData((prev) => ({ ...prev, fichier, duration: duree || prev.duration }));
     } catch (error) {
       console.error('Erreur lors du téléchargement:', error);
       
@@ -350,29 +372,35 @@ export default function PodcastFormModal({ podcast, isOpen, onClose }: PodcastFo
                   Fichier audio *
                 </label>
                 <div className="space-y-3">
-                  <input
-                    type="url"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    value={formData.audioUrl}
-                    onChange={(e) => setFormData({ ...formData, audioUrl: e.target.value })}
-                    placeholder="URL du fichier audio"
-                  />
+                  {/* Le fichier vit dans un bucket privé : pas d'adresse à saisir,
+                      pas d'adresse à partager. */}
+                  <div className={`text-sm rounded-lg px-3 py-2 ${formData.fichier ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
+                    {formData.fichier
+                      ? `Audio en ligne${formData.duration ? ` · ${formatDuration(formData.duration)}` : ''}`
+                      : 'Aucun audio déposé : cette étape restera inaccessible.'}
+                  </div>
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-500">ou</span>
                     <label className="flex items-center space-x-2 cursor-pointer bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg transition-colors">
                       <Upload className="w-4 h-4" />
                       <span className="text-sm">
-                        {uploadingAudio ? 'Téléchargement...' : 'Télécharger un fichier'}
+                        {uploadingAudio ? 'Envoi en cours…' : formData.fichier ? 'Remplacer le MP3' : 'Déposer le MP3'}
                       </span>
                       <input
                         type="file"
-                        accept="audio/*"
+                        accept="audio/mpeg,audio/mp4,.mp3,.m4a"
                         className="hidden"
                         onChange={handleAudioUpload}
                         disabled={uploadingAudio}
                       />
                     </label>
+                    {podcast?.id && formData.fichier && (
+                      <button type="button" onClick={ecouter}
+                        className="text-sm px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
+                        Écouter
+                      </button>
+                    )}
                   </div>
+                  {apercu && <audio src={apercu} controls className="w-full h-9" />}
                 </div>
               </div>
 
@@ -714,7 +742,7 @@ export default function PodcastFormModal({ podcast, isOpen, onClose }: PodcastFo
             </button>
             <button
               onClick={handleSubmit}
-              disabled={loading || !formData.title.trim() || !formData.audioUrl.trim() || formData.access_tiers.length === 0}
+              disabled={loading || !formData.title.trim() || !formData.fichier || formData.access_tiers.length === 0}
               className="flex items-center space-x-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save className="w-4 h-4" />

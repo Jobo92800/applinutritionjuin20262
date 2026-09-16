@@ -9,6 +9,7 @@
   1. `podcasts` devient la table des étapes
      - `fichier` : chemin dans le bucket privé (null tant que rien n'est déposé)
      - `actif`   : une étape désactivée n'apparaît plus dans le parcours
+     - `audio_url` cesse d'être obligatoire (l'adresse publique est abandonnée)
      Les colonnes `display_order` (numéro d'étape), `access_tiers` (cure) et
      `duration` (durée réelle en secondes, lue dans le MP3 par le formulaire
      d'admin, base du seuil des 90 %) existent déjà et jouent leur rôle tel quel.
@@ -38,6 +39,9 @@
 -- ---------------------------------------------------------------------------
 ALTER TABLE podcasts ADD COLUMN IF NOT EXISTS fichier text;
 ALTER TABLE podcasts ADD COLUMN IF NOT EXISTS actif   boolean NOT NULL DEFAULT true;
+-- L'adresse publique n'a plus de raison d'être obligatoire : le fichier vit
+-- désormais dans le bucket privé. Les lignes existantes gardent la leur.
+ALTER TABLE podcasts ALTER COLUMN audio_url DROP NOT NULL;
 
 -- Ces deux-là ont été ajoutées à la main (MIGRATION_PODCAST_ORDER.sql et
 -- MIGRATION_TO_RUN.sql à la racine du dépôt). On s'assure qu'elles sont là.
