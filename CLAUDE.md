@@ -288,7 +288,9 @@ nom `MAB_Cure{3|6}mois_S{nn}_….pdf`, S00 = étape 1. Migration
 `20260917000000_fiches_pdf.sql` (colonne + `application/pdf` autorisé dans le
 bucket). Les 38 fiches sont dans
 `~/Desktop/Nouveau Site MAbeautyplus/fiches PDF podcast /` ; la S24 « Bilan
-final » n'a pas d'épisode.
+final » n'a pas d'épisode : **l'audio n'est pas encore enregistré** (Jonathan
+le refera). Le jour venu : Nouveau podcast en cure 6 mois (il se place en
+dernier, étape 25), déposer le MP3, puis redéposer la fiche S24.
 
 **Relais de transition** — `MON_PARCOURS_API_URL` (`https://applipodcast.netlify.app/api/admin`)
 et `MON_PARCOURS_ADMIN_CODE` (le code de Mon Parcours) : tant qu'ils sont
