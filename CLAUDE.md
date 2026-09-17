@@ -278,6 +278,18 @@ cache si la permission est refusée ou si la cliente l'a fermée
 (`localStorage mbp_rappels_refuses`). Le banc remplace le transport
 (`definirTransportPush`) pour vérifier ce qui partirait.
 
+**Fiches récap PDF (17/09/2026)** : une par cure et par étape — les deux
+variantes ne diffèrent que par l'en-tête (« Cure 3 mois · Semaine 1 sur 12 »),
+mais la cliente doit voir la sienne. Colonne `podcasts.fiches` (jsonb, cure →
+chemin dans le bucket privé, dossier `fiches/`), signée par `/api/audio` avec
+l'audio et affichée dans le lecteur (« Fiche récap de l'étape »). Dépôt
+groupé dans l'admin (`FichesPdfImport`) : les fichiers sont reconnus à leur
+nom `MAB_Cure{3|6}mois_S{nn}_….pdf`, S00 = étape 1. Migration
+`20260917000000_fiches_pdf.sql` (colonne + `application/pdf` autorisé dans le
+bucket). Les 38 fiches sont dans
+`~/Desktop/Nouveau Site MAbeautyplus/fiches PDF podcast /` ; la S24 « Bilan
+final » n'a pas d'épisode.
+
 **Relais de transition** — `MON_PARCOURS_API_URL` (`https://applipodcast.netlify.app/api/admin`)
 et `MON_PARCOURS_ADMIN_CODE` (le code de Mon Parcours) : tant qu'ils sont
 posés, chaque compte créé ici (par la V2 ou l'onglet Clientes) est aussi créé

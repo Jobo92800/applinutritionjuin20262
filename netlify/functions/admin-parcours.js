@@ -263,7 +263,7 @@ export default async (req) => {
       /* ---------------------------------------------------------- les étapes --- */
       case 'url-envoi': {
         const chemin = String(corps.chemin || '').replace(/[^A-Za-z0-9/._-]/g, '');
-        if (!/^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+\.(mp3|m4a|aac|wav)$/i.test(chemin)) {
+        if (!/^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+\.(mp3|m4a|aac|wav|pdf)$/i.test(chemin)) {
           return json(400, { erreur: 'chemin-invalide' });
         }
         return ok({ url: await urlEnvoi(chemin), chemin });
@@ -289,7 +289,7 @@ export default async (req) => {
         const etapes = [];
         for (const [code, cure] of Object.entries(CODES_PARCOURS)) {
           (await etapesDeLaCure(cure)).forEach((e, i) => etapes.push({
-            id: e.id, parcours_code: code, numero: i + 1, titre: e.title, fichier: e.fichier || null, actif: true,
+            id: e.id, parcours_code: code, numero: i + 1, titre: e.title, fichier: e.fichier || null, fiche: !!(e.fiches && e.fiches[cure]), actif: true,
           }));
         }
         return ok({
@@ -407,6 +407,19 @@ export default async (req) => {
 
         await journaliser('import-clientes', { ip: ipDe(req), detail: `${bilan.crees} créées, ${bilan.completes} complétées, ${bilan.progressions} progressions, ${bilan.echecs.length} échecs` });
         return ok({ ...bilan, hachages: !!exp.corps.hachagesDisponibles });
+      }
+
+      /* Rattache la fiche PDF d'une cure à une étape (le fichier est déjà déposé). */
+      case 'fiche-maj': {
+        if (!corps.id || !CURES[corps.cure]) return json(400, { erreur: 'fiche-incomplete' });
+        const chemin = String(corps.fichier || '').replace(/[^A-Za-z0-9/._-]/g, '');
+        if (chemin && !/^fiches\/[A-Za-z0-9._-]+\.pdf$/i.test(chemin)) return json(400, { erreur: 'chemin-invalide' });
+        const etape = await db.un('podcasts', `select=id,fiches&id=eq.${corps.id}`);
+        if (!etape) return json(404, { erreur: 'etape-inconnue' });
+        const fiches = { ...(etape.fiches || {}) };
+        if (chemin) fiches[corps.cure] = chemin; else delete fiches[corps.cure];
+        await db.majSur('podcasts', `id=eq.${etape.id}`, { fiches });
+        return ok({ fiches });
       }
 
       /* Écoute de contrôle : même adresse signée que pour une cliente, sans condition. */

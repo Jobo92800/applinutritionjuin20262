@@ -207,6 +207,23 @@ p('chemin privé enregistré', tables.podcasts.find((x) => x.id === 'p9').fichie
 r = await post('admin-parcours', { action: 'migrer-audio' }, ADMIN);
 p('relancer ne recopie rien', r.copies === 0 && r.ignores === 9);
 
+// --- fiches PDF, une par cure ---
+r = await post('admin-parcours', { action: 'url-envoi', chemin: 'fiches/MAB_Cure3mois_S00_Bienvenue.pdf' }, ADMIN);
+p('adresse d\'envoi signée pour une fiche PDF', r.statut === 200 && r.chemin === 'fiches/MAB_Cure3mois_S00_Bienvenue.pdf');
+r = await post('admin-parcours', { action: 'fiche-maj', id: 'p1', cure: '3_month', fichier: 'fiches/MAB_Cure3mois_S00_Bienvenue.pdf' }, ADMIN);
+r = await post('admin-parcours', { action: 'fiche-maj', id: 'p1', cure: '6_month', fichier: 'fiches/MAB_Cure6mois_S00_Bienvenue.pdf' }, ADMIN);
+p('deux fiches sur le même épisode, une par cure', r.statut === 200 && r.fiches['3_month'].includes('Cure3mois') && r.fiches['6_month'].includes('Cure6mois'));
+r = await post('admin-parcours', { action: 'fiche-maj', id: 'p1', cure: '3_month', fichier: '../secret.pdf' }, ADMIN);
+p('chemin de fiche hors dossier refusé', r.statut === 400);
+r = await post('audio', { numero: 1, appareil: 'ap1' }, auth(acces));
+p('la cliente 3 mois reçoit la fiche de sa cure, signée', r.statut === 200 && r.fichePdf?.includes('MAB_Cure3mois_S00') && r.fichePdf?.includes('token=faux'));
+r = await post('audio', { numero: 1, appareil: 'n1' }, auth(connecter('nina@exemple.fr')));
+p('la cliente 6 mois reçoit la sienne', r.statut === 200 && r.fichePdf?.includes('MAB_Cure6mois_S00'));
+r = await post('parcours', { appareil: 'ap1' }, auth(acces));
+p('le parcours signale la fiche disponible', r.etapes[0].fiche === true && r.etapes[1].fiche === false);
+r = await post('admin-parcours', { action: 'parcours' }, ADMIN);
+p('la liste admin signale la fiche par cure', r.etapes.find((e) => e.parcours_code === 'B' && e.numero === 1)?.fiche === true && r.etapes.find((e) => e.parcours_code === 'B' && e.numero === 2)?.fiche === false);
+
 // --- dépôt et écoute de contrôle ---
 r = await post('admin-parcours', { action: 'url-envoi', chemin: '3_month/S01-1234.mp3' }, ADMIN);
 p('URL d\'envoi signée', r.statut === 200 && r.url.includes('token=faux'));

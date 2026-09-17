@@ -302,7 +302,7 @@ export async function corpsJson(req) {
 export async function etapesDeLaCure(tier) {
   const podcasts = await db.lire(
     'podcasts',
-    'select=id,title,description,key_points,week_challenges,support_pdf_url,cta_button,cta_button2,thumbnail,duration,fichier,access_tiers,display_order,created_at&actif=eq.true&order=display_order.asc,created_at.asc'
+    'select=id,title,description,key_points,week_challenges,support_pdf_url,fiches,cta_button,cta_button2,thumbnail,duration,fichier,access_tiers,display_order,created_at&actif=eq.true&order=display_order.asc,created_at.asc'
   );
   return podcasts.filter((p) => {
     const tiers = Array.isArray(p.access_tiers) ? p.access_tiers : [];

@@ -43,7 +43,7 @@ export const tables = {
 const podcast = (id, title, tiers, ordre, extra = {}) => ({
   id, title, description: 'desc ' + title, key_points: [], week_challenges: [],
   support_pdf_url: null, cta_button: null, cta_button2: null, thumbnail: null,
-  access_tiers: tiers, display_order: ordre, duration: 900, fichier: `${tiers[0]}/${id}.mp3`,
+  access_tiers: tiers, display_order: ordre, duration: 900, fichier: `${tiers[0]}/${id}.mp3`, fiches: {},
   actif: true, created_at: new Date(2026, 0, ordre).toISOString(), ...extra,
 });
 tables.podcasts.push(
@@ -181,7 +181,7 @@ function repondre(donnees, statut = 200) {
 const DEFAUTS = {
   profiles: { role: 'user', subscription_tier: 'user', parcours_statut: 'actif', parcours_debloque_manuel: 0 },
   parcours_progression: { couverture: '', position_sec: 0, taux: 0, terminee: false },
-  podcasts: { actif: true, duration: 0, fichier: null, access_tiers: ['all'], display_order: 0 },
+  podcasts: { actif: true, duration: 0, fichier: null, access_tiers: ['all'], display_order: 0, fiches: {} },
   parcours_appareils: { derniere_vue: new Date().toISOString() },
 };
 

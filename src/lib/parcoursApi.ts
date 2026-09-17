@@ -50,6 +50,8 @@ export interface EtapeParcours {
   pointsCles?: string[];
   defis?: string[];
   supportPdf?: string | null;
+  /** Une fiche récapitulative existe pour la cure de la cliente (signée à l'ouverture de l'étape). */
+  fiche?: boolean;
   boutons?: { text: string; url: string; enabled: boolean }[];
   vignette?: string | null;
   dureeSec?: number | null;
@@ -70,7 +72,7 @@ export interface EtatParcours {
 export const parcoursApi = {
   etat: (appareil: string) => appeler<EtatParcours>('parcours', { appareil }),
   audio: (numero: number, appareil: string) =>
-    appeler<{ url: string; expireDans: number; dureeSec: number | null }>('audio', { numero, appareil }),
+    appeler<{ url: string; expireDans: number; dureeSec: number | null; fichePdf?: string | null }>('audio', { numero, appareil }),
   progression: (charge: { numero: number; appareil: string; couverture: string; position: number; duree: number }) =>
     appeler<{ taux: number; terminee: boolean; deja?: boolean }>('progression', charge),
 };
@@ -103,6 +105,10 @@ export const adminParcoursApi = {
   validerEtape: (id: string) => appeler<{ numero: number }>('admin-parcours', { action: 'valider-etape', id }),
   renvoyerInvitation: (id: string) => appeler<object>('admin-parcours', { action: 'renvoyer-invitation', id }),
   urlEnvoi: (chemin: string) => appeler<{ url: string; chemin: string }>('admin-parcours', { action: 'url-envoi', chemin }),
+  ficheMaj: (id: string, cure: Cure, fichier: string | null) =>
+    appeler<{ fiches: Record<string, string> }>('admin-parcours', { action: 'fiche-maj', id, cure, fichier }),
+  etapesAdmin: () =>
+    appeler<{ etapes: { id: string; parcours_code: string; numero: number; titre: string; fichier: string | null; fiche: boolean }[] }>('admin-parcours', { action: 'parcours' }),
   etapeMaj: (id: string, champs: { fichier?: string; dureeSec?: number; actif?: boolean }) =>
     appeler<object>('admin-parcours', { action: 'etape-maj', id, ...champs }),
   ecouter: (id: string) => appeler<{ url: string; titre: string }>('admin-parcours', { action: 'ecouter', id }),

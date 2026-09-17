@@ -9,6 +9,7 @@ import PodcastFormModal from './PodcastFormModal';
 import MessagesPanel from './MessagesPanel';
 import NotificationsPanel from './NotificationsPanel';
 import ClientesPanel from './ClientesPanel';
+import FichesPdfImport from './FichesPdfImport';
 
 export default function AdminPanel() {
   const {
@@ -308,6 +309,8 @@ export default function AdminPanel() {
                   )}
                 </div>
               )}
+
+              <FichesPdfImport />
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                 <p className="text-sm text-blue-800">

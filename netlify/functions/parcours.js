@@ -51,6 +51,7 @@ export default async (req) => {
         pointsCles: e.key_points || [],
         defis: e.week_challenges || [],
         supportPdf: e.support_pdf_url || null,
+        fiche: !!(e.fiches && e.fiches[cure]),
         boutons: [e.cta_button, e.cta_button2].filter((b) => b && b.enabled),
         vignette: e.thumbnail || null,
         dureeSec: e.duration || null,

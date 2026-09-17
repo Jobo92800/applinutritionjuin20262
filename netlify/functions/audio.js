@@ -50,10 +50,19 @@ export default async (req) => {
     const etape = etapes[index];
     if (!etape.fichier) return json(503, { erreur: 'audio-absent' });
 
+    // La fiche récapitulative de la cure, signée elle aussi : elle vit dans le
+    // même bucket privé. Une fiche manquante n'empêche pas l'écoute.
+    const cheminFiche = etape.fiches && etape.fiches[cure];
+    let fichePdf = null;
+    if (cheminFiche) {
+      try { fichePdf = await urlSignee(cheminFiche, DUREE_LIEN); } catch (e) { console.error('fiche :', e.message); }
+    }
+
     return json(200, {
       url: await urlSignee(etape.fichier, DUREE_LIEN),
       expireDans: DUREE_LIEN,
       dureeSec: etape.duration || null,
+      fichePdf,
     });
   } catch (e) {
     console.error('audio :', e.message);

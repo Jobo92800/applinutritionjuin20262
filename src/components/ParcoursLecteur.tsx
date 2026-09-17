@@ -47,6 +47,7 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
   const [taux, setTaux] = useState(etape.taux || 0);
   const [validee, setValidee] = useState(etape.terminee);
   const [celebration, setCelebration] = useState(false);
+  const [fichePdf, setFichePdf] = useState<string | null>(null);
 
   const numero = etape.numero;
 
@@ -105,6 +106,7 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
         }
         audioRef.current.src = rep.url;
         audioRef.current.load();
+        setFichePdf(rep.fichePdf || null);
         setChargement(false);
       } catch (e) {
         if (annule) return;
@@ -359,8 +361,14 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
           </ul>
         </div>
       )}
-      {(etape.supportPdf || (etape.boutons && etape.boutons.length > 0)) && (
+      {(fichePdf || etape.supportPdf || (etape.boutons && etape.boutons.length > 0)) && (
         <div className="mt-4 flex flex-wrap gap-3">
+          {fichePdf && (
+            <a href={fichePdf} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-marine-100 text-marine-800 hover:bg-marine-200">
+              <FileText className="w-4 h-4" /><span>Fiche récap de l'étape (PDF)</span>
+            </a>
+          )}
           {etape.supportPdf && (
             <a href={etape.supportPdf} target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
