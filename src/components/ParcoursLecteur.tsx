@@ -332,6 +332,14 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
                   : "L'étape suivante se débloque une fois cet épisode écouté."}
             </p>
           </div>
+
+          {/* La fiche récap : le support écrit de l'épisode, à portée de main du lecteur. */}
+          {fichePdf && (
+            <a href={fichePdf} target="_blank" rel="noopener noreferrer"
+              className="mt-4 w-full flex items-center justify-center space-x-2 bg-marine-600 text-white py-3 rounded-full font-semibold hover:bg-marine-700 hover:-translate-y-px transition-all shadow-carte">
+              <FileText className="w-5 h-5" /><span>Ouvrir la fiche récap de l'étape</span>
+            </a>
+          )}
         </div>
       )}
 
@@ -361,14 +369,8 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
           </ul>
         </div>
       )}
-      {(fichePdf || etape.supportPdf || (etape.boutons && etape.boutons.length > 0)) && (
+      {(etape.supportPdf || (etape.boutons && etape.boutons.length > 0)) && (
         <div className="mt-4 flex flex-wrap gap-3">
-          {fichePdf && (
-            <a href={fichePdf} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-marine-100 text-marine-800 hover:bg-marine-200">
-              <FileText className="w-4 h-4" /><span>Fiche récap de l'étape (PDF)</span>
-            </a>
-          )}
           {etape.supportPdf && (
             <a href={etape.supportPdf} target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
