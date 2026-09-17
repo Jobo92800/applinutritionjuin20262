@@ -100,9 +100,17 @@ p('« terminee » forgé ignoré', r.terminee === false);
 const presque = new Array(900).fill(0); for (let i = 0; i < 801; i++) presque[i] = 1;
 r = await post('progression', { numero: 1, appareil: 'ap1', couverture: pack(presque), position: 801, duree: 900 }, auth(acces));
 p('89 % : toujours verrouillé', r.terminee === false);
+// Marie a activé les notifications sur deux appareils, dont un dont l'abonnement est périmé.
+tables.push_subscriptions.push(
+  { id: 'ps1', user_id: marie.id, endpoint: 'https://push.exemple/marie-telephone', p256dh: 'k', auth: 'a' },
+  { id: 'ps2', user_id: marie.id, endpoint: 'https://push.exemple/marie-perime', p256dh: 'k', auth: 'a' },
+);
 const assez = new Array(900).fill(0); for (let i = 0; i < 815; i++) assez[i] = 1;
 r = await post('progression', { numero: 1, appareil: 'ap1', couverture: pack(assez), position: 815, duree: 900 }, auth(acces));
 p('90,6 % : étape validée', r.terminee === true);
+const pushValidation = journal.pushs.at(-1);
+p('notification « Étape validée » avec le titre de la suivante', pushValidation?.title === 'Étape validée 🎉' && pushValidation?.body.includes('« Semaine 1 »') && pushValidation?.tag === 'parcours' && pushValidation?.url === '/?page=podcasts');
+p('abonnement périmé supprimé, l\'autre conservé', !tables.push_subscriptions.some((s) => s.id === 'ps2') && tables.push_subscriptions.some((s) => s.id === 'ps1'));
 r = await post('parcours', { appareil: 'ap1' }, auth(acces));
 p('étape 2 débloquée', r.disponible === 1 && r.etapes[1].accessible && r.etapes[1].titre === 'Semaine 1');
 p('1 étape terminée', r.terminees === 1);
@@ -214,6 +222,26 @@ p('écoute d\'une étape inconnue refusée', r.statut === 404);
 r = await post('admin-parcours', { action: 'etape-maj', id: 'p5', actif: false }, ADMIN);
 r = await post('parcours', { appareil: 'ap9' }, auth(acces));
 p('étape désactivée retirée du parcours', r.total === 4);
+
+// --- rappels aux clientes silencieuses ---
+const { rappelsParcours } = await import('../../netlify/lib/parcours-rappels.js');
+const ilYA = (jours) => new Date(Date.now() - jours * 86400000).toISOString();
+const nina = tables.profiles.find((x) => x.email === 'nina@exemple.fr');
+// Nina : abonnée, a ouvert son parcours il y a 10 jours, rien depuis.
+tables.push_subscriptions.push({ id: 'ps-nina', user_id: nina.id, endpoint: 'https://push.exemple/nina', p256dh: 'k', auth: 'a' });
+tables.parcours_acces_log.push({ id: 9001, user_id: nina.id, action: 'ouverture', created_at: ilYA(10) });
+// Sophie : abonnée aussi, mais n'a jamais ouvert son parcours ici (importée, écoute encore sur Mon Parcours).
+r = await post('admin-parcours', { action: 'creer', prenom: 'Sophie', email: 'sophie@exemple.fr', parcours: 'C', motDePasse: 'motdepasse-long' }, ADMIN);
+const sophie = tables.profiles.find((x) => x.email === 'sophie@exemple.fr');
+tables.push_subscriptions.push({ id: 'ps-sophie', user_id: sophie.id, endpoint: 'https://push.exemple/sophie', p256dh: 'k', auth: 'a' });
+const avantRappels = journal.pushs.length;
+let bilan = await rappelsParcours();
+const pushNina = journal.pushs.slice(avantRappels).find((x) => x.endpoints.includes('https://push.exemple/nina'));
+p('rappel envoyé à Nina, silencieuse depuis 10 jours, avec son étape', bilan.rappelees === 1 && pushNina?.title === 'Votre parcours vous attend' && pushNina?.body.includes('« Introduction »'));
+p('Marie (active cette semaine) et Sophie (jamais ouvert ici) ne sont pas rappelées', !journal.pushs.slice(avantRappels).some((x) => x.endpoints.some((e) => e.includes('marie') || e.includes('sophie'))));
+p('rappel journalisé', tables.parcours_acces_log.some((l) => l.user_id === nina.id && l.action === 'rappel-parcours'));
+bilan = await rappelsParcours();
+p('pas de second rappel dans la semaine', bilan.rappelees === 0);
 
 let ko = 0;
 for (const [n, ok, d] of T) { if (!ok) ko++; console.log((ok ? '  OK  ' : '  KO  ') + n + (d && !ok ? ' -> ' + d : '')); }

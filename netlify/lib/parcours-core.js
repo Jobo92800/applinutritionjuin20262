@@ -165,6 +165,38 @@ export async function copierVersPrive(bucketSource, cle, destination) {
   }
 }
 
+/* ------------------------------------------------------ Notifications --- */
+
+import { sendToSubscriptions, VAPID_PRIVATE_KEY } from './push-core.js';
+
+/*
+  L'envoi réel passe par web-push (push-core.js). Le banc d'essai remplace ce
+  transport pour vérifier ce qui partirait sans rien envoyer.
+*/
+let transportPush = sendToSubscriptions;
+export function definirTransportPush(fn) { transportPush = fn; }
+
+/**
+ * Notifie une cliente sur tous ses appareils abonnés. Ne lève jamais : une
+ * notification qui échoue ne doit pas faire échouer l'action qui l'a
+ * déclenchée.
+ */
+export async function notifierCliente(userId, { title, body, url = '/?page=podcasts', tag = 'parcours' }) {
+  try {
+    if (!VAPID_PRIVATE_KEY && transportPush === sendToSubscriptions) return { sent: 0, raison: 'vapid-absent' };
+    const abonnements = await db.lire('push_subscriptions', `select=endpoint,p256dh,auth&user_id=eq.${userId}`);
+    if (!abonnements.length) return { sent: 0, raison: 'aucun-abonnement' };
+    const r = await transportPush(abonnements, { title, body, url, tag });
+    for (const endpoint of r.expiredEndpoints || []) {
+      await db.supprimer('push_subscriptions', `endpoint=eq.${encodeURIComponent(endpoint)}`).catch(() => {});
+    }
+    return r;
+  } catch (e) {
+    console.error('Notification impossible :', e.message);
+    return { sent: 0, raison: e.message };
+  }
+}
+
 /* ------------------------------------------------------------ Couverture --- */
 
 /**

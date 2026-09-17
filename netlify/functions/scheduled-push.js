@@ -11,6 +11,7 @@ import {
   SUPABASE_URL,
   VAPID_PRIVATE_KEY,
 } from '../lib/push-core.js';
+import { rappelsParcours, HEURE_RAPPEL } from '../lib/parcours-rappels.js';
 
 // Clé de service : nécessaire car aucune session utilisateur n'existe ici.
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -34,6 +35,18 @@ export default async () => {
 
   const { date, hour, dayOfWeek } = parisNow();
 
+  // Les rappels du parcours audio, une fois par jour, en plus des
+  // programmations. Un échec ici ne doit pas bloquer les programmations.
+  let rappels = null;
+  if (hour === HEURE_RAPPEL) {
+    try {
+      rappels = await rappelsParcours();
+      console.log(`scheduled-push: rappels parcours — ${rappels.rappelees} sur ${rappels.examinees} cliente(s).`);
+    } catch (e) {
+      console.error('scheduled-push: rappels parcours impossibles', e.message);
+    }
+  }
+
   // 1. Programmations actives pour cette heure
   const schedulesResponse = await serviceFetch(
     `/rest/v1/scheduled_notifications?select=*&active=eq.true&hour=eq.${hour}`
@@ -55,7 +68,7 @@ export default async () => {
   });
 
   if (due.length === 0) {
-    return json(200, { checked: schedules.length, sentSchedules: 0 });
+    return json(200, { checked: schedules.length, sentSchedules: 0, rappels });
   }
 
   // 3. Récupérer les abonnés une seule fois

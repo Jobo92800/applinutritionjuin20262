@@ -37,6 +37,7 @@ export const tables = {
   parcours_progression: [],
   parcours_appareils: [],
   parcours_acces_log: [],
+  push_subscriptions: [],
 };
 
 const podcast = (id, title, tiers, ordre, extra = {}) => ({
@@ -59,7 +60,7 @@ tables.podcasts.push(
   podcast('p10', 'Ancien perdu',     ['1_month'],           10, { fichier: null, audio_url: `${FAUX}/storage/v1/object/public/podcast-audio/absent.mp3` }),
 );
 
-export const journal = { emails: [], signatures: [], copies: [], relais: [] };
+export const journal = { emails: [], signatures: [], copies: [], relais: [], pushs: [] };
 /* Un « Mon Parcours » simulé pour le relais de transition. */
 const RELAIS = 'http://fauxmonparcours.local/api/admin';
 process.env.MON_PARCOURS_API_URL = RELAIS;
@@ -132,6 +133,7 @@ function filtrer(lignes, params) {
       if (op === 'eq') return String(c) === v || (v === 'true' && c === true) || (v === 'false' && c === false);
       if (op === 'gte') return String(c) >= v;
       if (op === 'lte') return String(c) <= v;
+      if (op === 'in') return v.replace(/^\(|\)$/g, '').split(',').includes(String(c));
       return true;
     });
   }
@@ -311,6 +313,13 @@ const FONCTIONS = {};
 for (const nom of ['parcours', 'audio', 'progression', 'admin-parcours']) {
   FONCTIONS[nom] = (await import(`${RACINE}/netlify/functions/${nom}.js`)).default;
 }
+// Les notifications : on note ce qui partirait, sans rien envoyer.
+const { definirTransportPush } = await import(`${RACINE}/netlify/lib/parcours-core.js`);
+definirTransportPush(async (abonnements, message) => {
+  journal.pushs.push({ ...message, endpoints: abonnements.map((a) => a.endpoint) });
+  const expiredEndpoints = abonnements.filter((a) => a.endpoint.includes('perime')).map((a) => a.endpoint);
+  return { sent: abonnements.length - expiredEndpoints.length, failed: expiredEndpoints.length, expiredEndpoints };
+});
 
 /** Un son de test : 60 s de tonalité douce, en WAV 8 kHz mono, généré ici. */
 function sonDeTest(secondes = 60) {

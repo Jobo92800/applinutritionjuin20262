@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Headphones, Lock, Check, Play, Loader2 } from 'lucide-react';
+import { Headphones, Lock, Check, Play, Loader2, Bell, X } from 'lucide-react';
 import { parcoursApi, EtatParcours, EtapeParcours, ParcoursApiError } from '../lib/parcoursApi';
 import { idAppareil, minutes, mmss } from '../lib/parcoursEcoute';
+import { isPushSupported, permissionState, isSubscribed, subscribeToPush, iosNeedsInstall } from '../lib/webpush';
+import { useAuth } from '../contexts/AuthContext';
 import ParcoursLecteur from './ParcoursLecteur';
 
 /*
@@ -27,6 +29,73 @@ const MESSAGES: Record<string, { titre: string; texte: string }> = {
     texte: 'Déconnectez-vous puis reconnectez-vous pour reprendre votre parcours.',
   },
 };
+
+const CLE_RAPPELS_REFUSES = 'mbp_rappels_refuses';
+
+/*
+  Invitation à activer les notifications : « votre nouvelle étape est
+  disponible », et un rappel si le parcours reste sans écoute une semaine.
+  Discrète, et qui ne revient pas si la cliente l'a fermée.
+*/
+function InvitationRappels() {
+  const { user } = useAuth();
+  const [visible, setVisible] = useState(false);
+  const [enCours, setEnCours] = useState(false);
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    let annule = false;
+    (async () => {
+      try {
+        if (!isPushSupported() || iosNeedsInstall() || permissionState() === 'denied') return;
+        if (localStorage.getItem(CLE_RAPPELS_REFUSES)) return;
+        if (await isSubscribed()) return;
+        if (!annule) setVisible(true);
+      } catch { /* pas d'invitation plutôt qu'une erreur */ }
+    })();
+    return () => { annule = true; };
+  }, []);
+
+  if (!visible) return null;
+
+  const activer = async () => {
+    if (!user) return;
+    setEnCours(true);
+    try {
+      const ok = await subscribeToPush(user.id);
+      if (ok) { setMessage('C\'est activé : vous serez prévenue à chaque nouvelle étape.'); setTimeout(() => setVisible(false), 2500); }
+      else setMessage('Les notifications ont été refusées par le navigateur.');
+    } catch {
+      setMessage("Impossible d'activer les notifications sur cet appareil.");
+    } finally {
+      setEnCours(false);
+    }
+  };
+  const fermer = () => {
+    try { localStorage.setItem(CLE_RAPPELS_REFUSES, '1'); } catch { /* sans stockage, l'invitation reviendra */ }
+    setVisible(false);
+  };
+
+  return (
+    <div className="bg-marine-50 border border-marine-200 rounded-2xl p-4 flex items-start gap-3">
+      <Bell className="w-5 h-5 text-marine-700 mt-0.5 flex-shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-marine-900">
+          {message || 'Recevez une notification quand votre nouvelle étape est disponible.'}
+        </p>
+        {!message && (
+          <button onClick={activer} disabled={enCours}
+            className="mt-2 text-sm font-semibold text-white bg-marine-600 hover:bg-marine-700 disabled:opacity-50 px-4 py-1.5 rounded-full">
+            {enCours ? 'Activation…' : 'Activer les notifications'}
+          </button>
+        )}
+      </div>
+      <button onClick={fermer} aria-label="Ne plus proposer" className="text-marine-400 hover:text-marine-700">
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
 
 export default function Parcours() {
   const appareil = idAppareil();
@@ -103,6 +172,8 @@ export default function Parcours() {
         <h1 className="text-2xl font-bold text-gray-800 mt-1">Votre parcours MAbeautyplus</h1>
         <p className="text-sm text-gray-500 mt-1">{etat.cliente.cure} · une étape à la fois, à votre rythme.</p>
       </div>
+
+      <InvitationRappels />
 
       {/* Avancement global */}
       <div className="bg-white rounded-2xl border border-gray-200 p-5">

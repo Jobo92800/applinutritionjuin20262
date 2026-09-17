@@ -14,7 +14,7 @@
 */
 import {
   json, configManquante, corpsJson, db, profilParSession, etapesDeLaCure,
-  tauxCouverture, SEUIL,
+  tauxCouverture, notifierCliente, SEUIL,
 } from '../lib/parcours-core.js';
 
 export default async (req) => {
@@ -75,6 +75,16 @@ export default async (req) => {
       },
       'user_id,podcast_id'
     );
+
+    // Validée : on prévient la cliente sur ses appareils. Si elle est dans
+    // l'application, le service worker n'affiche rien ; sinon la notification
+    // l'attend, avec le titre de l'étape suivante.
+    if (terminee) {
+      const suivante = etapes[numero];
+      await notifierCliente(profil.id, suivante
+        ? { title: 'Étape validée 🎉', body: `Bravo ! Votre prochaine étape « ${suivante.title} » est disponible.` }
+        : { title: 'Parcours terminé 🎉', body: 'Vous avez écouté toutes les étapes de votre cure. Bravo !' });
+    }
 
     return json(200, { taux: Number(taux.toFixed(3)), terminee, seuil: SEUIL });
   } catch (e) {

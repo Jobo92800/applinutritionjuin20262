@@ -20,6 +20,21 @@ self.addEventListener('push', (event) => {
     renotify: true,
   };
 
+  // Une notification du parcours (étape validée, rappel) n'a pas lieu d'être
+  // si la cliente a l'application sous les yeux : la célébration s'en charge.
+  if (options.tag === 'parcours') {
+    event.waitUntil(
+      self.clients
+        .matchAll({ type: 'window', includeUncontrolled: true })
+        .then((clientList) => {
+          const visible = clientList.some((c) => c.visibilityState === 'visible');
+          if (!visible) return self.registration.showNotification(title, options);
+        })
+        .catch(() => self.registration.showNotification(title, options))
+    );
+    return;
+  }
+
   event.waitUntil(self.registration.showNotification(title, options));
 });
 

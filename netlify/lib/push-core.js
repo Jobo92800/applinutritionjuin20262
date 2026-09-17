@@ -39,9 +39,9 @@ export async function supabaseFetch(path, token, options = {}) {
  * Envoie une notification à une liste d'abonnements.
  * Retourne le nombre d'envois réussis, échoués, et les abonnements expirés.
  */
-export async function sendToSubscriptions(subscriptions, { title, body, url }) {
+export async function sendToSubscriptions(subscriptions, { title, body, url, tag }) {
   webpush.setVapidDetails(`mailto:${CONTACT_EMAIL}`, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
-  const payload = JSON.stringify({ title, body, url: url || '/' });
+  const payload = JSON.stringify({ title, body, url: url || '/', ...(tag ? { tag } : {}) });
 
   const results = await Promise.allSettled(
     subscriptions.map((sub) =>

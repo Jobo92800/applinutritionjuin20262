@@ -19,7 +19,10 @@ import BadgeCelebration from './components/BadgeCelebration';
 
 function AppContent() {
   const { user, isLoading, completeOnboarding } = useAuth();
-  const [currentPage, setCurrentPage] = useState('dashboard');
+  // Une notification ouvre directement la bonne page : /?page=podcasts
+  const PAGES = ['dashboard', 'recipes', 'podcasts', 'calendar', 'shopping', 'progress', 'food-analysis', 'account', 'admin'];
+  const pageDemandee = new URLSearchParams(window.location.search).get('page');
+  const [currentPage, setCurrentPage] = useState(pageDemandee && PAGES.includes(pageDemandee) ? pageDemandee : 'dashboard');
   const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
 

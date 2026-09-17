@@ -264,6 +264,20 @@ changeantes). Modèles « Reset password » et « Invite user » en français,
 Site URL et Redirect URLs sur l'adresse de production, plafond d'envoi à 30/h.
 Testé : « Mot de passe oublié » arrive et fonctionne.
 
+**Notifications du parcours (17/09/2026)** : à la validation d'une étape,
+`progression.js` envoie « Étape validée 🎉 » avec le titre de la suivante
+(`notifierCliente` dans `parcours-core.js`, transport `web-push` de
+`push-core.js`) ; `scheduled-push` appelle `rappelsParcours()`
+(`netlify/lib/parcours-rappels.js`) tous les jours à 18 h Paris : rappel aux
+clientes abonnées, silencieuses depuis 7 jours, **qui ont déjà ouvert leur
+parcours ici** (les importées qui écoutent encore sur Mon Parcours ne sont pas
+rappelées), au plus une fois par semaine (journal `rappel-parcours`). Le
+service worker n'affiche pas un push `tag: parcours` si l'app est visible.
+`/?page=podcasts` ouvre directement le parcours. L'invitation à activer se
+cache si la permission est refusée ou si la cliente l'a fermée
+(`localStorage mbp_rappels_refuses`). Le banc remplace le transport
+(`definirTransportPush`) pour vérifier ce qui partirait.
+
 **Relais de transition** — `MON_PARCOURS_API_URL` (`https://applipodcast.netlify.app/api/admin`)
 et `MON_PARCOURS_ADMIN_CODE` (le code de Mon Parcours) : tant qu'ils sont
 posés, chaque compte créé ici (par la V2 ou l'onglet Clientes) est aussi créé
