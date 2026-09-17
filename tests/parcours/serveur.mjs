@@ -47,7 +47,12 @@ const podcast = (id, title, tiers, ordre, extra = {}) => ({
   actif: true, created_at: new Date(2026, 0, ordre).toISOString(), ...extra,
 });
 tables.podcasts.push(
-  podcast('p1', 'Introduction',      ['3_month', '6_month'], 1),
+  podcast('p1', 'Introduction',      ['3_month', '6_month'], 1, {
+    // Un vrai texte de production, pour juger la mise en page dans le banc.
+    description: "Cette semaine, on lance officiellement la cure. Vous êtes au cœur de votre journée détox, une étape stratégique de remise à zéro essentielle pour relancer la purification du corps.\n\nDès demain, vous entrez dans la phase d'attaque (7 jours). Vous retirez les féculents le midi et le soir, non pas par punition, mais pour stabiliser la glycémie et inciter le corps à puiser dans ses réserves. Attention, cette phase est volontairement courte pour éviter que l'organisme ne ralentisse son métabolisme.\n\nLe succès de cette semaine repose sur un petit-déjeuner structuré qui respecte les 4 piliers essentiels protéines, fruit, graisses de qualité et glucides à IG bas.\n\nLes protéines maigres (volaille, œufs, poisson blanc) sont fondamentales car elles apportent les acides aminés essentiels. Les fruits, riches en nutriments, sont vos alliés s'ils sont bien choisis (limitez ceux contenant plus de 15 % de sucre à une portion/jour). Pendant cette semaine, vos assiettes seront composées de légumes à volonté, de protéines maigres et de bonnes graisses.",
+    key_points: ["La journée détox est une remise à zéro symbolique et stratégique des organes d'élimination.", "La phase d'attaque retire les féculents midi et soir pour stabiliser la glycémie et brûler les graisses.", 'Le petit-déjeuner doit contenir les 4 piliers protéines, fibres, graisses saines et glucides à IG bas.'],
+    week_challenges: ["Boire 2 litres d'eau par jour.", "Suivre votre semaine d'attaque à la lettre, sans écart."],
+  }),
   podcast('p2', 'Semaine 1',         ['3_month', '6_month'], 2, { duration: 600 }),
   podcast('p3', 'Semaine 2',         ['3_month'],            3, { duration: 600 }),
   podcast('p4', 'Semaine 12 (3 m)',  ['3_month'],            4),

@@ -3,6 +3,7 @@ import { ArrowLeft, Play, Pause, RotateCcw, RotateCw, Headphones, Lock, FileText
 import { parcoursApi, EtapeParcours, ParcoursApiError } from '../lib/parcoursApi';
 import { supabase } from '../lib/supabase';
 import { empaqueter, depaqueter, tauxLocal, mmss } from '../lib/parcoursEcoute';
+import ContenuEpisode from './ContenuEpisode';
 
 /*
   Le lecteur d'une étape. Porté de « Mon Parcours » (index.html), avec ses
@@ -344,31 +345,7 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
       )}
 
       {/* Le contenu de l'étape */}
-      {etape.description && (
-        <div className="mt-6 bg-white rounded-2xl border border-gray-200 p-6">
-          <p className="text-gray-700 leading-relaxed">{etape.description}</p>
-        </div>
-      )}
-      {etape.pointsCles && etape.pointsCles.length > 0 && (
-        <div className="mt-4 bg-white rounded-2xl border border-gray-200 p-6">
-          <h2 className="font-semibold text-gray-800 mb-3">Points clés</h2>
-          <ul className="space-y-2">
-            {etape.pointsCles.map((p, i) => (
-              <li key={i} className="flex items-start space-x-2 text-gray-700"><span className="text-green-600 mt-0.5">•</span><span>{p}</span></li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {etape.defis && etape.defis.length > 0 && (
-        <div className="mt-4 bg-green-50 rounded-2xl border border-green-200 p-6">
-          <h2 className="font-semibold text-green-800 mb-3">Défis de la semaine</h2>
-          <ul className="space-y-2">
-            {etape.defis.map((p, i) => (
-              <li key={i} className="flex items-start space-x-2 text-green-900"><span className="mt-0.5">✓</span><span>{p}</span></li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <ContenuEpisode description={etape.description} pointsCles={etape.pointsCles} defis={etape.defis} />
       {(etape.supportPdf || (etape.boutons && etape.boutons.length > 0)) && (
         <div className="mt-4 flex flex-wrap gap-3">
           {etape.supportPdf && (
