@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, Book, Calendar, ShoppingCart, TrendingUp, Headphones, Settings, LogOut, Menu, X, Camera, Fingerprint } from 'lucide-react';
+import { Home, Book, Calendar, ShoppingCart, TrendingUp, Headphones, Settings, LogOut, Menu, X, Camera, Fingerprint, HelpCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import FloatingMessageButton from './FloatingMessageButton';
 
@@ -23,6 +23,7 @@ export default function Layout({ children, currentPage, onPageChange }: LayoutPr
     { id: 'progress', name: 'Suivi', icon: TrendingUp },
     { id: 'food-analysis', name: 'Analyse photo', icon: Camera },
     { id: 'account', name: 'Compte', icon: Settings },
+    { id: 'aide', name: 'Aide', icon: HelpCircle },
   ];
 
   if (user?.role === 'admin') {

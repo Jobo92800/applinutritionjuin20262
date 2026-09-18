@@ -326,6 +326,15 @@ devenu facultatif : « Poids actuel », IMC et l'historique ne comptent que les
 entrées pesées). `profilApi.etat()` garde sa réponse 3 min, liée au jeton de
 session.
 
+**Aide et guide (18/09/2026)** : page « Aide » (`Aide.tsx`, page `aide`, menu)
+= le guide dans l'application, une carte par écran, le réglage des
+notifications (`PushNotificationSettings`) dans la carte qui l'explique, un
+bouton vers chaque page. Le PDF (`public/guide-application.pdf`, 10 pages)
+est produit depuis `docs/guide-cliente/guide.html` (procédure dans son
+README) ; les deux disent la même chose, les changer ensemble. Le banc
+accepte `BANC_CLIENTE=1` et le front `?demo=cliente` pour des captures en
+vue cliente.
+
 **Relais de transition** — `MON_PARCOURS_API_URL` (`https://applipodcast.netlify.app/api/admin`)
 et `MON_PARCOURS_ADMIN_CODE` (le code de Mon Parcours) : tant qu'ils sont
 posés, chaque compte créé ici (par la V2 ou l'onglet Clientes) est aussi créé
