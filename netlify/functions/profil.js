@@ -2,7 +2,7 @@
   « Mon profil » : le BioPortrait de la cliente, lu dans la base de
   l'application thérapeute.
 
-  GET /api/profil                      -> { cliente, bilans[], mensurations[], seuil }
+  GET /api/profil                      -> { cliente, bilans[], mensurations[], poids[], seuil }
                                           ou { cliente: null } quand aucune fiche ne porte cet email
   GET /api/profil?document=<bilanId>   -> le PDF du BioPortrait de ce bilan
 
@@ -41,7 +41,7 @@ export default async (req) => {
     }
     const profil = await profilCliente(compte.email);
     await journaliser('profil', { userId: compte.id, ip: ipDe(req), detail: profil ? `${profil.bilans.length} bilan(s)` : 'sans fiche' });
-    return json(200, profil || { cliente: null, bilans: [], mensurations: [] });
+    return json(200, profil || { cliente: null, bilans: [], mensurations: [], poids: [] });
   } catch (e) {
     console.error('profil :', e.message);
     return json(502, { erreur: 'profil-indisponible' });

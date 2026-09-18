@@ -40,10 +40,14 @@ export interface BilanProfil {
 
 export type Mensuration = { date: string } & Record<string, number | string | null>;
 
+/** Une pesée faite en séance au centre. */
+export interface PeseeCentre { id: string; date: string; poids: number }
+
 export interface ProfilCliente {
   cliente: { prenom: string; civilite: string } | null;
   bilans: BilanProfil[];
   mensurations: Mensuration[];
+  poids: PeseeCentre[];
   seuil?: number;
 }
 
@@ -59,12 +63,26 @@ async function lire(requete = ''): Promise<Response> {
   });
 }
 
+/*
+  Le profil est lu par deux pages (Mon profil, Suivi) : on garde la dernière
+  réponse quelques minutes plutôt que d'interroger la V2 à chaque onglet.
+*/
+const CACHE_MS = 3 * 60 * 1000;
+let cache: { jeton: string | null; promesse: Promise<ProfilCliente>; a: number } | null = null;
+
 export const profilApi = {
   async etat(): Promise<ProfilCliente> {
-    const r = await lire();
-    const donnees = await r.json().catch(() => ({}));
-    if (!r.ok) throw new ParcoursApiError(donnees.erreur || 'erreur', r.status);
-    return donnees as ProfilCliente;
+    const acces = await jeton();   // le cache est lié à la session : un autre compte ne relit jamais le sien
+    if (cache && cache.jeton === acces && Date.now() - cache.a < CACHE_MS) return cache.promesse;
+    const promesse = (async () => {
+      const r = await fetch('/api/profil', { headers: acces ? { Authorization: `Bearer ${acces}` } : {} });
+      const donnees = await r.json().catch(() => ({}));
+      if (!r.ok) throw new ParcoursApiError(donnees.erreur || 'erreur', r.status);
+      return { poids: [], ...donnees } as ProfilCliente;
+    })();
+    cache = { jeton: acces, promesse, a: Date.now() };
+    promesse.catch(() => { cache = null; });
+    return promesse;
   },
 
   /** Le PDF d'un bilan, en adresse locale (blob) à ouvrir dans un nouvel onglet. */

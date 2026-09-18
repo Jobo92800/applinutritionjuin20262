@@ -113,7 +113,7 @@ export function presenterBilan(b, bareme) {
 /*
   Tout ce que la cliente peut voir : ses bilans de perte de poids terminés,
   du plus récent au plus ancien, chacun lu dans la version de barème qui l'a
-  produit, et ses mensurations dans l'ordre du temps.
+  produit, ses mensurations et ses pesées de séance dans l'ordre du temps.
 
   Le Bio-Portrait Anti-Âge (famille `anti_age`) se lit autrement et n'est pas
   repris ici. Le PDF n'est pas lu ici non plus : il pèse, on le sert à part
@@ -154,9 +154,15 @@ export async function profilCliente(email) {
     + `&cliente_id=in.(${ids})&order=date_mesure.asc,cree_le.asc`
   );
 
+  // Les pesées faites en séance : une par séance où la thérapeute a noté le poids.
+  const seances = await rest(
+    `/seances?select=id,date_seance,poids,technologie&cliente_id=in.(${ids})&poids=not.is.null&order=date_seance.asc,cree_le.asc`
+  );
+
   const fiche = fiches[0];
   return {
     cliente: { prenom: fiche.prenom, civilite: fiche.civilite || 'Mme' },
+    poids: seances.map((x) => ({ id: x.id, date: x.date_seance, poids: Number(x.poids) })),
     bilans: bilans
       .filter((b) => baremes[b.bareme_version])
       .map((b) => presenterBilan({ ...b, a_un_pdf: avecPdf.has(b.id) }, baremes[b.bareme_version])),

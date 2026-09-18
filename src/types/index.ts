@@ -101,6 +101,8 @@ export interface WeightEntry {
   userId: string;
   weight: number;
   date: string;
+  /** `centre` : pesée faite en séance par la thérapeute (lue dans la V2, non modifiable ici). */
+  source?: 'centre';
   measurements?: {
     waist?: number;
     chest?: number;

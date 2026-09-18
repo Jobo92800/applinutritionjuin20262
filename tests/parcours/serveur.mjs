@@ -124,6 +124,14 @@ export const tablesV2 = {
       scores: { P1: 50, P2: 70, P3: 40, P4: 20, P5: 55, T1: 40, T2: 80, T3: 30, T4: 45, T5: 10 },
       profil_dominant: 'P2', terrain_dominant: 'T2', inbody: {}, texte_libre: '', bioportrait_pdf: null, bioportrait_depose_le: null },
   ],
+  seances: [
+    { id: 's1', cliente_id: 'c-marie', date_seance: '2026-06-02', cree_le: '2026-06-02T10:00:00Z', poids: '84.50', technologie: 'luxo', cloturee: true },
+    { id: 's2', cliente_id: 'c-marie', date_seance: '2026-06-09', cree_le: '2026-06-09T10:00:00Z', poids: null, technologie: 'luxo', cloturee: true },
+    { id: 's3', cliente_id: 'c-marie', date_seance: '2026-06-16', cree_le: '2026-06-16T10:00:00Z', poids: '83.20', technologie: 'ishape', cloturee: false },
+    { id: 's4', cliente_id: 'c-demo', date_seance: '2026-09-01', cree_le: '2026-09-01T10:00:00Z', poids: '84.50', technologie: 'luxo', cloturee: true },
+    { id: 's5', cliente_id: 'c-demo', date_seance: '2026-09-08', cree_le: '2026-09-08T10:00:00Z', poids: '83.80', technologie: 'luxo', cloturee: true },
+    { id: 's6', cliente_id: 'c-demo', date_seance: '2026-09-15', cree_le: '2026-09-15T10:00:00Z', poids: '82.90', technologie: 'presso', cloturee: true },
+  ],
   mensurations: [
     { id: 'm1', cliente_id: 'c-marie', date_mesure: '2026-06-02', cree_le: '2026-06-02T10:00:00Z', taille: 84, ventre: 96, hanches: 104, cuisse_droite: 62, cuisse_gauche: 62 },
     { id: 'm2', cliente_id: 'c-marie', date_mesure: '2026-07-14', cree_le: '2026-07-14T10:00:00Z', taille: 80.5, ventre: 91, hanches: 101, cuisse_droite: 60, cuisse_gauche: 60.5 },

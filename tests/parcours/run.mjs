@@ -281,6 +281,8 @@ p('mesures InBody et complément, texte libre', b1.inbody?.length === 2 && b1.co
 p('le PDF est signalé sans être chargé dans la liste', b1.document === true && r.bilans[1].document === false && !('bioportrait_pdf' in b1));
 p('mensurations dans l\'ordre du temps, avec la date', r.mensurations?.length === 2 && r.mensurations[0].date === '2026-06-02' && r.mensurations[1].taille === 80.5 && !('date_mesure' in r.mensurations[0]));
 
+p('pesées de séance dans l\'ordre, en nombre, sans les séances sans poids', r.poids?.length === 2 && r.poids[0].date === '2026-06-02' && r.poids[0].poids === 84.5 && r.poids[1].poids === 83.2);
+
 r = await get('profil?document=11111111-1111-4111-8111-111111111111', auth(jetonMarie));
 p('le PDF de son bilan est servi en PDF', r.statut === 200 && r.type === 'application/pdf' && r.corps.toString().startsWith('%PDF-1.4 faux'));
 r = await get('profil?document=55555555-5555-4555-8555-555555555555', auth(jetonMarie));
@@ -289,7 +291,7 @@ r = await get('profil?document=22222222-2222-4222-8222-222222222222', auth(jeton
 p('un bilan sans PDF répond document-absent', r.statut === 404 && r.erreur === 'document-absent');
 
 r = await get('profil', auth(connecter('sophie@exemple.fr')));
-p('sans fiche V2 : cliente null, rien d\'autre', r.statut === 200 && r.cliente === null && r.bilans.length === 0);
+p('sans fiche V2 : cliente null, rien d\'autre', r.statut === 200 && r.cliente === null && r.bilans.length === 0 && r.poids.length === 0);
 
 let ko = 0;
 for (const [n, ok, d] of T) { if (!ok) ko++; console.log((ok ? '  OK  ' : '  KO  ') + n + (d && !ok ? ' -> ' + d : '')); }

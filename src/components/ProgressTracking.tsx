@@ -1,7 +1,9 @@
-import { useState } from 'react';
-import { TrendingUp, Plus, Target, Calendar, Weight, CheckCircle, Award, Star, CreditCard as Edit2, Trash2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { TrendingUp, Plus, Target, Calendar, Weight, CheckCircle, Award, Star, CreditCard as Edit2, Trash2, Building2 } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
+import { profilApi } from '../lib/profilApi';
+import { WeightEntry } from '../types';
 import Achievements from './Achievements';
 
 export default function ProgressTracking() {
@@ -31,8 +33,20 @@ export default function ProgressTracking() {
     }
   });
 
-  const userEntries = weightEntries
-    .filter(entry => entry.userId === user?.id)
+  /*
+    Les pesées faites en séance au centre viennent de la V2 (via /api/profil)
+    et se lisent avec celles de la cliente : mêmes courbes, même historique,
+    mais elles ne se modifient pas ici — c'est la thérapeute qui les tient.
+  */
+  const [peseesCentre, setPeseesCentre] = useState<WeightEntry[]>([]);
+  useEffect(() => {
+    if (!user) return;
+    profilApi.etat()
+      .then((p) => setPeseesCentre(p.poids.map((x) => ({ id: `centre-${x.id}`, userId: user.id, weight: x.poids, date: x.date, source: 'centre' as const }))))
+      .catch(() => setPeseesCentre([]));   // sans V2 joignable, le suivi reste celui de la cliente
+  }, [user]);
+
+  const userEntries = [...weightEntries.filter(entry => entry.userId === user?.id), ...peseesCentre]
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // Tri par date croissante pour le graphique
 
   const currentWeekProgress = user ? getCurrentWeekProgress(user.id) : null;
@@ -873,7 +887,7 @@ export default function ProgressTracking() {
             <div key={entry.id} className="p-6 hover:bg-gray-50 transition-colors">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex-1">
-                  <div className="flex items-center space-x-4">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                     <div className="text-lg font-semibold text-gray-800">{entry.weight} kg</div>
                     <div className="text-sm text-gray-500">
                       {new Date(entry.date).toLocaleDateString('fr-FR', {
@@ -883,6 +897,11 @@ export default function ProgressTracking() {
                         day: 'numeric'
                       })}
                     </div>
+                    {entry.source === 'centre' && (
+                      <span className="inline-flex items-center space-x-1 text-xs font-medium text-marine-800 bg-marine-100 px-2 py-0.5 rounded-full">
+                        <Building2 className="w-3 h-3" /><span>Pesée au centre</span>
+                      </span>
+                    )}
                   </div>
                   {entry.measurements && (
                     <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
@@ -901,7 +920,7 @@ export default function ProgressTracking() {
                       {getIMCCategory(parseFloat(calculateIMC(entry.weight, heightCm))).text}
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  {entry.source !== 'centre' && <div className="flex gap-2">
                     <button
                       onClick={() => openEditModal(entry)}
                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -916,7 +935,7 @@ export default function ProgressTracking() {
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
-                  </div>
+                  </div>}
                 </div>
               </div>
             </div>
