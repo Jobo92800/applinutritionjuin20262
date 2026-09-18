@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, Book, Calendar, ShoppingCart, TrendingUp, Headphones, Settings, LogOut, Menu, X, Camera } from 'lucide-react';
+import { Home, Book, Calendar, ShoppingCart, TrendingUp, Headphones, Settings, LogOut, Menu, X, Camera, Fingerprint } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import FloatingMessageButton from './FloatingMessageButton';
 
@@ -17,6 +17,7 @@ export default function Layout({ children, currentPage, onPageChange }: LayoutPr
     { id: 'dashboard', name: 'Accueil', icon: Home },
     { id: 'recipes', name: 'Recettes', icon: Book },
     { id: 'podcasts', name: 'Mon parcours', icon: Headphones },
+    { id: 'profil', name: 'Mon profil', icon: Fingerprint },
     { id: 'calendar', name: 'Calendrier', icon: Calendar },
     { id: 'shopping', name: 'Courses', icon: ShoppingCart },
     { id: 'progress', name: 'Suivi', icon: TrendingUp },

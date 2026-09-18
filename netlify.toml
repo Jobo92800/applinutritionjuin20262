@@ -23,6 +23,10 @@ status = 200
 from = "/api/admin-parcours"
 to = "/.netlify/functions/admin-parcours"
 status = 200
+[[redirects]]
+from = "/api/profil"
+to = "/.netlify/functions/profil"
+status = 200
 
 [[redirects]]
 from = "/*"

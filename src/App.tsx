@@ -9,6 +9,7 @@ import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import RecipeList from './components/RecipeList';
 import Parcours from './components/Parcours';
+import MonProfil from './components/MonProfil';
 import MealCalendar from './components/MealCalendar';
 import ShoppingList from './components/ShoppingList';
 import ProgressTracking from './components/ProgressTracking';
@@ -20,7 +21,7 @@ import BadgeCelebration from './components/BadgeCelebration';
 function AppContent() {
   const { user, isLoading, completeOnboarding } = useAuth();
   // Une notification ouvre directement la bonne page : /?page=podcasts
-  const PAGES = ['dashboard', 'recipes', 'podcasts', 'calendar', 'shopping', 'progress', 'food-analysis', 'account', 'admin'];
+  const PAGES = ['dashboard', 'recipes', 'podcasts', 'profil', 'calendar', 'shopping', 'progress', 'food-analysis', 'account', 'admin'];
   const pageDemandee = new URLSearchParams(window.location.search).get('page');
   const [currentPage, setCurrentPage] = useState(pageDemandee && PAGES.includes(pageDemandee) ? pageDemandee : 'dashboard');
   const [showPasswordReset, setShowPasswordReset] = useState(false);
@@ -88,6 +89,8 @@ function AppContent() {
         return <RecipeList />;
       case 'podcasts':
         return <Parcours />;
+      case 'profil':
+        return <MonProfil />;
       case 'calendar':
         return <MealCalendar />;
       case 'shopping':

@@ -292,6 +292,30 @@ final » n'a pas d'épisode : **l'audio n'est pas encore enregistré** (Jonathan
 le refera). Le jour venu : Nouveau podcast en cure 6 mois (il se place en
 dernier, étape 25), déposer le MP3, puis redéposer la fiche S24.
 
+**Mon profil — le BioPortrait (18/09/2026)** : un onglet « Mon profil »
+(`MonProfil.tsx`, page `profil`) montre à la cliente son BioPortrait tel qu'il
+a été établi au centre : profil × terrain dominants avec les mots du barème
+(`AX[].name/sig/feel/imp`, balises retirées), la phrase de synthèse, les dix
+jauges (seuil de présence 60, même règle que la V2), les mesures InBody
+(`bilans.inbody.mesures`), le complément orienté par le terrain
+(`TERRAIN_COMPL`), le texte libre, le PDF du BioPortrait, et les mensurations
+d'une date à l'autre. **Rien n'est copié : `/api/profil` (`netlify/functions/
+profil.js`, `netlify/lib/v2-core.js`) lit la base de la V2** en lecture seule
+avec sa clé de service — secrets Netlify `V2_SUPABASE_URL` et
+`V2_SUPABASE_SERVICE_ROLE_KEY`. Rapprochement sur **l'email** du compte
+(`clientes.email`, sans tenir compte de la casse, toutes les fiches qui le
+portent). Seuls les bilans `termine` de famille `perte_de_poids` avec un
+profil sont montrés, chacun lu dans **sa** version de barème
+(`bareme_empreinte`) ; l'anti-âge et le bilan santé restent au centre. Le PDF
+vient de `bilans.bioportrait_pdf` (base64, gardé en base par la V2 après
+l'envoi à Airtable) — servi à part (`?document=<id>`), jamais chargé dans la
+liste (`bioportrait_pdf=not.is.null` pour savoir s'il existe). Sans fiche V2 :
+« Votre BioPortrait apparaîtra ici après votre bilan au centre ». Sans les
+secrets : 503 `profil-indisponible`, message doux. Chaque consultation est
+journalisée (`profil`). Le banc simule la V2 (`tablesV2`, `journal.v2`).
+Safari n'ouvre un onglet que dans le geste : la fenêtre est ouverte avant
+l'appel, puis reçoit le PDF ; en PWA installée, téléchargement.
+
 **Relais de transition** — `MON_PARCOURS_API_URL` (`https://applipodcast.netlify.app/api/admin`)
 et `MON_PARCOURS_ADMIN_CODE` (le code de Mon Parcours) : tant qu'ils sont
 posés, chaque compte créé ici (par la V2 ou l'onglet Clientes) est aussi créé

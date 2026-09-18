@@ -260,6 +260,37 @@ p('rappel journalisé', tables.parcours_acces_log.some((l) => l.user_id === nina
 bilan = await rappelsParcours();
 p('pas de second rappel dans la semaine', bilan.rappelees === 0);
 
+// --- « Mon profil » : le BioPortrait lu dans la V2 ---
+const get = async (r, h = {}) => {
+  const x = await fetch(B + '/api/' + r, { headers: h });
+  const type = x.headers.get('content-type') || '';
+  return { statut: x.status, type, ...(type.includes('json') ? await x.json().catch(() => ({})) : { corps: Buffer.from(await x.arrayBuffer()) }) };
+};
+r = await get('profil');
+p('profil sans session refusé', r.statut === 401);
+const jetonMarie = connecter('marie@exemple.fr');
+r = await get('profil', auth(jetonMarie));
+p('profil de Marie lu par son email, quelle que soit la casse', r.statut === 200 && r.cliente?.prenom === 'Marie');
+p('deux bilans terminés, le plus récent d\'abord ; l\'abandonné et l\'anti-âge écartés', r.bilans?.length === 2 && r.bilans[0].date === '2026-06-02' && r.bilans[1].date === '2025-01-10');
+const b1 = r.bilans?.[0] || {};
+p('profil et terrain dominants avec les mots du barème, sans balises', b1.profil?.nom === 'Émotionnelle' && b1.terrain?.nom === 'Hormonal' && b1.profil?.texte === 'Les émotions guident vos choix à table.' && b1.profil?.pourcentage === 82);
+p('phrase de synthèse avec les forces secondaires (≥ 60 %)', b1.synthese === 'Votre BioPortrait associe un profil Émotionnelle à un terrain Hormonal. Deux forces secondaires la nuancent : pressée et digestif. Cette combinaison est la vôtre, et elle seule guide votre parcours.');
+p('dix jauges triées, dominant et présence marqués', b1.jauges?.profils?.length === 5 && b1.jauges.profils[0].code === 'P1' && b1.jauges.profils[0].dominant === true && b1.jauges.profils[1].present === true && b1.jauges.profils[2].present === false && b1.jauges.terrains?.[0].code === 'T1');
+p('« aussi présent » = les secondaires au-dessus du seuil', JSON.stringify(b1.aussiPresents) === JSON.stringify([{ nom: 'Pressée', pourcentage: 64 }, { nom: 'Digestif', pourcentage: 61 }]));
+p('mesures InBody et complément, texte libre', b1.inbody?.length === 2 && b1.complement?.nom === 'SOS / Sauveur' && b1.complement?.raison === 'Pour accompagner les cycles.' && b1.texteLibre === 'Retrouver de l’énergie le matin.');
+p('le PDF est signalé sans être chargé dans la liste', b1.document === true && r.bilans[1].document === false && !('bioportrait_pdf' in b1));
+p('mensurations dans l\'ordre du temps, avec la date', r.mensurations?.length === 2 && r.mensurations[0].date === '2026-06-02' && r.mensurations[1].taille === 80.5 && !('date_mesure' in r.mensurations[0]));
+
+r = await get('profil?document=11111111-1111-4111-8111-111111111111', auth(jetonMarie));
+p('le PDF de son bilan est servi en PDF', r.statut === 200 && r.type === 'application/pdf' && r.corps.toString().startsWith('%PDF-1.4 faux'));
+r = await get('profil?document=55555555-5555-4555-8555-555555555555', auth(jetonMarie));
+p('le PDF du bilan d\'une autre cliente est refusé', r.statut === 404);
+r = await get('profil?document=22222222-2222-4222-8222-222222222222', auth(jetonMarie));
+p('un bilan sans PDF répond document-absent', r.statut === 404 && r.erreur === 'document-absent');
+
+r = await get('profil', auth(connecter('sophie@exemple.fr')));
+p('sans fiche V2 : cliente null, rien d\'autre', r.statut === 200 && r.cliente === null && r.bilans.length === 0);
+
 let ko = 0;
 for (const [n, ok, d] of T) { if (!ok) ko++; console.log((ok ? '  OK  ' : '  KO  ') + n + (d && !ok ? ' -> ' + d : '')); }
 console.log(`\n${T.length - ko} contrôle${T.length - ko > 1 ? 's' : ''} passe${T.length - ko > 1 ? 'nt' : ''}` + (ko ? `, ${ko} en échec` : ''));

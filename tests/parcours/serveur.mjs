@@ -65,7 +65,73 @@ tables.podcasts.push(
   podcast('p10', 'Ancien perdu',     ['1_month'],           10, { fichier: null, audio_url: `${FAUX}/storage/v1/object/public/podcast-audio/absent.mp3` }),
 );
 
-export const journal = { emails: [], signatures: [], copies: [], relais: [], pushs: [] };
+export const journal = { emails: [], signatures: [], copies: [], relais: [], pushs: [], v2: [] };
+/* La base de l'application thérapeute (V2), lue par « Mon profil ». */
+const V2 = 'http://fauxv2.local';
+process.env.V2_SUPABASE_URL = V2;
+process.env.V2_SUPABASE_SERVICE_ROLE_KEY = 'cle-v2-test';
+const AXE = (name, sig, feel, imp) => ({ name, sig, feel, imp, note: '' });
+export const tablesV2 = {
+  clientes: [
+    // Marie a deux fiches (une reprise du CRM, une née dans la V2) : on lit les deux.
+    { id: 'c-marie', prenom: 'Marie', nom: 'Dupont', civilite: 'Mme', email: 'Marie@Exemple.fr', airtable_record_id: 'recM', cree_le: '2026-06-01T10:00:00Z' },
+    { id: 'c-marie-2', prenom: 'Marie', nom: 'Dupont', civilite: 'Mme', email: 'marie@exemple.fr', airtable_record_id: null, cree_le: '2025-01-01T10:00:00Z' },
+    { id: 'c-lea', prenom: 'Léa', nom: 'Martin', civilite: 'Mme', email: 'lea@exemple.fr', airtable_record_id: 'recL', cree_le: '2026-06-01T10:00:00Z' },
+    { id: 'c-demo', prenom: 'Démo', nom: 'Cliente', civilite: 'Mme', email: 'demo@nutrition.com', airtable_record_id: 'recD', cree_le: '2026-06-01T10:00:00Z' },
+  ],
+  bareme_empreinte: [
+    { version: 3, actif: true, contenu: {
+      AX: {
+        P1: AXE('Émotionnelle', 'Vous mangez ce que vous ressentez.', 'Les émotions guident <b>vos choix</b> à table.', ['Grignotage du soir', 'Compensation après une contrariété']),
+        P2: AXE('Pressée', 'Le temps manque, l’assiette s’en ressent.', 'Vous mangez vite, souvent debout.', ['Repas sautés']),
+        P3: AXE('Sociale', '', 'Les repas sont des moments partagés.', []),
+        P4: AXE('Contrôlante', '', 'Vous surveillez tout.', []),
+        P5: AXE('Gourmande', '', 'Le plaisir d’abord.', []),
+        T1: AXE('Hormonal', 'Votre corps suit ses cycles.', 'Le terrain hormonal pèse sur <b>la rétention</b> et l’énergie.', ['Ventre gonflé en fin de journée']),
+        T2: AXE('Digestif', '', 'La digestion est lente.', []),
+        T3: AXE('Circulatoire', '', 'Les jambes sont lourdes.', []),
+        T4: AXE('Métabolique', '', 'Le métabolisme est ralenti.', []),
+        T5: AXE('Inflammatoire', '', 'Le terrain est inflammatoire.', []),
+      },
+      TERRAIN_COMPL: { T1: { n: 'SOS / Sauveur', r: 'Pour accompagner <b>les cycles</b>.' } },
+      CURE_PRIO: {},
+      STEPS: [],
+    } },
+  ],
+  bilans: [
+    { id: '11111111-1111-4111-8111-111111111111', cliente_id: 'c-marie', famille: 'perte_de_poids', statut: 'termine', date_bilan: '2026-06-02', cree_le: '2026-06-02T10:00:00Z', bareme_version: 3,
+      scores: { P1: 82, P2: 64, P3: 40, P4: 20, P5: 55, T1: 75, T2: 61, T3: 30, T4: 45, T5: 10 },
+      profil_dominant: 'P1', terrain_dominant: 'T1', inbody: { mesures: [{ libelle: 'Graisse viscérale', valeur: 'Élevée (dans la zone gris foncé)' }, { libelle: 'Score InBody / 100', valeur: '72' }] },
+      texte_libre: 'Retrouver de l’énergie le matin.', bioportrait_pdf: Buffer.from('%PDF-1.4 faux document').toString('base64'), bioportrait_depose_le: null },
+    { id: '22222222-2222-4222-8222-222222222222', cliente_id: 'c-marie-2', famille: 'perte_de_poids', statut: 'termine', date_bilan: '2025-01-10', cree_le: '2025-01-10T10:00:00Z', bareme_version: 3,
+      scores: { P1: 50, P2: 70, P3: 40, P4: 20, P5: 55, T1: 40, T2: 80, T3: 30, T4: 45, T5: 10 },
+      profil_dominant: 'P2', terrain_dominant: 'T2', inbody: {}, texte_libre: '', bioportrait_pdf: null, bioportrait_depose_le: null },
+    // Abandonné : pas de profil, ne s'affiche pas.
+    { id: '33333333-3333-4333-8333-333333333333', cliente_id: 'c-marie', famille: 'perte_de_poids', statut: 'abandonne', date_bilan: '2026-07-01', cree_le: '2026-07-01T10:00:00Z', bareme_version: 3,
+      scores: {}, profil_dominant: null, terrain_dominant: null, inbody: {}, texte_libre: '', bioportrait_pdf: null, bioportrait_depose_le: null },
+    // Anti-âge : un autre document, pas repris ici.
+    { id: '44444444-4444-4444-8444-444444444444', cliente_id: 'c-marie', famille: 'anti_age', statut: 'termine', date_bilan: '2026-08-01', cree_le: '2026-08-01T10:00:00Z', bareme_version: 1,
+      scores: { fermete: 5 }, profil_dominant: 'fermete', terrain_dominant: 'hydratation', inbody: {}, texte_libre: '', bioportrait_pdf: null, bioportrait_depose_le: null },
+    // Léa : un bilan à elle, que Marie ne doit pas pouvoir ouvrir.
+    { id: '55555555-5555-4555-8555-555555555555', cliente_id: 'c-lea', famille: 'perte_de_poids', statut: 'termine', date_bilan: '2026-06-05', cree_le: '2026-06-05T10:00:00Z', bareme_version: 3,
+      scores: { P1: 30, P2: 30, P3: 90, P4: 20, P5: 55, T1: 40, T2: 20, T3: 85, T4: 45, T5: 10 },
+      profil_dominant: 'P3', terrain_dominant: 'T3', inbody: {}, texte_libre: '', bioportrait_pdf: Buffer.from('%PDF-1.4 lea').toString('base64'), bioportrait_depose_le: '2026-06-05T11:00:00Z' },
+    { id: '66666666-6666-4666-8666-666666666666', cliente_id: 'c-demo', famille: 'perte_de_poids', statut: 'termine', date_bilan: '2026-09-01', cree_le: '2026-09-01T10:00:00Z', bareme_version: 3,
+      scores: { P1: 82, P2: 64, P3: 40, P4: 20, P5: 55, T1: 75, T2: 61, T3: 30, T4: 45, T5: 10 },
+      profil_dominant: 'P1', terrain_dominant: 'T1', inbody: { mesures: [{ libelle: 'Graisse viscérale', valeur: 'Élevée (dans la zone gris foncé)' }, { libelle: 'Masse musculaire', valeur: 'Moyenne' }, { libelle: 'Métabolisme', valeur: 'Lent (sur / juste sous la fourchette basse)' }, { libelle: 'Rétention d’eau', valeur: 'Moyenne (0,381 à 0,390)' }, { libelle: 'Score InBody / 100', valeur: '72' }] },
+      texte_libre: 'Retrouver de l’énergie le matin.', bioportrait_pdf: Buffer.from('%PDF-1.4 faux document').toString('base64'), bioportrait_depose_le: null },
+    { id: '77777777-7777-4777-8777-777777777777', cliente_id: 'c-demo', famille: 'perte_de_poids', statut: 'termine', date_bilan: '2026-03-01', cree_le: '2026-03-01T10:00:00Z', bareme_version: 3,
+      scores: { P1: 50, P2: 70, P3: 40, P4: 20, P5: 55, T1: 40, T2: 80, T3: 30, T4: 45, T5: 10 },
+      profil_dominant: 'P2', terrain_dominant: 'T2', inbody: {}, texte_libre: '', bioportrait_pdf: null, bioportrait_depose_le: null },
+  ],
+  mensurations: [
+    { id: 'm1', cliente_id: 'c-marie', date_mesure: '2026-06-02', cree_le: '2026-06-02T10:00:00Z', taille: 84, ventre: 96, hanches: 104, cuisse_droite: 62, cuisse_gauche: 62 },
+    { id: 'm2', cliente_id: 'c-marie', date_mesure: '2026-07-14', cree_le: '2026-07-14T10:00:00Z', taille: 80.5, ventre: 91, hanches: 101, cuisse_droite: 60, cuisse_gauche: 60.5 },
+    { id: 'm3', cliente_id: 'c-demo', date_mesure: '2026-09-01', cree_le: '2026-09-01T10:00:00Z', taille: 84, ventre: 96, hanches: 104, cuisse_droite: 62, cuisse_gauche: 62 },
+    { id: 'm4', cliente_id: 'c-demo', date_mesure: '2026-09-15', cree_le: '2026-09-15T10:00:00Z', taille: 80.5, ventre: 91, hanches: 101, cuisse_droite: 60, cuisse_gauche: 60.5 },
+  ],
+};
+
 /* Un « Mon Parcours » simulé pour le relais de transition. */
 const RELAIS = 'http://fauxmonparcours.local/api/admin';
 process.env.MON_PARCOURS_API_URL = RELAIS;
@@ -139,6 +205,9 @@ function filtrer(lignes, params) {
       if (op === 'gte') return String(c) >= v;
       if (op === 'lte') return String(c) <= v;
       if (op === 'in') return v.replace(/^\(|\)$/g, '').split(',').includes(String(c));
+      if (op === 'ilike') return String(c ?? '').toLowerCase() === v.replace(/[%*]/g, '').toLowerCase();
+      if (op === 'is') return v === 'null' ? c == null : String(c) === v;
+      if (op === 'not' && reste[0] === 'is') return reste[1] === 'null' ? c != null : String(c) !== reste[1];
       return true;
     });
   }
@@ -210,6 +279,13 @@ globalThis.fetch = async (url, options = {}) => {
     }
     if (corps.action === 'renvoyer-invitation') return repondre({ ok: true });
     return repondre({ erreur: 'action-inconnue' }, 400);
+  }
+  if (u.startsWith(V2)) {
+    if (options.headers?.apikey !== 'cle-v2-test') return repondre({ message: 'clé V2 invalide' }, 401);
+    const [chemin, requete = ''] = u.slice(V2.length).replace('/rest/v1/', '').split('?');
+    if (!tablesV2[chemin]) return repondre({ message: 'table V2 inconnue ' + chemin }, 404);
+    journal.v2.push(chemin);
+    return repondre(filtrer(tablesV2[chemin], new URLSearchParams(requete)));
   }
   if (!u.startsWith(FAUX)) return vraiFetch(url, options);
   const apres = u.slice(FAUX.length);
@@ -315,7 +391,7 @@ globalThis.fetch = async (url, options = {}) => {
 
 /* ------------------------------------------- serveur de test --- */
 const FONCTIONS = {};
-for (const nom of ['parcours', 'audio', 'progression', 'admin-parcours']) {
+for (const nom of ['parcours', 'audio', 'progression', 'admin-parcours', 'profil']) {
   FONCTIONS[nom] = (await import(`${RACINE}/netlify/functions/${nom}.js`)).default;
 }
 // Les notifications : on note ce qui partirait, sans rien envoyer.
@@ -375,5 +451,5 @@ http.createServer(async (req, res) => {
   });
   const reponse = await fn(requete);
   res.writeHead(reponse.status, Object.fromEntries(reponse.headers));
-  res.end(await reponse.text());
+  res.end(Buffer.from(await reponse.arrayBuffer()));
 }).listen(PORT, () => console.log('banc prêt sur ' + PORT));
