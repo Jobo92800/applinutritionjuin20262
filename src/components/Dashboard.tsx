@@ -38,7 +38,7 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
 
   const recentWeightEntry = userEntries[userEntries.length - 1];
   const previousWeightEntry = userEntries[userEntries.length - 2];
-  const weightChange = recentWeightEntry && previousWeightEntry ? recentWeightEntry.weight - previousWeightEntry.weight : 0;
+  const weightChange = recentWeightEntry?.weight != null && previousWeightEntry?.weight != null ? recentWeightEntry.weight - previousWeightEntry.weight : 0;
 
   const weightGoal = user?.profile?.weightGoal || 70;
   const heightCm = user?.profile?.heightCm;

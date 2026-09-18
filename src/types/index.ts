@@ -99,7 +99,8 @@ export interface MealPlan {
 export interface WeightEntry {
   id: string;
   userId: string;
-  weight: number;
+  /** Absent sur un relevé de mensurations du centre sans pesée ce jour-là. */
+  weight?: number;
   date: string;
   /** `centre` : pesée faite en séance par la thérapeute (lue dans la V2, non modifiable ici). */
   source?: 'centre';

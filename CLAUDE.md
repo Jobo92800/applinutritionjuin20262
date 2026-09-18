@@ -319,8 +319,12 @@ l'appel, puis reçoit le PDF ; en PWA installée, téléchargement.
 réponse (`poids[]`) et se lisent dans l'onglet Suivi avec les pesées de la
 cliente : `WeightEntry.source = 'centre'`, badge « Pesée au centre », ni
 modification ni suppression — c'est la thérapeute qui les tient. Rien n'est
-écrit dans `weight_entries`. `profilApi.etat()` garde sa réponse 3 min, liée
-au jeton de session.
+écrit dans `weight_entries`. **Les mensurations du centre** (taille, poitrine,
+hanches — les seules que la courbe trace) rejoignent l'entrée de la pesée du
+même jour, ou font leur propre entrée sans poids (`WeightEntry.weight` est
+devenu facultatif : « Poids actuel », IMC et l'historique ne comptent que les
+entrées pesées). `profilApi.etat()` garde sa réponse 3 min, liée au jeton de
+session.
 
 **Relais de transition** — `MON_PARCOURS_API_URL` (`https://applipodcast.netlify.app/api/admin`)
 et `MON_PARCOURS_ADMIN_CODE` (le code de Mon Parcours) : tant qu'ils sont

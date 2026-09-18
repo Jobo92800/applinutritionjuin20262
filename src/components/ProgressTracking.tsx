@@ -42,7 +42,24 @@ export default function ProgressTracking() {
   useEffect(() => {
     if (!user) return;
     profilApi.etat()
-      .then((p) => setPeseesCentre(p.poids.map((x) => ({ id: `centre-${x.id}`, userId: user.id, weight: x.poids, date: x.date, source: 'centre' as const }))))
+      .then((p) => {
+        // Une entrée par jour de passage au centre : la pesée, et les mensurations
+        // (taille, poitrine, hanches — les seules que la courbe sait tracer) si
+        // elles ont été relevées le même jour ; sinon chacune fait son entrée.
+        const parJour = new Map<string, WeightEntry>();
+        for (const x of p.poids) {
+          parJour.set(x.date, { id: `centre-${x.id}`, userId: user.id, weight: x.poids, date: x.date, source: 'centre' });
+        }
+        for (const m of p.mensurations) {
+          const n = (v: unknown) => (v == null || v === '' ? undefined : Number(v));
+          const measurements = { waist: n(m.taille), chest: n(m.poitrine), hips: n(m.hanches) };
+          if (measurements.waist == null && measurements.chest == null && measurements.hips == null) continue;
+          const existante = parJour.get(m.date);
+          if (existante) existante.measurements = measurements;
+          else parJour.set(m.date, { id: `centre-mesures-${m.date}`, userId: user.id, date: m.date, measurements, source: 'centre' });
+        }
+        setPeseesCentre([...parJour.values()]);
+      })
       .catch(() => setPeseesCentre([]));   // sans V2 joignable, le suivi reste celui de la cliente
   }, [user]);
 
@@ -139,8 +156,10 @@ export default function ProgressTracking() {
     return { text: 'Obésité', color: 'text-red-600' };
   };
 
-  const latest = userEntries[userEntries.length - 1]; // Dernier élément après tri croissant
-  const previous = userEntries[userEntries.length - 2];
+  // Les relevés de mensurations sans pesée ne comptent pas comme un poids.
+  const pesees = userEntries.filter((e) => e.weight != null) as (WeightEntry & { weight: number })[];
+  const latest = pesees[pesees.length - 1]; // Dernier élément après tri croissant
+  const previous = pesees[pesees.length - 2];
   const weightChange = latest && previous ? latest.weight - previous.weight : 0;
 
   // Récupérer l'objectif de poids du profil utilisateur (défaut: 70kg)
@@ -888,7 +907,7 @@ export default function ProgressTracking() {
               <div className="flex items-center justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                    <div className="text-lg font-semibold text-gray-800">{entry.weight} kg</div>
+                    <div className="text-lg font-semibold text-gray-800">{entry.weight != null ? `${entry.weight} kg` : 'Mensurations'}</div>
                     <div className="text-sm text-gray-500">
                       {new Date(entry.date).toLocaleDateString('fr-FR', {
                         weekday: 'long',
@@ -912,14 +931,14 @@ export default function ProgressTracking() {
                   )}
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="text-right">
+                  {entry.weight != null && <div className="text-right">
                     <div className="text-sm font-medium text-gray-800">
                       IMC: {calculateIMC(entry.weight, heightCm)}
                     </div>
                     <div className={`text-xs ${getIMCCategory(parseFloat(calculateIMC(entry.weight, heightCm))).color}`}>
                       {getIMCCategory(parseFloat(calculateIMC(entry.weight, heightCm))).text}
                     </div>
-                  </div>
+                  </div>}
                   {entry.source !== 'centre' && <div className="flex gap-2">
                     <button
                       onClick={() => openEditModal(entry)}

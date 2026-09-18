@@ -153,7 +153,7 @@ export default function AccountProfile() {
   };
 
   const calculateBMI = () => {
-    if (latestWeight && formData.heightCm) {
+    if (latestWeight?.weight != null && formData.heightCm) {
       const heightM = parseInt(formData.heightCm) / 100;
       return (latestWeight.weight / (heightM * heightM)).toFixed(1);
     }
