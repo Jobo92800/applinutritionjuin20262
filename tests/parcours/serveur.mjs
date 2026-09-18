@@ -77,7 +77,7 @@ export const tablesV2 = {
     { id: 'c-marie', prenom: 'Marie', nom: 'Dupont', civilite: 'Mme', email: 'Marie@Exemple.fr', airtable_record_id: 'recM', cree_le: '2026-06-01T10:00:00Z' },
     { id: 'c-marie-2', prenom: 'Marie', nom: 'Dupont', civilite: 'Mme', email: 'marie@exemple.fr', airtable_record_id: null, cree_le: '2025-01-01T10:00:00Z' },
     { id: 'c-lea', prenom: 'Léa', nom: 'Martin', civilite: 'Mme', email: 'lea@exemple.fr', airtable_record_id: 'recL', cree_le: '2026-06-01T10:00:00Z' },
-    { id: 'c-demo', prenom: 'Démo', nom: 'Cliente', civilite: 'Mme', email: 'demo@nutrition.com', airtable_record_id: 'recD', cree_le: '2026-06-01T10:00:00Z' },
+    { id: 'c-demo', prenom: 'Marie', nom: 'Démo', civilite: 'Mme', email: 'demo@nutrition.com', airtable_record_id: 'recD', cree_le: '2026-06-01T10:00:00Z' },
   ],
   bareme_empreinte: [
     { version: 3, actif: true, contenu: {
@@ -183,8 +183,9 @@ function ouvrirSession(compte) {
   return { access_token: acces, refresh_token: 'ref-' + compte.id, expires_in: 3600, user: compte };
 }
 if (BANC_UI) {
-  const demo = nouveauCompte('demo@nutrition.com', { name: 'Utilisateur Démo' });
-  Object.assign(tables.profiles.find((x) => x.id === demo.id), { role: 'admin', subscription_tier: '3_month' });
+  // BANC_CLIENTE=1 : le compte de démo est une simple cliente (captures pour le guide).
+  const demo = nouveauCompte('demo@nutrition.com', { name: process.env.BANC_CLIENTE ? 'Marie' : 'Utilisateur Démo' });
+  Object.assign(tables.profiles.find((x) => x.id === demo.id), { role: process.env.BANC_CLIENTE ? 'user' : 'admin', subscription_tier: '3_month' });
   comptes.set(JETON_DEMO, demo);
   // Deux clientes pour peupler l'onglet Clientes.
   for (const [email, name, tier] of [['marie@exemple.fr', 'Marie Dupont', '3_month'], ['lea@exemple.fr', 'Léa Martin', '6_month']]) {

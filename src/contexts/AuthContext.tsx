@@ -72,14 +72,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
           }
 
-          // Mode démo avec utilisateur fictif (admin par défaut)
+          // Mode démo avec utilisateur fictif (admin par défaut ; ?demo=cliente pour une simple cliente)
+          const demoCliente = new URLSearchParams(window.location.search).get('demo') === 'cliente';
           if (mounted) {
             setUser({
               id: 'demo-user',
               email: 'demo@nutrition.com',
-              name: 'Utilisateur Démo',
-              role: 'admin',
-              subscription_tier: 'admin',
+              name: demoCliente ? 'Marie' : 'Utilisateur Démo',
+              role: demoCliente ? 'user' : 'admin',
+              subscription_tier: demoCliente ? '3_month' : 'admin',
               createdAt: new Date().toISOString(),
               isOnboardingComplete: true
             });

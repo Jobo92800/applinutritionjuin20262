@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Guide de l'application MAbeautyplus</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: 'Poppins', system-ui, sans-serif; color: #1f2d2e; font-size: 10.5pt; line-height: 1.55; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  :root { --teal: #3BBFBF; --teal-sombre: #2a8f8f; --teal-pale: #e6f6f6; --rose: #E8318A; --rose-pale: #fdeaf2; --ardoise: #5b6b6c; --ardoise-pale: #f3f6f6; --trait: #dfe7e7; }
+
+  .page { width: 210mm; height: 297mm; padding: 18mm 16mm 16mm; page-break-after: always; position: relative; overflow: hidden; background: #fff; }
+  .page:last-child { page-break-after: auto; }
+  .pied { position: absolute; left: 16mm; right: 16mm; bottom: 9mm; display: flex; justify-content: space-between; font-size: 8pt; color: #8a9899; border-top: 1px solid var(--trait); padding-top: 3mm; }
+
+  h1 { font-size: 22pt; font-weight: 700; margin: 0 0 3mm; letter-spacing: -0.01em; }
+  h2 { font-size: 11pt; font-weight: 600; margin: 7mm 0 2mm; color: var(--teal-sombre); }
+  p { margin: 0 0 3mm; }
+  .sur { font-size: 8.5pt; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--teal-sombre); margin-bottom: 2mm; }
+  .chapeau { font-size: 11.5pt; color: var(--ardoise); margin-bottom: 6mm; }
+
+  .deux { display: grid; grid-template-columns: 1fr 62mm; gap: 10mm; align-items: start; }
+  .tel { border-radius: 8mm; border: 1.6mm solid #1f2d2e; overflow: hidden; background: #fff; box-shadow: 0 6mm 14mm -8mm rgba(21,43,44,.5); }
+  .tel img { display: block; width: 100%; }
+  .legende { font-size: 8.5pt; color: #8a9899; text-align: center; margin-top: 2.5mm; }
+
+  ol.etapes { list-style: none; padding: 0; margin: 0 0 4mm; counter-reset: e; }
+  ol.etapes li { counter-increment: e; position: relative; padding-left: 10mm; margin-bottom: 3mm; }
+  ol.etapes li::before { content: counter(e); position: absolute; left: 0; top: 0.3mm; width: 7mm; height: 7mm; border-radius: 50%; background: var(--teal); color: #fff; font-weight: 600; font-size: 9pt; display: flex; align-items: center; justify-content: center; }
+  ul.puces { padding-left: 5mm; margin: 0 0 3mm; }
+  ul.puces li { margin-bottom: 1.5mm; }
+
+  .astuce { background: var(--teal-pale); border-left: 1.2mm solid var(--teal); border-radius: 0 3mm 3mm 0; padding: 3mm 4mm; margin: 4mm 0; font-size: 9.5pt; }
+  .astuce b { color: var(--teal-sombre); }
+  .important { background: var(--rose-pale); border-left: 1.2mm solid var(--rose); border-radius: 0 3mm 3mm 0; padding: 3mm 4mm; margin: 4mm 0; font-size: 9.5pt; }
+  .important b { color: var(--rose); }
+  .pill { display: inline-block; background: var(--rose); color: #fff; border-radius: 99px; padding: 0.5mm 3mm; font-weight: 600; font-size: 9pt; }
+  .pill.teal { background: var(--teal); }
+  .bouton { display: inline-block; border: 1px solid var(--trait); background: var(--ardoise-pale); border-radius: 99px; padding: 0.3mm 2.5mm; font-size: 9pt; font-weight: 500; white-space: nowrap; }
+
+  /* couverture */
+  .couv { background: linear-gradient(160deg, #3BBFBF 0%, #7fd2d2 45%, #f4b6d0 100%); color: #fff; display: flex; flex-direction: column; justify-content: space-between; }
+  .couv .logo { font-size: 13pt; font-weight: 600; letter-spacing: .04em; }
+  .couv h1 { font-size: 36pt; line-height: 1.1; margin: 0 0 6mm; }
+  .couv .sous { font-size: 14pt; opacity: .95; max-width: 120mm; }
+  .couv .bas { display: flex; justify-content: space-between; align-items: flex-end; font-size: 9.5pt; opacity: .9; }
+  .couv .carte { background: rgba(255,255,255,.92); color: #1f2d2e; border-radius: 6mm; padding: 6mm 7mm; max-width: 118mm; }
+  .couv .carte h3 { margin: 0 0 2mm; color: var(--teal-sombre); font-size: 11pt; }
+  .couv .carte ol { margin: 0; padding-left: 5mm; font-size: 10pt; }
+
+  .sommaire { columns: 2; column-gap: 10mm; font-size: 10.5pt; }
+  .sommaire div { break-inside: avoid; display: flex; gap: 3mm; margin-bottom: 2.5mm; }
+  .sommaire .n { color: var(--rose); font-weight: 600; min-width: 6mm; }
+
+  .grille-obj { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; margin: 3mm 0 4mm; }
+  .obj { border: 1px solid var(--trait); border-radius: 3mm; padding: 2.5mm 3.5mm; font-size: 9.5pt; }
+  .obj b { display: block; }
+  .badges { display: flex; flex-wrap: wrap; gap: 2mm; margin: 2mm 0 4mm; }
+  .badge { border: 1px solid var(--trait); background: var(--ardoise-pale); border-radius: 99px; padding: 1mm 3.5mm; font-size: 9pt; }
+</style>
+</head>
+<body>
+
+<!-- Couverture -->
+<section class="page couv">
+  <div class="logo">MAbeautyplus</div>
+  <div>
+    <h1>Votre application,<br>pas à pas</h1>
+    <p class="sous">Le guide de l'application MAbeautyplus Nutrition : votre parcours audio, votre BioPortrait, vos repas et votre suivi, tout au même endroit.</p>
+    <div class="carte" style="margin-top:10mm">
+      <h3>Pour commencer, il vous faut</h3>
+      <ol>
+        <li>l'adresse de l'application, donnée par votre centre ;</li>
+        <li>votre e-mail et le mot de passe choisi ensemble au centre ;</li>
+        <li>5 minutes pour l'installer sur votre téléphone (page 3).</li>
+      </ol>
+    </div>
+  </div>
+  <div class="bas">
+    <span>Guide de prise en main · septembre 2026</span>
+    <span>Votre centre reste à votre écoute</span>
+  </div>
+</section>
+
+<!-- Sommaire -->
+<section class="page">
+  <p class="sur">Sommaire</p>
+  <h1>Ce que vous trouverez dans l'application</h1>
+  <p class="chapeau">Chaque page de ce guide présente un écran : à quoi il sert, et comment s'en servir.</p>
+  <div class="sommaire">
+    <div><span class="n">3</span><span>Se connecter et installer l'application sur son téléphone</span></div>
+    <div><span class="n">4</span><span>L'accueil</span></div>
+    <div><span class="n">5</span><span>Mon parcours — l'accompagnement audio, une étape par semaine</span></div>
+    <div><span class="n">6</span><span>Écouter une étape et ouvrir sa fiche récap</span></div>
+    <div><span class="n">7</span><span>Mon profil — votre BioPortrait et vos mesures du centre</span></div>
+    <div><span class="n">8</span><span>Suivi — poids, mensurations, objectifs de la semaine et badges</span></div>
+    <div><span class="n">9</span><span>Recettes, calendrier des repas et liste de courses</span></div>
+    <div><span class="n">10</span><span>Analyse photo, Mon compte et le bouton d'aide</span></div>
+  </div>
+
+  <h2>Les trois rendez-vous de votre semaine</h2>
+  <ol class="etapes">
+    <li><b>Un jour fixe, votre pesée.</b> Le matin, à jeun. Vous la notez dans <span class="bouton">Suivi</span> ; celles faites au centre s'y ajoutent toutes seules.</li>
+    <li><b>Une étape audio par semaine.</b> Dans <span class="bouton">Mon parcours</span>, écoutez l'étape de la semaine, puis ouvrez sa fiche récap.</li>
+    <li><b>Chaque jour, quatre cases.</b> Compléments, hydratation, audio, cuisine maison : cochez-les dans Suivi pour lancer votre série et gagner vos badges.</li>
+  </ol>
+  <div class="astuce"><b>Une perte de poids saine et durable, c'est 0,5 à 1 kg par semaine.</b> Regardez la direction, pas la vitesse : l'application est faite pour ça.</div>
+  <div class="pied"><span>MAbeautyplus · Guide de l'application</span><span>2</span></div>
+</section>
+
+<!-- Connexion & installation -->
+<section class="page">
+  <p class="sur">Avant tout</p>
+  <h1>Se connecter, puis installer l'application</h1>
+  <div class="deux">
+    <div>
+      <h2>Votre compte a été créé au centre</h2>
+      <p>Votre thérapeute a créé votre accès à la signature de votre cure, avec votre adresse e-mail et un mot de passe choisi ensemble. Il n'y a rien à créer de votre côté.</p>
+      <ol class="etapes">
+        <li>Ouvrez l'adresse de l'application dans le navigateur de votre téléphone (Safari sur iPhone, Chrome sur Android).</li>
+        <li>Entrez votre e-mail et votre mot de passe, puis <span class="bouton">Se connecter</span>.</li>
+        <li>Vous restez connectée ensuite : pas besoin de retaper votre mot de passe à chaque fois.</li>
+      </ol>
+      <div class="astuce"><b>Mot de passe oublié ?</b> Sur l'écran de connexion, appuyez sur « Mot de passe oublié ? » : un e-mail de <i>contact@mabeautyplus.fr</i> vous permet d'en choisir un nouveau. Regardez aussi dans vos indésirables.</div>
+
+      <h2>Sur votre écran d'accueil, comme une vraie application</h2>
+      <p>L'application s'installe sans passer par l'App Store ni Google Play. Un bandeau <span class="bouton">Installer l'application</span> vous le propose en bas de l'écran.</p>
+      <p><b>Sur iPhone</b> (dans Safari) : appuyez sur le bouton <b>Partager</b> (le carré avec une flèche, en bas), puis <b>« Sur l'écran d'accueil »</b>, puis <b>Ajouter</b>.</p>
+      <p><b>Sur Android</b> (dans Chrome) : appuyez sur le bandeau « Installer l'application », ou sur les trois points en haut à droite puis « Installer l'application ».</p>
+      <div class="important"><b>C'est important pour les notifications</b> : sur iPhone, les rappels de votre parcours ne peuvent arriver que si l'application est installée sur l'écran d'accueil et ouverte depuis là.</div>
+    </div>
+    <div>
+      <div class="tel"><img src="account.png" alt=""></div>
+      <p class="legende">Votre compte, une fois connectée</p>
+    </div>
+  </div>
+  <div class="pied"><span>MAbeautyplus · Guide de l'application</span><span>3</span></div>
+</section>
+
+<!-- Accueil -->
+<section class="page">
+  <p class="sur">Premier écran</p>
+  <h1>L'accueil</h1>
+  <p class="chapeau">Votre point de départ à chaque ouverture : un raccourci vers chaque partie de l'application, et un résumé de vos progrès.</p>
+  <div class="deux">
+    <div>
+      <h2>Quatre raccourcis</h2>
+      <ul class="puces">
+        <li><b>Parcourir les recettes</b> — les recettes de votre programme.</li>
+        <li><b>Mon parcours audio</b> — l'étape de la semaine à écouter.</li>
+        <li><b>Planifier mes repas</b> — votre calendrier de la semaine.</li>
+        <li><b>Liste de courses</b> — générée à partir de vos repas planifiés.</li>
+      </ul>
+      <h2>Le résumé des progrès</h2>
+      <p>Poids initial, poids actuel, dernière pesée, nombre d'entrées de la semaine : un coup d'œil, et un bouton <span class="bouton">Ajouter une pesée</span> pour noter celle du jour sans changer d'écran.</p>
+      <h2>Le menu</h2>
+      <p>Sur téléphone, le menu s'ouvre avec les trois traits en haut à gauche. Sur ordinateur, il reste affiché à gauche. Vous y retrouvez, dans l'ordre : Accueil, Recettes, Mon parcours, Mon profil, Calendrier, Courses, Suivi, Analyse photo, Compte.</p>
+      <div class="astuce"><b>La petite bulle en bas à droite</b> est là sur tous les écrans : elle envoie un message à votre centre (voir page 10).</div>
+    </div>
+    <div>
+      <div class="tel"><img src="dashboard.png" alt=""></div>
+      <p class="legende">L'accueil, sur téléphone</p>
+    </div>
+  </div>
+  <div class="pied"><span>MAbeautyplus · Guide de l'application</span><span>4</span></div>
+</section>
+
+<!-- Mon parcours -->
+<section class="page">
+  <p class="sur">Mon parcours</p>
+  <h1>L'accompagnement audio, une étape par semaine</h1>
+  <p class="chapeau">Votre cure est accompagnée d'un parcours audio : une introduction, puis une étape par semaine, dans l'ordre. Chaque étape se débloque quand la précédente a été écoutée.</p>
+  <div class="deux">
+    <div>
+      <h2>Comment ça marche</h2>
+      <ol class="etapes">
+        <li><b>L'étape du moment</b> est en haut, avec sa durée. Appuyez sur <span class="pill">Commencer</span> (ou <span class="pill">Reprendre mon écoute</span> si vous aviez commencé).</li>
+        <li><b>Écoutez-la</b> — en une fois ou en plusieurs, l'application retient où vous en êtes, même si vous fermez.</li>
+        <li><b>Quand elle est écoutée, la suivante s'ouvre</b>. Une fenêtre « Bravo ! » vous le dit à la fin de l'épisode.</li>
+      </ol>
+      <h2>La frise « Votre parcours »</h2>
+      <p>Sous l'étape du moment, toutes les étapes de votre cure : celles terminées, celle disponible, et les suivantes, encore fermées. Vous pouvez réécouter une étape terminée autant de fois que vous voulez.</p>
+      <h2>Les notifications</h2>
+      <p>Dès votre première visite, une carte propose <span class="bouton">Activer les notifications</span>. Vous recevrez un message quand une étape est validée et que la suivante est prête, et un petit rappel si votre parcours vous attend depuis une semaine. Jamais plus.</p>
+      <div class="astuce"><b>Un seul épisode par semaine, c'est voulu.</b> Le rythme laisse le temps d'appliquer les conseils et d'en ressentir les effets. Choisissez un jour fixe : pesée, écoute, planification des repas.</div>
+      <div class="important"><b>Vos appareils.</b> Vous pouvez écouter depuis votre téléphone, votre tablette et votre ordinateur — jusqu'à quatre appareils. Votre progression est la même partout.</div>
+    </div>
+    <div>
+      <div class="tel"><img src="podcasts.png" alt=""></div>
+      <p class="legende">La page du parcours</p>
+    </div>
+  </div>
+  <div class="pied"><span>MAbeautyplus · Guide de l'application</span><span>5</span></div>
+</section>
+
+<!-- Le lecteur -->
+<section class="page">
+  <p class="sur">Mon parcours</p>
+  <h1>Écouter une étape, et ouvrir sa fiche récap</h1>
+  <p class="chapeau">L'écran d'écoute est volontairement simple : un gros bouton, deux sauts de 15 secondes, et tout ce qu'il faut savoir sous le lecteur.</p>
+  <h2>Le lecteur</h2>
+  <ul class="puces">
+    <li><b>Le bouton rond</b> lance et met en pause. Sur iPhone, un seul appui suffit — si le son tarde d'une seconde, c'est le temps de chargement, laissez-le venir.</li>
+    <li><b>« 15 s »</b> à gauche et à droite reculent ou avancent de quinze secondes. La barre se déplace aussi au doigt.</li>
+    <li><b>« Écouté : … % »</b> vous dit où vous en êtes. L'étape est validée à partir de 90 % d'écoute ; la suivante se débloque alors, mais <b>l'épisode continue jusqu'à la fin</b> — rien ne vous coupe.</li>
+    <li>Vous pouvez avancer dans l'épisode si vous l'avez déjà entendu : ce que vous passez compte comme écouté. Revenir en arrière ne retire rien.</li>
+  </ul>
+  <h2>La fiche récap</h2>
+  <p>Juste sous le lecteur, le grand bouton teal <span class="pill teal">Ouvrir la fiche récap de l'étape</span> ouvre le PDF de la semaine : l'essentiel de l'épisode par écrit, à garder ou à imprimer. Il y en a une par étape, propre à votre cure.</p>
+  <h2>Sous le lecteur</h2>
+  <ul class="puces">
+    <li><b>L'épisode en quelques mots</b> — le résumé de l'étape, en paragraphes courts.</li>
+    <li><b>À retenir</b> — les points clés, numérotés.</li>
+    <li><b>Vos défis de la semaine</b> — ce que vous mettez en pratique jusqu'à la prochaine étape.</li>
+  </ul>
+  <div class="astuce"><b>Pour revenir au parcours</b>, la flèche en haut à gauche du lecteur. Votre position dans l'épisode est gardée.</div>
+  <div class="pied"><span>MAbeautyplus · Guide de l'application</span><span>6</span></div>
+</section>
+
+<!-- Mon profil -->
+<section class="page">
+  <p class="sur">Mon profil</p>
+  <h1>Votre BioPortrait, et vos mesures du centre</h1>
+  <p class="chapeau">Tout ce que votre thérapeute a établi avec vous au centre se retrouve ici, à jour : le bilan BioPortrait, l'analyse InBody, vos mensurations.</p>
+  <div class="deux">
+    <div>
+      <h2>Le BioPortrait</h2>
+      <p>En haut, votre <b>profil</b> (teal) et votre <b>terrain</b> (rose), avec la phrase qui les résume. Puis une carte pour chacun : ce qu'il signifie, et ce qu'il change dans votre quotidien.</p>
+      <p>Le bouton <span class="pill teal">Ouvrir mon BioPortrait (PDF)</span> ouvre le document complet, celui que votre centre garde à votre dossier.</p>
+      <h2>L'analyse de composition corporelle</h2>
+      <p>Les mesures relevées sur la balance InBody lors de votre bilan : graisse viscérale, masse musculaire, métabolisme, rétention d'eau, score.</p>
+      <h2>Les jauges</h2>
+      <p>Les cinq profils et les cinq terrains, du plus marqué au moins marqué. Le trait vertical marque le seuil à partir duquel un axe compte vraiment chez vous.</p>
+      <h2>Vos mensurations</h2>
+      <p>Quand votre thérapeute relève vos mensurations en séance, elles apparaissent ici en tableau, d'une date à l'autre, avec l'écart. En teal quand ça descend.</p>
+      <div class="astuce"><b>Plusieurs bilans ?</b> Si vous refaites un point avec votre thérapeute, une barre de dates apparaît en haut : le plus récent d'abord, et les anciens restent consultables — c'est la comparaison qui est intéressante.</div>
+      <div class="important"><b>Rien ne se modifie ici</b> : ces données sont tenues par votre centre. Si quelque chose vous semble inexact, parlez-en à votre thérapeute.</div>
+    </div>
+    <div>
+      <div class="tel"><img src="profil.png" alt=""></div>
+      <p class="legende">Le BioPortrait dans l'application</p>
+    </div>
+  </div>
+  <div class="pied"><span>MAbeautyplus · Guide de l'application</span><span>7</span></div>
+</section>
+
+<!-- Suivi -->
+<section class="page">
+  <p class="sur">Suivi</p>
+  <h1>Votre poids, vos objectifs de la semaine, vos badges</h1>
+  <div class="deux">
+    <div>
+      <h2>Noter une pesée</h2>
+      <ol class="etapes">
+        <li>Appuyez sur <span class="pill teal">Nouvelle entrée</span>.</li>
+        <li>Entrez votre poids et la date. Si vous voulez, vos tours de taille, de poitrine et de hanches.</li>
+        <li>Enregistrez : la courbe se met à jour, l'IMC aussi.</li>
+      </ol>
+      <p>Une entrée se modifie ou se supprime avec les deux petites icônes à droite dans l'historique.</p>
+      <h2>La courbe « Évolution des mesures »</h2>
+      <p>Le poids en vert, les tours en couleur, et votre objectif en pointillé rouge. <b>Les pesées et mensurations faites au centre</b> y figurent aussi, marquées <span class="bouton">Pesée au centre</span> : elles viennent de votre thérapeute et ne se modifient pas ici.</p>
+      <h2>Les objectifs de la semaine</h2>
+      <p>Quatre questions, une case par jour :</p>
+      <div class="grille-obj">
+        <div class="obj"><b>Compléments alimentaires</b>Ai-je bien pris mes compléments ce matin ?</div>
+        <div class="obj"><b>Hydratation</b>Ai-je bien bu mes 2 litres d'eau ?</div>
+        <div class="obj"><b>Audio de la semaine</b>Ai-je bien écouté l'audio de la semaine ?</div>
+        <div class="obj"><b>Cuisine maison</b>Ai-je cuisiné mes repas maison ?</div>
+      </div>
+      <h2>Série et badges</h2>
+      <p>Une journée où tout est coché fait avancer votre <b>série</b>. Les badges se gagnent avec la régularité :</p>
+      <div class="badges"><span class="badge">Semaine Parfaite</span><span class="badge">Maître de l'Hydratation</span><span class="badge">Champion des Compléments</span><span class="badge">Chef à Domicile</span><span class="badge">Auditeur Assidu</span><span class="badge">Série de 7 jours</span><span class="badge">Série de 30 jours</span></div>
+    </div>
+    <div>
+      <div class="tel"><img src="progress.png" alt=""></div>
+      <p class="legende">Le suivi des progrès</p>
+    </div>
+  </div>
+  <div class="pied"><span>MAbeautyplus · Guide de l'application</span><span>8</span></div>
+</section>
+
+<!-- Recettes, calendrier, courses -->
+<section class="page">
+  <p class="sur">Vos repas</p>
+  <h1>Recettes, calendrier des repas, liste de courses</h1>
+  <p class="chapeau">Trois écrans qui se suivent : on choisit ses recettes, on les place dans la semaine, et la liste de courses s'écrit toute seule.</p>
+  <div class="deux">
+    <div>
+      <h2>Recettes</h2>
+      <p>Cherchez par nom, filtrez par catégorie, difficulté ou préférence alimentaire. Ouvrez une recette pour les ingrédients, les étapes, le temps et les apports. Certaines proposent une <b>version adaptée à vos besoins caloriques</b>, calculée d'après votre profil. Le cœur met une recette en favori.</p>
+      <h2>Calendrier des repas</h2>
+      <p>Une semaine à la fois (les flèches changent de semaine). Pour chaque jour : petit-déjeuner, déjeuner, dîner, chacun avec ses cases <span class="bouton">+ Ajouter</span> (entrée, plat, dessert…). Appuyez sur une case, choisissez une recette, c'est placé. En bas, les <b>apports moyens par jour</b> de la semaine.</p>
+      <h2>Liste de courses</h2>
+      <ol class="etapes">
+        <li><span class="pill teal">Générer depuis les repas</span> — choisissez la semaine : tous les ingrédients de vos repas planifiés arrivent dans la liste.</li>
+        <li>Ajoutez à la main ce qui manque (nom, quantité, rayon).</li>
+        <li>En magasin, cochez au fur et à mesure. <span class="bouton">J'ai fait mes courses</span> remet la liste à zéro.</li>
+      </ol>
+      <div class="astuce"><b>Le bon ordre pour votre jour fixe :</b> écouter l'étape, planifier les repas de la semaine, générer la liste. Dix minutes, et la semaine est prête.</div>
+    </div>
+    <div>
+      <div class="tel"><img src="calendar.png" alt=""></div>
+      <p class="legende">Le calendrier de la semaine</p>
+    </div>
+  </div>
+  <div class="pied"><span>MAbeautyplus · Guide de l'application</span><span>9</span></div>
+</section>
+
+<!-- Analyse photo, compte, aide -->
+<section class="page">
+  <p class="sur">Et aussi</p>
+  <h1>Analyse photo, Mon compte, et le bouton d'aide</h1>
+  <div class="deux">
+    <div>
+      <h2>Analyse calorique par photo</h2>
+      <p>Prenez votre assiette en photo (ou importez-la depuis la galerie), appuyez sur <span class="bouton">Analyser</span> : l'application estime les calories et la répartition du repas. <span class="bouton">Sauvegarder dans l'historique</span> pour la retrouver. C'est une estimation, utile pour prendre conscience des portions — pas une pesée au gramme près.</p>
+      <h2>Mon compte</h2>
+      <ul class="puces">
+        <li><b>Informations personnelles</b> — nom, tranche d'âge, taille (elle sert au calcul de l'IMC), niveau d'activité, préférences alimentaires.</li>
+        <li><b>Objectif de poids</b> — c'est la ligne rouge de votre courbe de suivi.</li>
+        <li><b>Notifications</b> — activer ou désactiver les notifications sur ce téléphone, les rappels de repas, le rapport hebdomadaire.</li>
+        <li><b>Mot de passe</b> — pour en changer, il faut l'actuel puis le nouveau, deux fois.</li>
+        <li><b>Se déconnecter</b> — tout en bas. Utile seulement si vous prêtez votre téléphone ; sinon, restez connectée.</li>
+      </ul>
+      <h2>Une question ? Le bouton en bas à droite</h2>
+      <p>Sur tous les écrans, la bulle en bas à droite ouvre <span class="bouton">Envoyer un message</span> : un sujet, quelques lignes, et votre centre vous répond dans l'application. Vous y retrouvez aussi vos messages précédents et leurs réponses.</p>
+      <div class="important"><b>Ça ne marche pas comme prévu ?</b> Trois gestes qui règlent presque tout : fermer complètement l'application et la rouvrir ; vérifier que vous avez du réseau ; vous déconnecter puis vous reconnecter. Et sinon, le bouton message — ou votre centre, tout simplement.</div>
+    </div>
+    <div>
+      <div class="tel"><img src="food-analysis.png" alt=""></div>
+      <p class="legende">L'analyse d'un repas en photo</p>
+    </div>
+  </div>
+  <div class="pied"><span>MAbeautyplus · Guide de l'application</span><span>10</span></div>
+</section>
+
+</body>
+</html>
