@@ -68,13 +68,13 @@ export default function RecipeList({ onRecipeSelect }: RecipeListProps) {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Recettes</h1>
+          <h1 className="titre-1"><b>Recettes</b></h1>
           <p className="text-gray-600 mt-2">{filteredRecipes.length} recettes disponibles</p>
         </div>
       </div>
 
       {/* Search and Filters */}
-      <div className="hidden md:block bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+      <div className="hidden md:block bg-white rounded-xl p-6 border border-gray-200">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -127,7 +127,7 @@ export default function RecipeList({ onRecipeSelect }: RecipeListProps) {
       </div>
 
       {/* Mobile Search Only */}
-      <div className="md:hidden bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+      <div className="md:hidden bg-white rounded-xl p-4 border border-gray-200">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
@@ -145,7 +145,7 @@ export default function RecipeList({ onRecipeSelect }: RecipeListProps) {
         {filteredRecipes.map((recipe) => (
           <div
             key={recipe.id}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+            className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:border-marine-250 hover:shadow-carte transition-colors duration-200 cursor-pointer"
             onClick={() => handleRecipeClick(recipe)}
           >
             <div className="relative">
@@ -159,7 +159,7 @@ export default function RecipeList({ onRecipeSelect }: RecipeListProps) {
                   e.stopPropagation();
                   toggleFavorite(recipe.id);
                 }}
-                className="absolute top-4 right-4 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors shadow-lg"
+                className="absolute top-4 right-4 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors shadow-carte"
               >
                 <Heart
                   className={`w-5 h-5 ${

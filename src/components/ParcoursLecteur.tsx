@@ -267,28 +267,28 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
         <ArrowLeft className="w-5 h-5" /><span>Mon parcours</span>
       </button>
 
-      <p className="text-xs font-semibold tracking-widest uppercase text-pink-600">Étape {numero} sur {total}</p>
-      <h1 className="text-2xl font-bold text-gray-800 mt-1 mb-6">{etape.titre}</h1>
+      <p className="surtitre">Étape {numero} sur {total}</p>
+      <h1 className="titre-1 mt-1 mb-6">{etape.titre}</h1>
 
       {erreur ? (
         <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 flex items-start space-x-3">
           <Lock className="w-5 h-5 mt-0.5 flex-shrink-0" /><span>{erreur}</span>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-2xl border border-gray-200 p-6">
           {/* Le bouton lecture, entouré de l'anneau de progression */}
           <div className="flex flex-col items-center">
             <div className="relative w-28 h-28">
               <svg className="absolute inset-0 -rotate-90" viewBox="0 0 96 96">
-                <circle cx="48" cy="48" r="45" fill="none" stroke="#E5E7EB" strokeWidth="5" />
-                <circle cx="48" cy="48" r="45" fill="none" stroke="#16A34A" strokeWidth="5" strokeLinecap="round"
+                <circle cx="48" cy="48" r="45" fill="none" stroke="#E4F2F2" strokeWidth="5" />
+                <circle cx="48" cy="48" r="45" fill="none" stroke="#3BBFBF" strokeWidth="5" strokeLinecap="round"
                   strokeDasharray="282.7" strokeDashoffset={282.7 - (pcLu / 100) * 282.7} className="transition-all" />
               </svg>
               <button
                 onClick={basculer}
                 disabled={chargement}
                 aria-label={enLecture ? 'Pause' : 'Lecture'}
-                className="absolute inset-3 rounded-full bg-green-600 text-white flex items-center justify-center shadow-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                className="absolute inset-3 rounded-full bg-marine-700 text-white flex items-center justify-center shadow-carte hover:bg-marine-800 disabled:opacity-50 transition-colors"
               >
                 {chargement ? <Headphones className="w-8 h-8 animate-pulse" /> : enLecture ? <Pause className="w-9 h-9" /> : <Play className="w-9 h-9 ml-1" />}
               </button>
@@ -322,8 +322,8 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
               <span className="text-gray-600">Écouté</span>
               <span className="font-semibold text-gray-800">{Math.round(taux * 100)} %</span>
             </div>
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${pcSeuil}%` }} />
+            <div className="h-2 bg-mab-rail rounded-full overflow-hidden">
+              <div className="h-full bg-mab-aqua rounded-full transition-all duration-200" style={{ width: `${pcSeuil}%` }} />
             </div>
             <p className="text-sm text-gray-600 mt-3">
               {validee
@@ -337,7 +337,7 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
           {/* La fiche récap : le support écrit de l'épisode, à portée de main du lecteur. */}
           {fichePdf && (
             <a href={fichePdf} target="_blank" rel="noopener noreferrer"
-              className="mt-4 w-full flex items-center justify-center space-x-2 bg-marine-600 text-white py-3 rounded-full font-semibold hover:bg-marine-700 hover:-translate-y-px transition-all shadow-carte">
+              className="mt-4 w-full flex items-center justify-center space-x-2 bg-marine-700 text-white py-3 rounded-full font-semibold hover:bg-marine-800 transition-colors shadow-carte">
               <FileText className="w-5 h-5" /><span>Ouvrir la fiche récap de l'étape</span>
             </a>
           )}
@@ -356,7 +356,7 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
           )}
           {etape.boutons?.map((b, i) => (
             <a key={i} href={b.url} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center space-x-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">
+              className="inline-flex items-center space-x-2 px-4 py-2 rounded-lg bg-marine-700 text-white hover:bg-marine-800">
               <ExternalLink className="w-4 h-4" /><span>{b.text}</span>
             </a>
           ))}
@@ -366,7 +366,7 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
       {/* La célébration : à la fin de l'épisode, jamais avant */}
       {celebration && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-xl">
+          <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-flottante">
             <PartyPopper className="w-12 h-12 text-pink-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-800">Bravo !</h2>
             <p className="text-gray-600 mt-2">
@@ -375,7 +375,7 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
                 : '🔓 Votre prochaine étape est maintenant disponible.'}
             </p>
             <button onClick={() => { setCelebration(false); onSuivante(); }}
-              className="mt-6 w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700">
+              className="mt-6 w-full bg-marine-700 text-white py-3 rounded-lg font-medium hover:bg-marine-800">
               {numero >= total ? 'Revenir à mon parcours' : 'Découvrir la prochaine étape'}
             </button>
             <button onClick={() => { setCelebration(false); onRetour(); }}

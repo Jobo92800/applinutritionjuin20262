@@ -213,13 +213,13 @@ export default function Aide({ onPageChange }: Props) {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <p className="text-xs font-semibold tracking-widest uppercase text-green-600">Aide</p>
-        <h1 className="text-2xl font-bold text-gray-800 mt-1">Comment fonctionne votre application</h1>
+        <p className="surtitre">Aide</p>
+        <h1 className="titre-1 mt-1">Comment fonctionne <b>votre application</b></h1>
         <p className="text-sm text-gray-500 mt-1">Un écran, une carte. Appuyez pour ouvrir.</p>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-200 p-5">
-        <p className="flex items-center space-x-2 text-xs font-semibold tracking-widest uppercase text-marine-700"><LifeBuoy className="w-4 h-4" /><span>Les trois rendez-vous de votre semaine</span></p>
+        <p className="surtitre flex items-center space-x-2"><LifeBuoy className="w-4 h-4" /><span>Les trois rendez-vous de votre semaine</span></p>
         <div className="mt-3">
           <Etapes enfants={[
             <><b>Un jour fixe, votre pesée</b>, le matin à jeun. Notez-la dans Suivi ; celles du centre s'ajoutent toutes seules.</>,
@@ -250,7 +250,7 @@ export default function Aide({ onPageChange }: Props) {
                   {s.contenu}
                   {s.page && (
                     <button onClick={() => onPageChange(s.page!)}
-                      className="w-full sm:w-auto bg-marine-600 text-white px-5 py-2.5 rounded-full font-semibold hover:bg-marine-700 transition-colors">
+                      className="w-full sm:w-auto bg-marine-700 text-white px-5 py-2.5 rounded-full font-semibold hover:bg-marine-800 transition-colors">
                       {NOMS_PAGES[s.page] || 'Ouvrir la page'}
                     </button>
                   )}

@@ -16,10 +16,10 @@ export default function BadgeCelebration() {
       onClick={clearNewBadges}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden"
+        className="bg-white rounded-2xl shadow-flottante max-w-sm w-full overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 px-6 py-5 text-center">
+        <div className="bg-degrade-profond px-6 py-5 text-center">
           <div className="text-5xl mb-1">🎉</div>
           <h2 className="text-xl font-bold text-white">
             {pluriel ? 'Nouveaux badges débloqués !' : 'Nouveau badge débloqué !'}
@@ -44,7 +44,7 @@ export default function BadgeCelebration() {
 
           <button
             onClick={clearNewBadges}
-            className="w-full mt-2 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors"
+            className="w-full mt-2 py-3 bg-marine-700 text-white rounded-xl font-semibold hover:bg-marine-800 transition-colors"
           >
             Continuer
           </button>

@@ -58,7 +58,7 @@ export default function UpdatePrompt() {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-[60] p-3 sm:p-4">
-      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl border border-gray-200 p-4 flex items-center gap-3">
+      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-flottante border border-gray-200 p-4 flex items-center gap-3">
         <div className="w-11 h-11 flex-shrink-0 bg-green-100 rounded-xl flex items-center justify-center">
           <RefreshCw className={`w-5 h-5 text-green-600 ${updating ? 'animate-spin' : ''}`} />
         </div>
@@ -75,7 +75,7 @@ export default function UpdatePrompt() {
         <button
           onClick={handleUpdate}
           disabled={updating}
-          className="flex-shrink-0 inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-green-600 text-white rounded-xl font-semibold text-sm sm:text-base hover:bg-green-700 transition-colors disabled:opacity-60"
+          className="flex-shrink-0 inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-marine-700 text-white rounded-xl font-semibold text-sm sm:text-base hover:bg-marine-800 transition-colors disabled:opacity-60"
         >
           {updating ? 'Mise à jour…' : 'Actualiser'}
         </button>

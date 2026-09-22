@@ -128,7 +128,7 @@ export default function NotificationsPanel() {
       {(title.trim() || message.trim()) && (
         <div>
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Aperçu</p>
-          <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex items-start gap-3">
+          <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-start gap-3">
             <div className="w-10 h-10 flex-shrink-0 bg-green-100 rounded-lg flex items-center justify-center">
               <Bell className="w-5 h-5 text-green-600" />
             </div>
@@ -148,7 +148,7 @@ export default function NotificationsPanel() {
       <button
         onClick={handleSend}
         disabled={sending || !message.trim() || !title.trim()}
-        className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-marine-700 text-white rounded-xl font-semibold hover:bg-marine-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
         {sending ? 'Envoi en cours…' : 'Envoyer à tous les abonnés'}

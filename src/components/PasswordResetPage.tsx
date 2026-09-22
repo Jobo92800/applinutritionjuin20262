@@ -122,9 +122,9 @@ export default function PasswordResetPage({ onBackToLogin }: PasswordResetPagePr
   // Affichage pendant la vérification du token
   if (validToken === null) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-marine-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="bg-white rounded-2xl shadow-flottante p-8 text-center">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
             </div>
@@ -139,9 +139,9 @@ export default function PasswordResetPage({ onBackToLogin }: PasswordResetPagePr
   // Affichage si le token n'est pas valide
   if (validToken === false) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-marine-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="bg-white rounded-2xl shadow-flottante p-8 text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <AlertCircle className="w-8 h-8 text-red-600" />
             </div>
@@ -151,7 +151,7 @@ export default function PasswordResetPage({ onBackToLogin }: PasswordResetPagePr
             </p>
             <button
               onClick={onBackToLogin}
-              className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+              className="w-full bg-marine-700 text-white py-3 rounded-lg font-medium hover:bg-marine-800 transition-colors"
             >
               Retour à la connexion
             </button>
@@ -164,9 +164,9 @@ export default function PasswordResetPage({ onBackToLogin }: PasswordResetPagePr
   // Affichage de succès
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-marine-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="bg-white rounded-2xl shadow-flottante p-8 text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
@@ -176,7 +176,7 @@ export default function PasswordResetPage({ onBackToLogin }: PasswordResetPagePr
             </p>
             <button
               onClick={onBackToLogin}
-              className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+              className="w-full bg-marine-700 text-white py-3 rounded-lg font-medium hover:bg-marine-800 transition-colors"
             >
               Se connecter
             </button>
@@ -188,9 +188,9 @@ export default function PasswordResetPage({ onBackToLogin }: PasswordResetPagePr
 
   // Formulaire de réinitialisation
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-marine-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white rounded-2xl shadow-flottante p-8">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Lock className="w-8 h-8 text-green-600" />
@@ -265,7 +265,7 @@ export default function PasswordResetPage({ onBackToLogin }: PasswordResetPagePr
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-marine-700 text-white py-3 rounded-lg font-medium hover:bg-marine-800 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Mise à jour...' : 'Mettre à jour le mot de passe'}
             </button>

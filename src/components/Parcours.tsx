@@ -85,7 +85,7 @@ function InvitationRappels() {
         </p>
         {!message && (
           <button onClick={activer} disabled={enCours}
-            className="mt-2 text-sm font-semibold text-white bg-marine-600 hover:bg-marine-700 disabled:opacity-50 px-4 py-1.5 rounded-full">
+            className="mt-2 text-sm font-semibold text-white bg-marine-700 hover:bg-marine-800 disabled:opacity-50 px-4 py-1.5 rounded-full">
             {enCours ? 'Activation…' : 'Activer les notifications'}
           </button>
         )}
@@ -130,7 +130,7 @@ export default function Parcours() {
     const m = MESSAGES[erreur] || { titre: 'Un problème est survenu', texte: "Votre parcours n'a pas pu être chargé. Vérifiez votre connexion et réessayez." };
     return (
       <div className="max-w-md mx-auto text-center py-16">
-        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-pink-400 flex items-center justify-center mx-auto mb-5">
+        <div className="w-16 h-16 rounded-full bg-marine-500 flex items-center justify-center mx-auto mb-5">
           <Lock className="w-7 h-7 text-white" />
         </div>
         <h1 className="text-2xl font-bold text-gray-800">{m.titre}</h1>
@@ -168,8 +168,8 @@ export default function Parcours() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <p className="text-xs font-semibold tracking-widest uppercase text-green-600">Bonjour {etat.cliente.prenom}</p>
-        <h1 className="text-2xl font-bold text-gray-800 mt-1">Votre parcours MAbeautyplus</h1>
+        <p className="surtitre">Bonjour {etat.cliente.prenom}</p>
+        <h1 className="titre-1 mt-1">Votre <b>parcours</b> MAbeautyplus</h1>
         <p className="text-sm text-gray-500 mt-1">{etat.cliente.cure} · une étape à la fois, à votre rythme.</p>
       </div>
 
@@ -178,18 +178,27 @@ export default function Parcours() {
       {/* Avancement global */}
       <div className="bg-white rounded-2xl border border-gray-200 p-5">
         <div className="flex justify-between text-sm mb-2">
-          <span className="text-gray-700">{etat.terminees} étape{etat.terminees > 1 ? 's' : ''} terminée{etat.terminees > 1 ? 's' : ''} sur {etat.total}</span>
-          <span className="font-semibold text-pink-600">{pourcent} %</span>
+          <span className="text-gray-700">Votre progression</span>
+          <span className="font-semibold text-gray-800">{etat.terminees} / {etat.total}</span>
         </div>
-        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-green-500 to-pink-500 rounded-full transition-all" style={{ width: `${pourcent}%` }} />
+        {/*
+          Le dégradé de marque s'étale sur toute la largeur du rail et le
+          remplissage le découpe : on voit qu'on s'approche du rose. Jamais le
+          dégradé sur la seule portion remplie.
+        */}
+        <div className="relative h-2 bg-mab-rail rounded-full overflow-hidden">
+          <div className="absolute inset-y-0 left-0 overflow-hidden rounded-full transition-all duration-200"
+            style={{ width: `${pourcent}%` }}>
+            <div className="absolute inset-y-0 left-0 bg-degrade-marque"
+              style={{ width: `${pourcent ? (100 / pourcent) * 100 : 100}%` }} />
+          </div>
         </div>
       </div>
 
       {/* L'étape du moment */}
       {courante && (
-        <div className="bg-white rounded-2xl border-l-4 border-green-500 shadow-sm p-5">
-          <p className="text-xs font-semibold tracking-widest uppercase text-pink-600">
+        <div className="bg-white rounded-2xl border-l-4 border-green-500 p-5">
+          <p className="surtitre">
             {toutFini ? 'Parcours terminé' : `Étape ${courante.numero}`}
           </p>
           <h2 className="text-xl font-bold text-gray-800 mt-1">{courante.titre}</h2>
@@ -202,7 +211,7 @@ export default function Parcours() {
           </p>
           <button
             onClick={() => setOuverte(courante.numero)}
-            className="mt-4 w-full bg-pink-600 text-white py-3 rounded-full font-medium hover:bg-pink-700 transition-colors flex items-center justify-center space-x-2"
+            className="bouton-action mt-4 w-full"
           >
             <Play className="w-5 h-5" />
             <span>{toutFini ? 'Réécouter' : courante.position ? 'Reprendre mon écoute' : 'Commencer'}</span>
@@ -225,7 +234,7 @@ function Etape({ etape, premiereVerrouillee, onOuvrir }: { etape: EtapeParcours;
   const pc = Math.round((etape.taux || 0) * 100);
   const pastille = etape.terminee
     ? 'bg-green-500 text-white'
-    : etape.accessible ? 'bg-pink-600 text-white ring-4 ring-pink-100' : 'bg-white border-2 border-gray-300 text-gray-400';
+    : etape.accessible ? 'bg-marine-700 text-white ring-4 ring-marine-100' : 'bg-white border-2 border-gray-300 text-gray-400';
 
   return (
     <li className="ml-6">
@@ -234,7 +243,7 @@ function Etape({ etape, premiereVerrouillee, onOuvrir }: { etape: EtapeParcours;
       </span>
       {etape.accessible ? (
         <button onClick={onOuvrir} className="text-left w-full">
-          <p className={`font-medium ${etape.terminee ? 'text-gray-700' : 'text-pink-700'}`}>{etape.numero}. {etape.titre}</p>
+          <p className={`font-medium ${etape.terminee ? 'text-gray-700' : 'text-mab-aqua-texte'}`}>{etape.numero}. {etape.titre}</p>
           <p className="text-sm text-gray-500">
             {etape.terminee ? 'Terminée' : pc > 0 ? `En cours · ${pc} % écouté` : 'Disponible'}
           </p>

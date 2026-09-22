@@ -8,22 +8,104 @@
   }
 
   /*
-    Le fond n'est pas plat : un halo de teal très pâle en haut de page, repris
-    du diagnostic BioPortrait et de l'application thérapeute. De la profondeur
-    sans rien coûter en lisibilité.
+    Le fond n'est pas plat : `halo-haut` de la charte, posé sur le `wash` —
+    le gabarit « application » (charte §7 : wash en fond, cartes blanches).
+    Valeurs exactes du jeton, pas une approximation.
   */
   body {
-    @apply bg-ardoise-100 text-ardoise-900;
-    background-image: radial-gradient(
-      1000px 480px at 50% -220px,
-      theme('colors.marine.100') 0%,
-      rgba(234, 247, 247, 0) 72%
-    );
+    @apply bg-ardoise-100 text-ardoise-900 bg-halo-haut;
     background-attachment: fixed;
   }
 
   :focus-visible {
     @apply outline-none ring-2 ring-marine-500 ring-offset-2 ring-offset-white;
+  }
+}
+
+@layer components {
+  /*
+    La signature éditoriale de la marque : le titre est fin (300), les deux ou
+    trois mots qui portent l'idée passent en 600 dans la même phrase. Jamais un
+    grand titre entier en gras.
+
+        <h1 className="titre-1">Votre <b>parcours</b></h1>
+  */
+  .titre-1 {
+    @apply font-light text-ardoise-900;
+    font-size: 28px;
+    line-height: 34px;
+    letter-spacing: -0.015em;
+  }
+
+  .titre-2 {
+    @apply font-semibold text-ardoise-900;
+    font-size: 24px;
+    line-height: 30px;
+    letter-spacing: -0.01em;
+  }
+
+  .titre-1 b,
+  .titre-2 b,
+  .chapeau b {
+    @apply font-semibold;
+  }
+
+  @screen md {
+    .titre-1 { font-size: 36px; line-height: 42px; }
+    .titre-2 { font-size: 28px; line-height: 34px; }
+  }
+
+  /* Un seul chapeau par page. */
+  .chapeau {
+    @apply font-light text-ardoise-700;
+    font-size: 17px;
+    line-height: 28px;
+  }
+
+  @screen md {
+    .chapeau { font-size: 19px; line-height: 30px; }
+  }
+
+  /*
+    Surtitre : CAPITALES en `aqua-texte` (4,8:1). Jamais en `aqua-profond`,
+    qui est à 3,0:1 — l'écart de contraste que la charte demande de ne pas
+    reproduire.
+  */
+  .surtitre {
+    @apply font-semibold uppercase text-mab-aqua-texte;
+    font-size: 12px;
+    line-height: 16px;
+    letter-spacing: 0.14em;
+  }
+
+  /*
+    Le bouton d'action : pilule rose, un seul par écran, 56px sur téléphone
+    et 52px à partir du bureau.
+  */
+  .bouton-action {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-rose-500 px-8
+           font-semibold text-white shadow-cta transition-colors hover:bg-rose-600
+           disabled:opacity-60;
+    min-height: 56px;
+  }
+
+  .bouton-second {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-marine-500
+           bg-white px-8 font-semibold text-mab-aqua-texte transition-colors hover:bg-marine-100;
+    min-height: 56px;
+  }
+
+  @screen md {
+    .bouton-action, .bouton-second { min-height: 52px; }
+  }
+}
+
+/* Le mouvement reste discret : opacité et couleur, jamais de déplacement au survol. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

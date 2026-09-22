@@ -6,6 +6,21 @@ import { profilApi } from '../lib/profilApi';
 import { WeightEntry } from '../types';
 import Achievements from './Achievements';
 
+/*
+  Les quatre séries du graphique reprennent le trajet du dégradé de marque —
+  aqua, bleu de terrain, violet, rose. Aucune couleur n'est inventée hors des
+  jetons de la charte, et la légende lit la même liste que les courbes.
+*/
+const SERIES = [
+  { key: 'weight', label: 'Poids',            unit: 'kg', color: '#3BBFBF', gradientId: 'weightGradient', getValue: (e: any) => e.weight },
+  { key: 'waist',  label: 'Tour de taille',   unit: 'cm', color: '#3D6E93', gradientId: 'waistGradient',  getValue: (e: any) => e.measurements?.waist },
+  { key: 'chest',  label: 'Tour de poitrine', unit: 'cm', color: '#8E6FC6', gradientId: 'chestGradient',  getValue: (e: any) => e.measurements?.chest },
+  { key: 'hips',   label: 'Tour de hanches',  unit: 'cm', color: '#C42872', gradientId: 'hipsGradient',   getValue: (e: any) => e.measurements?.hips },
+];
+
+/** Gris-doux : la ligne de seuil ne crie pas, elle situe. */
+const COULEUR_OBJECTIF = '#9BABAB';
+
 export default function ProgressTracking() {
   const {
     weightEntries,
@@ -227,41 +242,7 @@ export default function ProgressTracking() {
     const innerWidth = chartWidth - 2 * padding;
     const innerHeight = chartHeight - 2 * padding;
 
-    // Définir les lignes à afficher avec leurs configurations
-    const measurements = [
-      {
-        key: 'weight',
-        label: 'Poids',
-        unit: 'kg',
-        color: '#10b981',
-        getValue: (entry: any) => entry.weight,
-        gradientId: 'weightGradient'
-      },
-      {
-        key: 'waist',
-        label: 'Tour de taille',
-        unit: 'cm',
-        color: '#3b82f6',
-        getValue: (entry: any) => entry.measurements?.waist,
-        gradientId: 'waistGradient'
-      },
-      {
-        key: 'chest',
-        label: 'Tour de poitrine',
-        unit: 'cm',
-        color: '#8b5cf6',
-        getValue: (entry: any) => entry.measurements?.chest,
-        gradientId: 'chestGradient'
-      },
-      {
-        key: 'hips',
-        label: 'Tour de hanches',
-        unit: 'cm',
-        color: '#f59e0b',
-        getValue: (entry: any) => entry.measurements?.hips,
-        gradientId: 'hipsGradient'
-      }
-    ];
+    const measurements = SERIES;
 
     // Collecter toutes les valeurs pour calculer l'échelle
     const allValues: number[] = [];
@@ -336,7 +317,7 @@ export default function ProgressTracking() {
               </linearGradient>
             ))}
             <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#000000" floodOpacity="0.1"/>
+              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#152B2C" floodOpacity="0.1"/>
             </filter>
           </defs>
 
@@ -348,7 +329,7 @@ export default function ProgressTracking() {
                 y1={line.y}
                 x2={chartWidth - padding}
                 y2={line.y}
-                stroke="#e5e7eb"
+                stroke="#E6EFEF"
                 strokeWidth="1"
                 strokeDasharray={index === 0 || index === numGridLines ? "none" : "2,2"}
               />
@@ -446,7 +427,7 @@ export default function ProgressTracking() {
                   y1={padding}
                   x2={tooltipX}
                   y2={chartHeight - padding}
-                  stroke="#6b7280"
+                  stroke="#7C9091"
                   strokeWidth="1"
                   strokeDasharray="3,3"
                   opacity="0.5"
@@ -459,7 +440,7 @@ export default function ProgressTracking() {
                   height={tooltipHeight}
                   rx="8"
                   fill="#ffffff"
-                  stroke="#d1d5db"
+                  stroke="#E4F2F2"
                   strokeWidth="1"
                   filter="url(#shadow)"
                 />
@@ -582,7 +563,7 @@ export default function ProgressTracking() {
                     y1={targetY}
                     x2={chartWidth - padding}
                     y2={targetY}
-                    stroke="#ef4444"
+                    stroke={COULEUR_OBJECTIF}
                     strokeWidth="2"
                     strokeDasharray="5,5"
                   />
@@ -590,7 +571,7 @@ export default function ProgressTracking() {
                     x={chartWidth - padding - 5}
                     y={targetY - 5}
                     textAnchor="end"
-                    className="text-xs fill-red-500 font-medium"
+                    className="text-xs fill-gray-500 font-medium"
                   >
                     Objectif: {targetWeight}kg
                   </text>
@@ -608,12 +589,12 @@ export default function ProgressTracking() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Suivi des progrès</h1>
+          <h1 className="titre-1">Suivi de <b>vos progrès</b></h1>
           <p className="text-gray-600 mt-2">{userEntries.length} entrées enregistrées</p>
         </div>
         <button
           onClick={() => setShowAddEntry(true)}
-          className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors mt-4 md:mt-0"
+          className="flex items-center space-x-2 bg-marine-700 text-white px-4 py-2 rounded-lg hover:bg-marine-800 transition-colors mt-4 md:mt-0"
         >
           <Plus className="w-4 h-4" />
           <span>Nouvelle entrée</span>
@@ -622,7 +603,7 @@ export default function ProgressTracking() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div className="bg-white rounded-xl p-6 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Poids actuel</p>
@@ -644,7 +625,7 @@ export default function ProgressTracking() {
           )}
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div className="bg-white rounded-xl p-6 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">IMC</p>
@@ -663,7 +644,7 @@ export default function ProgressTracking() {
           )}
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div className="bg-white rounded-xl p-6 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Objectif</p>
@@ -676,7 +657,7 @@ export default function ProgressTracking() {
           <p className="text-xs md:text-sm text-gray-500 mt-2">À atteindre</p>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div className="bg-white rounded-xl p-6 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Dernière entrée</p>
@@ -695,29 +676,19 @@ export default function ProgressTracking() {
       </div>
 
       {/* Weight Chart */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <div className="flex flex-col space-y-4 mb-6">
           <h2 className="text-xl font-semibold text-gray-800">Évolution des mesures</h2>
           {userEntries.length > 1 && (
             <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+              {SERIES.map((serie) => (
+                <div key={serie.key} className="flex items-center space-x-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: serie.color }}></div>
+                  <span>{serie.label}</span>
+                </div>
+              ))}
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span>Poids</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span>Tour de taille</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                <span>Tour de poitrine</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
-                <span>Tour de hanches</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-1 bg-red-500 border-dashed border border-red-500"></div>
+                <div className="w-3 h-1 border-dashed border" style={{ backgroundColor: COULEUR_OBJECTIF, borderColor: COULEUR_OBJECTIF }}></div>
                 <span>Objectif ({weightGoal}kg)</span>
               </div>
             </div>
@@ -738,8 +709,8 @@ export default function ProgressTracking() {
       </div>
 
       {/* Checklist Hebdomadaire */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-blue-50">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="p-6 border-b border-gray-200 bg-rose-50">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold text-gray-800 flex items-center">
@@ -756,11 +727,13 @@ export default function ProgressTracking() {
           
           {/* Barre de progression */}
           <div className="mt-4">
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div
-                className="bg-gradient-to-r from-purple-500 to-blue-500 h-3 rounded-full transition-all duration-500"
-                style={{ width: `${getWeeklyCompletionRate()}%` }}
-              />
+            <div className="w-full bg-mab-rail rounded-full h-3 overflow-hidden">
+              {/* Le dégradé couvre le rail entier, le remplissage le découpe. */}
+              <div className="h-3 overflow-hidden rounded-full transition-all duration-200"
+                style={{ width: `${getWeeklyCompletionRate()}%` }}>
+                <div className="h-3 bg-degrade-marque"
+                  style={{ width: `${getWeeklyCompletionRate() ? (100 / getWeeklyCompletionRate()) * 100 : 100}%` }} />
+              </div>
             </div>
           </div>
         </div>
@@ -771,7 +744,7 @@ export default function ProgressTracking() {
               const goalProgress = currentWeekProgress?.goals[goal.id];
               
               return (
-                <div key={goal.id} className="border border-gray-200 rounded-lg p-3 md:p-4 hover:shadow-md transition-shadow">
+                <div key={goal.id} className="border border-gray-200 rounded-lg p-3 md:p-4 hover:shadow-carte transition-shadow">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center space-x-3">
                       <span className="text-xl md:text-2xl">{goal.icon}</span>
@@ -873,7 +846,7 @@ export default function ProgressTracking() {
 
           {/* Badge de félicitations */}
           {isAllGoalsCompleted() && (
-            <div className="mt-6 p-6 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl">
+            <div className="mt-6 p-6 bg-marine-50 border border-yellow-200 rounded-xl">
               <div className="flex items-center justify-center space-x-4">
                 <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center">
                   <Award className="w-8 h-8 text-yellow-600" />
@@ -897,7 +870,7 @@ export default function ProgressTracking() {
       <Achievements />
 
       {/* Entry History */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-800">Historique des entrées</h2>
         </div>
@@ -1044,7 +1017,7 @@ export default function ProgressTracking() {
               <button
                 onClick={handleAddEntry}
                 disabled={!newEntry.weight}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-marine-700 text-white rounded-lg hover:bg-marine-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Ajouter
               </button>
@@ -1140,7 +1113,7 @@ export default function ProgressTracking() {
               <button
                 onClick={handleEditEntry}
                 disabled={!editingEntry.weight}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-marine-700 text-white rounded-lg hover:bg-marine-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Enregistrer
               </button>

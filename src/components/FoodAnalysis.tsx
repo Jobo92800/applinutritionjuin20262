@@ -199,7 +199,7 @@ export default function FoodAnalysis() {
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Analyse calorique par photo</h1>
+        <h1 className="titre-1">Analyse calorique <b>par photo</b></h1>
         <p className="text-gray-500 mt-1 text-sm">
           Photographiez votre repas pour obtenir une estimation nutritionnelle instantanee par IA.
         </p>
@@ -214,7 +214,7 @@ export default function FoodAnalysis() {
               onClick={() => setTab(id)}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 tab === id
-                  ? 'bg-white text-green-700 shadow-sm'
+                  ? 'bg-white text-green-700'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -244,7 +244,7 @@ export default function FoodAnalysis() {
               <div className="flex gap-3">
                 <button
                   onClick={(e) => { e.stopPropagation(); cameraInputRef.current?.click(); }}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-marine-700 text-white rounded-lg text-sm font-medium hover:bg-marine-800 transition-colors"
                 >
                   <Camera className="w-4 h-4" />
                   Prendre une photo
@@ -274,7 +274,7 @@ export default function FoodAnalysis() {
               />
             </div>
           ) : (
-            <div className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm">
+            <div className="rounded-2xl overflow-hidden border border-gray-200 bg-white">
               <div className="relative">
                 <img
                   src={imagePreview}
@@ -293,7 +293,7 @@ export default function FoodAnalysis() {
                   <button
                     onClick={handleAnalyze}
                     disabled={isAnalyzing}
-                    className="w-full flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-xl font-semibold transition-colors"
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-marine-700 hover:bg-marine-800 disabled:bg-green-400 text-white rounded-xl font-semibold transition-colors"
                   >
                     {isAnalyzing ? (
                       <>
@@ -339,9 +339,9 @@ export default function FoodAnalysis() {
 
           {/* Results */}
           {result && !isAnalyzing && (
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
               {/* Meal name header */}
-              <div className="bg-gradient-to-r from-green-600 to-emerald-500 px-6 py-4">
+              <div className="bg-degrade-profond px-6 py-4">
                 <p className="text-green-100 text-xs font-medium uppercase tracking-wide">Analyse du repas</p>
                 <h2 className="text-white text-xl font-bold mt-0.5">{result.mealName}</h2>
               </div>
@@ -386,7 +386,7 @@ export default function FoodAnalysis() {
                   className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
                     savedSuccess
                       ? 'bg-green-100 text-green-700 border border-green-200'
-                      : 'bg-green-600 hover:bg-green-700 text-white'
+                      : 'bg-marine-700 hover:bg-marine-800 text-white'
                   }`}
                 >
                   {isSaving ? (
@@ -419,7 +419,7 @@ export default function FoodAnalysis() {
               <p className="text-sm mt-1">Analysez un repas et sauvegardez-le pour le retrouver ici.</p>
               <button
                 onClick={() => setTab('analyze')}
-                className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+                className="mt-4 px-4 py-2 bg-marine-700 text-white rounded-lg text-sm font-medium hover:bg-marine-800 transition-colors"
               >
                 Analyser un repas
               </button>
@@ -483,7 +483,7 @@ function FoodItemRow({ food, totalCalories }: { food: FoodItem; totalCalories: n
       </div>
       <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-green-500 to-emerald-400 rounded-full transition-all"
+          className="h-full bg-mab-aqua rounded-full transition-all duration-200"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -510,7 +510,7 @@ function HistoryCard({
   const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
       <div className="flex items-center gap-4 p-4">
         {item.image_url && (
           <img

@@ -57,7 +57,7 @@ export default function FloatingMessageButton() {
     <>
       <button
         onClick={openModal}
-        className="fixed bottom-6 right-6 bg-gradient-to-r from-green-500 to-blue-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 z-40 group"
+        className="fixed bottom-6 right-6 bg-marine-700 text-white p-4 rounded-full shadow-carte hover:bg-marine-800 transition-colors duration-200 z-40 group"
         aria-label="Envoyer un message"
       >
         <MessageCircle className="w-6 h-6" />

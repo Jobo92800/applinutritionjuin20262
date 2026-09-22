@@ -66,10 +66,10 @@ export default function MonProfil() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <p className="text-xs font-semibold tracking-widest uppercase text-green-600">
+        <p className="surtitre">
           {etat.cliente ? `Bonjour ${etat.cliente.prenom}` : 'Mon profil'}
         </p>
-        <h1 className="text-2xl font-bold text-gray-800 mt-1">Votre BioPortrait</h1>
+        <h1 className="titre-1 mt-1">Votre <b>BioPortrait</b></h1>
         <p className="text-sm text-gray-500 mt-1">Le bilan établi avec votre thérapeute, et ce qu'il dit de vous.</p>
       </div>
 
@@ -92,7 +92,7 @@ export default function MonProfil() {
                 return (
                   <button key={b.id} type="button" onClick={() => setBilanChoisi(b.id)} aria-pressed={actif}
                     className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                      actif ? 'border-marine-600 bg-marine-600 text-white' : 'border-gray-200 bg-white text-gray-600 hover:border-marine-400'}`}>
+                      actif ? 'border-marine-600 bg-marine-700 text-white' : 'border-gray-200 bg-white text-gray-600 hover:border-marine-400'}`}>
                     {dateCourte(b.date)}{rang === 0 && <span className="ml-1.5 opacity-70">· le dernier</span>}
                   </button>
                 );
@@ -154,7 +154,7 @@ export default function MonProfil() {
 
 function Titre({ icone: Icone, texte }: { icone: typeof Fingerprint; texte: string }) {
   return (
-    <h2 className="flex items-center space-x-2 text-xs font-semibold tracking-widest uppercase text-marine-700">
+    <h2 className="surtitre flex items-center space-x-2">
       <Icone className="w-4 h-4" /><span>{texte}</span>
     </h2>
   );
@@ -190,7 +190,7 @@ function Synthese({ bilan }: { bilan: BilanProfil }) {
 
   return (
     <section className="bg-white rounded-2xl border border-gray-200 p-6 text-center shadow-carte">
-      <p className="text-xs font-semibold tracking-widest uppercase text-gray-400">Bilan du {dateLongue(bilan.date)}</p>
+      <p className="surtitre !text-mab-gris-doux">Bilan du {dateLongue(bilan.date)}</p>
       <p className="mt-3 flex flex-wrap items-center justify-center gap-3 text-2xl font-bold">
         <span className="text-marine-700">{bilan.profil.nom}</span>
         <span className="text-gray-300">×</span>
@@ -200,7 +200,7 @@ function Synthese({ bilan }: { bilan: BilanProfil }) {
 
       {bilan.document && (
         <button type="button" onClick={ouvrirPdf} disabled={ouverture === 'encours'}
-          className="mt-5 w-full flex items-center justify-center space-x-2 bg-marine-600 text-white py-3 rounded-full font-semibold hover:bg-marine-700 hover:-translate-y-px transition-all shadow-carte disabled:opacity-60">
+          className="mt-5 w-full flex items-center justify-center space-x-2 bg-marine-700 text-white py-3 rounded-full font-semibold hover:bg-marine-800 transition-colors shadow-carte disabled:opacity-60">
           {ouverture === 'encours' ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileText className="w-5 h-5" />}
           <span>Ouvrir mon BioPortrait (PDF)</span>
         </button>

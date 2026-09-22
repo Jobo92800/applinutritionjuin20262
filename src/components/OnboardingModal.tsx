@@ -78,9 +78,9 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[95vh] overflow-hidden shadow-2xl flex flex-col">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[95vh] overflow-hidden shadow-flottante flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-500 to-blue-600 p-6 text-white">
+        <div className="bg-degrade-profond p-6 text-white">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold">Bienvenue, {user?.name} ! 👋</h1>
             <div className="text-sm bg-white/20 px-3 py-1 rounded-full">
@@ -465,14 +465,14 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
             {currentStep < TOTAL_STEPS ? (
               <button
                 onClick={nextStep}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                className="px-6 py-2 bg-marine-700 text-white rounded-lg hover:bg-marine-800 transition-colors"
               >
                 {currentStep === TOTAL_STEPS - 1 ? 'Voir mes objectifs' : 'Suivant'}
               </button>
             ) : (
               <button
                 onClick={handleComplete}
-                className="flex items-center space-x-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                className="flex items-center space-x-2 px-6 py-2 bg-marine-700 text-white rounded-lg hover:bg-marine-800 transition-colors"
               >
                 <Save className="w-4 h-4" />
                 <span>Terminer</span>

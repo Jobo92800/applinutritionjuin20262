@@ -297,9 +297,9 @@ export default function RecipeFormModal({ recipe, isOpen, onClose }: RecipeFormM
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl max-w-6xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+      <div className="bg-white rounded-xl max-w-6xl w-full max-h-[90vh] overflow-hidden shadow-flottante">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-green-50 to-blue-50">
+        <div className="p-6 border-b border-gray-200 bg-marine-50">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-gray-800">
               {recipe ? 'Modifier la recette' : 'Nouvelle recette'}
@@ -890,7 +890,7 @@ export default function RecipeFormModal({ recipe, isOpen, onClose }: RecipeFormM
               type="button"
               onClick={handleSubmit}
               disabled={loading || !formData.title.trim()}
-              className="flex items-center space-x-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center space-x-2 px-6 py-2 bg-marine-700 text-white rounded-lg hover:bg-marine-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save className="w-4 h-4" />
               <span>{loading ? 'Sauvegarde...' : (recipe ? 'Mettre à jour' : 'Créer')}</span>

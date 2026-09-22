@@ -137,7 +137,7 @@ export default function MessagesPanel() {
             onClick={() => setStatusFilter(filter.key)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
               statusFilter === filter.key
-                ? 'bg-blue-600 text-white'
+                ? 'bg-marine-700 text-white'
                 : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
             }`}
           >
@@ -166,9 +166,9 @@ export default function MessagesPanel() {
                     setSelectedMessage(msg);
                     setResponseText(msg.adminResponse || '');
                   }}
-                  className={`bg-white border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-md ${
+                  className={`bg-white border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-carte ${
                     selectedMessage?.id === msg.id
-                      ? 'border-blue-500 shadow-md'
+                      ? 'border-blue-500 shadow-carte'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
@@ -199,7 +199,7 @@ export default function MessagesPanel() {
           )}
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
           {selectedMessage ? (
             <div className="space-y-4">
               <div className="flex items-start justify-between">
@@ -259,7 +259,7 @@ export default function MessagesPanel() {
                         onClick={() => handleStatusChange(selectedMessage.id, status)}
                         className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           selectedMessage.status === status
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-marine-700 text-white'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                       >
@@ -285,7 +285,7 @@ export default function MessagesPanel() {
                   <button
                     onClick={handleSendResponse}
                     disabled={isSubmitting || !responseText.trim()}
-                    className="mt-3 w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="mt-3 w-full flex items-center justify-center space-x-2 bg-marine-700 text-white px-6 py-3 rounded-full font-semibold hover:bg-marine-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Send className="w-5 h-5" />
                     <span>{isSubmitting ? 'Envoi...' : 'Envoyer la réponse'}</span>

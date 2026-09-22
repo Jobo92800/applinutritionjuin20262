@@ -160,7 +160,7 @@ export default function ShoppingList() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Liste de courses</h1>
+          <h1 className="titre-1">Liste <b>de courses</b></h1>
           <p className="text-gray-600 mt-2">
             {checkedCount} / {totalCount} articles cochés
           </p>
@@ -170,7 +170,7 @@ export default function ShoppingList() {
           <div className="relative">
             <button
               onClick={() => setShowWeekSelector(!showWeekSelector)}
-              className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+              className="flex items-center space-x-2 bg-marine-700 text-white px-4 py-2 rounded-lg hover:bg-marine-800 transition-colors"
             >
               <Calendar className="w-4 h-4" />
               <span>Générer depuis les repas</span>
@@ -179,7 +179,7 @@ export default function ShoppingList() {
             
             {/* Dropdown pour sélectionner la semaine */}
             {showWeekSelector && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-carte border border-gray-200 z-10">
                 <div className="p-4 border-b border-gray-200">
                   <h3 className="font-semibold text-gray-800 mb-2">Choisir la période</h3>
                   <p className="text-sm text-gray-600">Sélectionnez la semaine pour générer votre liste de courses</p>
@@ -251,7 +251,7 @@ export default function ShoppingList() {
           
           <button
             onClick={exportList}
-            className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center space-x-2 bg-marine-700 text-white px-4 py-2 rounded-lg hover:bg-marine-800 transition-colors"
           >
             <Download className="w-4 h-4" />
             <span>Exporter</span>
@@ -269,7 +269,7 @@ export default function ShoppingList() {
 
       {/* Boutons d'actions rapides */}
       {totalCount > 0 && (
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+        <div className="bg-white rounded-xl p-4 border border-gray-200">
           <h3 className="text-sm font-medium text-gray-700 mb-3">Actions rapides</h3>
           <div className="flex flex-col sm:flex-row gap-3">
             <button
@@ -293,7 +293,7 @@ export default function ShoppingList() {
 
       {/* Progress Bar */}
       {totalCount > 0 && (
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div className="bg-white rounded-xl p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-700">Progression</span>
             <span className="text-sm text-gray-500">{Math.round((checkedCount / totalCount) * 100)}%</span>
@@ -308,7 +308,7 @@ export default function ShoppingList() {
       )}
 
       {/* Add New Item */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+      <div className="bg-white rounded-xl p-6 border border-gray-200">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Ajouter un article</h2>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <input
@@ -340,7 +340,7 @@ export default function ShoppingList() {
           
           <button
             onClick={addItem}
-            className="flex items-center justify-center space-x-2 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+            className="flex items-center justify-center space-x-2 bg-rose-500 text-white px-6 py-2 rounded-full font-semibold hover:bg-rose-600 transition-colors"
           >
             <Plus className="w-4 h-4" />
             <span>Ajouter</span>
@@ -352,7 +352,7 @@ export default function ShoppingList() {
       {groupedItems.length > 0 ? (
         <div className="space-y-6">
           {groupedItems.map((category) => (
-            <div key={category.key} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div key={category.key} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               <div className={`px-6 py-4 ${category.color} border-b`}>
                 <h3 className="font-semibold text-gray-800">{category.name}</h3>
                 <p className="text-sm text-gray-600">{category.items.length} articles</p>
@@ -370,7 +370,7 @@ export default function ShoppingList() {
                         onClick={() => toggleItemCheck(item.id)}
                         className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
                           item.checked
-                            ? 'bg-green-600 border-green-600 text-white'
+                            ? 'bg-marine-700 border-green-600 text-white'
                             : 'border-gray-300 hover:border-green-400'
                         }`}
                       >
@@ -399,8 +399,8 @@ export default function ShoppingList() {
         </div>
       ) : (
         <div className="text-center py-12">
-          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ShoppingCart className="w-8 h-8 text-orange-600" />
+          <div className="w-16 h-16 bg-marine-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ShoppingCart className="w-8 h-8 text-marine-700" />
           </div>
           <h3 className="text-xl font-medium text-gray-500 mb-2">Liste vide</h3>
           <p className="text-gray-400">Ajoutez des articles ou générez une liste depuis vos repas planifiés</p>

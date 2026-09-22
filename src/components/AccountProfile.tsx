@@ -186,14 +186,14 @@ export default function AccountProfile() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Mon compte</h1>
+          <h1 className="titre-1">Mon <b>compte</b></h1>
           <p className="text-gray-600 mt-2">Gérez vos informations personnelles et préférences</p>
         </div>
         <div className="flex items-center space-x-3 mt-4 md:mt-0">
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(true)}
-              className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center space-x-2 bg-marine-700 text-white px-4 py-2 rounded-lg hover:bg-marine-800 transition-colors"
             >
               <Edit className="w-4 h-4" />
               <span>Modifier</span>
@@ -208,7 +208,7 @@ export default function AccountProfile() {
               </button>
               <button
                 onClick={handleSave}
-                className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                className="flex items-center space-x-2 bg-marine-700 text-white px-4 py-2 rounded-lg hover:bg-marine-800 transition-colors"
               >
                 <Save className="w-4 h-4" />
                 <span>Sauvegarder</span>
@@ -219,8 +219,8 @@ export default function AccountProfile() {
       </div>
 
       {/* Informations générales */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="p-6 border-b border-gray-200 bg-marine-50">
           <div className="flex items-center space-x-4">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
               <span className="text-2xl font-bold text-blue-600">
@@ -314,7 +314,7 @@ export default function AccountProfile() {
       </div>
 
       {/* Objectifs et préférences */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-6 flex items-center">
           <Target className="w-5 h-5 mr-2 text-orange-600" />
           Objectifs et préférences
@@ -483,7 +483,7 @@ export default function AccountProfile() {
 
       {/* Sécurité */}
       {isEditing && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-6 flex items-center">
             <Lock className="w-5 h-5 mr-2 text-red-600" />
             Sécurité
@@ -536,7 +536,7 @@ export default function AccountProfile() {
       )}
 
       {/* Notifications */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-6 flex items-center">
           <Calendar className="w-5 h-5 mr-2 text-indigo-600" />
           Notifications

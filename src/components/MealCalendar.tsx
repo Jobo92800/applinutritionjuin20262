@@ -56,7 +56,7 @@ export default function MealCalendar() {
     { 
       key: 'petit-déjeuner', 
       name: 'Petit-déjeuner', 
-      color: 'bg-yellow-100 text-yellow-800', 
+      color: 'bg-mab-wash-2 text-mab-aqua-texte', 
       shortName: 'P-déj', 
       emoji: '🌅',
       subMeals: [
@@ -67,7 +67,7 @@ export default function MealCalendar() {
     { 
       key: 'déjeuner', 
       name: 'Déjeuner', 
-      color: 'bg-blue-100 text-blue-800', 
+      color: 'bg-mab-terrain-2-fond text-mab-terrain-2-texte', 
       shortName: 'Déj', 
       emoji: '🍽️',
       subMeals: [
@@ -79,7 +79,7 @@ export default function MealCalendar() {
     { 
       key: 'dîner', 
       name: 'Dîner', 
-      color: 'bg-purple-100 text-purple-800', 
+      color: 'bg-mab-violet-wash text-mab-violet-texte', 
       shortName: 'Dîner', 
       emoji: '🌙',
       subMeals: [
@@ -91,7 +91,7 @@ export default function MealCalendar() {
     { 
       key: 'collation', 
       name: 'Collation', 
-      color: 'bg-green-100 text-green-800', 
+      color: 'bg-mab-rose-wash text-mab-rose-texte', 
       shortName: 'Coll', 
       emoji: '🍎',
       subMeals: [
@@ -381,7 +381,7 @@ export default function MealCalendar() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">Calendrier des repas</h1>
+        <h1 className="titre-1 mb-4 sm:mb-0">Calendrier <b>des repas</b></h1>
         <div className="flex items-center justify-center space-x-4">
           <button
             onClick={() => navigateWeek('prev')}
@@ -404,7 +404,7 @@ export default function MealCalendar() {
       {/* Modal de sélection de recette */}
       {selectedMeal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-flottante max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-gray-800">
@@ -460,7 +460,7 @@ export default function MealCalendar() {
                         assignRecipeToMeal(recipe.id);
                       }
                     }}
-                    className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                    className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-carte transition-shadow cursor-pointer"
                   >
                     <img
                       src={recipe.image}
@@ -502,7 +502,7 @@ export default function MealCalendar() {
       {/* Modal de sélection de variante */}
       {selectedRecipeForPlanning && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-flottante max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-gray-800">
@@ -585,7 +585,7 @@ export default function MealCalendar() {
       )}
 
       {/* Calendar Grid - Desktop */}
-      <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="hidden lg:block bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="grid grid-cols-8 border-b border-gray-200">
           <div className="p-4 bg-gray-50 font-medium text-gray-700">Repas</div>
           {weekDays.map((day, index) => (
@@ -656,7 +656,7 @@ export default function MealCalendar() {
                             <img
                               src={recipe.image}
                               alt={recipe.title}
-                              className="w-full h-6 object-cover rounded mb-1 hover:scale-105 transition-transform"
+                              className="w-full h-6 object-cover rounded mb-1 "
                             />
                             <p className="text-xs font-medium text-gray-800 line-clamp-2 hover:text-green-600 transition-colors">
                               {recipe.title}
@@ -685,8 +685,8 @@ export default function MealCalendar() {
         ))}
 
         {/* Ligne résumé nutritionnel */}
-        <div className="grid grid-cols-8 border-t-2 border-gray-300 bg-gradient-to-r from-blue-50 to-green-50">
-          <div className="p-4 font-semibold text-gray-800 flex items-center bg-gradient-to-r from-blue-100 to-green-100">
+        <div className="grid grid-cols-8 border-t-2 border-gray-300 bg-marine-50">
+          <div className="p-4 font-semibold text-gray-800 flex items-center bg-marine-100">
             <span className="text-lg mr-2">📊</span>
             Résumé nutritionnel
           </div>
@@ -742,7 +742,7 @@ export default function MealCalendar() {
           const dayNutrition = calculateDayNutrition(dateStr);
           
           return (
-            <div key={dayIndex} className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden ${isToday ? 'ring-2 ring-green-500' : ''}`}>
+            <div key={dayIndex} className={`bg-white rounded-xl border border-gray-200 overflow-hidden ${isToday ? 'ring-2 ring-green-500' : ''}`}>
               {/* En-tête du jour */}
               <div className={`p-4 border-b border-gray-200 ${isToday ? 'bg-green-50' : 'bg-gray-50'}`}>
                 <div className="flex items-center justify-between">
@@ -810,7 +810,7 @@ export default function MealCalendar() {
                                       <img
                                         src={recipe.image}
                                         alt={recipe.title}
-                                        className="w-full h-12 object-cover rounded mb-1 hover:scale-105 transition-transform"
+                                        className="w-full h-12 object-cover rounded mb-1 "
                                       />
                                       <p className="text-xs font-medium text-gray-800 line-clamp-2 hover:text-green-600 transition-colors">
                                         {recipe.title}
@@ -843,7 +843,7 @@ export default function MealCalendar() {
               
               {/* Résumé nutritionnel du jour */}
               {dayNutrition.calories > 0 && (
-                <div className="p-4 border-t border-gray-200 bg-gradient-to-r from-blue-50 to-green-50">
+                <div className="p-4 border-t border-gray-200 bg-marine-50">
                   <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
                     <span className="text-lg mr-2">📊</span>
                     Résumé nutritionnel
@@ -875,8 +875,8 @@ export default function MealCalendar() {
 
       {/* Objectifs nutritionnels personnalisés */}
       {userNutritionTargets && user && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-4 lg:p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="p-4 lg:p-6 border-b border-gray-200 bg-marine-50">
             <h3 className="text-lg font-semibold text-gray-800 flex items-center">
               <span className="text-xl mr-3">🎯</span>
               Vos objectifs nutritionnels personnalisés
@@ -897,7 +897,7 @@ export default function MealCalendar() {
           <div className="p-4 lg:p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
               {/* Calories cibles */}
-              <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-4 lg:p-6 border border-orange-200">
+              <div className="bg-rose-50 rounded-xl p-4 lg:p-6 border border-orange-200">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-10 h-10 lg:w-12 lg:h-12 bg-orange-100 rounded-full flex items-center justify-center">
                     <span className="text-xl lg:text-2xl">🔥</span>
@@ -918,7 +918,7 @@ export default function MealCalendar() {
               </div>
 
               {/* Protéines cibles */}
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 lg:p-6 border border-blue-200">
+              <div className="bg-marine-50 rounded-xl p-4 lg:p-6 border border-blue-200">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-full flex items-center justify-center">
                     <span className="text-xl lg:text-2xl">💪</span>
@@ -939,7 +939,7 @@ export default function MealCalendar() {
               </div>
 
               {/* Glucides cibles */}
-              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 lg:p-6 border border-green-200">
+              <div className="bg-marine-50 rounded-xl p-4 lg:p-6 border border-green-200">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-full flex items-center justify-center">
                     <span className="text-xl lg:text-2xl">🌾</span>
@@ -960,7 +960,7 @@ export default function MealCalendar() {
               </div>
 
               {/* Lipides cibles */}
-              <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-4 lg:p-6 border border-purple-200">
+              <div className="bg-rose-50 rounded-xl p-4 lg:p-6 border border-purple-200">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-10 h-10 lg:w-12 lg:h-12 bg-purple-100 rounded-full flex items-center justify-center">
                     <span className="text-xl lg:text-2xl">🥑</span>
@@ -985,8 +985,8 @@ export default function MealCalendar() {
       )}
 
       {/* Tableau des moyennes nutritionnelles hebdomadaires - Desktop */}
-      <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+      <div className="hidden lg:block bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="p-4 border-b border-gray-200 bg-marine-50">
           <h3 className="text-lg font-semibold text-gray-800 flex items-center">
             <span className="text-xl mr-3">📈</span>
             Moyennes nutritionnelles hebdomadaires
@@ -1024,7 +1024,7 @@ export default function MealCalendar() {
             return (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Calories moyennes */}
-                <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-6 border border-orange-200">
+                <div className="bg-rose-50 rounded-xl p-6 border border-orange-200">
                   <div className="flex items-center justify-between mb-4">
                     <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
                       <span className="text-2xl">🔥</span>
@@ -1048,7 +1048,7 @@ export default function MealCalendar() {
                   </div>
                 </div>
                 {/* Protéines moyennes */}
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+                <div className="bg-marine-50 rounded-xl p-6 border border-blue-200">
                   <div className="flex items-center justify-between mb-4">
                     <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                       <span className="text-2xl">💪</span>
@@ -1073,7 +1073,7 @@ export default function MealCalendar() {
                 </div>
 
                 {/* Glucides moyens */}
-                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
+                <div className="bg-marine-50 rounded-xl p-6 border border-green-200">
                   <div className="flex items-center justify-between mb-4">
                     <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                       <span className="text-2xl">🌾</span>
@@ -1098,7 +1098,7 @@ export default function MealCalendar() {
                 </div>
 
                 {/* Lipides moyens */}
-                <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-6 border border-purple-200">
+                <div className="bg-rose-50 rounded-xl p-6 border border-purple-200">
                   <div className="flex items-center justify-between mb-4">
                     <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
                       <span className="text-2xl">🥑</span>

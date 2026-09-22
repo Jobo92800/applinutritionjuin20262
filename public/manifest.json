@@ -4,11 +4,18 @@
   "description": "Application de nutrition personnalisée avec recettes, podcasts et suivi des progrès",
   "start_url": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone"],
-  "background_color": "#ffffff",
-  "theme_color": "#3BBFBF",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ],
+  "background_color": "#f4fbfb",
+  "theme_color": "#ffffff",
   "orientation": "portrait-primary",
-  "categories": ["health", "lifestyle", "food"],
+  "categories": [
+    "health",
+    "lifestyle",
+    "food"
+  ],
   "lang": "fr",
   "prefer_related_applications": false,
   "icons": [

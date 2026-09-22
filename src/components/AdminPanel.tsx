@@ -159,7 +159,7 @@ export default function AdminPanel() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="border-b border-gray-200">
           <nav className="flex">
             <button
@@ -230,7 +230,7 @@ export default function AdminPanel() {
                 <h2 className="text-xl font-semibold text-gray-800">Gestion des recettes</h2>
                 <button 
                   onClick={handleNewRecipe}
-                  className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                  className="flex items-center space-x-2 bg-marine-700 text-white px-4 py-2 rounded-lg hover:bg-marine-800 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Nouvelle recette</span>
@@ -259,7 +259,7 @@ export default function AdminPanel() {
                     <div className="flex space-x-2">
                       <button 
                         onClick={() => handleEditRecipe(recipe)}
-                        className="flex-1 flex items-center justify-center space-x-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition-colors"
+                        className="flex-1 flex items-center justify-center space-x-1 bg-marine-700 text-white px-3 py-2 rounded text-sm hover:bg-marine-800 transition-colors"
                       >
                         <Edit className="w-3 h-3" />
                         <span>Modifier</span>
@@ -358,14 +358,14 @@ export default function AdminPanel() {
                       <div className="flex space-x-2">
                         <button 
                           onClick={() => handleEditPodcast(podcast)}
-                          className="flex items-center space-x-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition-colors"
+                          className="flex items-center space-x-1 bg-marine-700 text-white px-3 py-2 rounded text-sm hover:bg-marine-800 transition-colors"
                         >
                           <Edit className="w-3 h-3" />
                           <span>Modifier</span>
                         </button>
                         <button
                           onClick={() => handleEcouterPodcast(podcast)}
-                          className="flex items-center space-x-1 bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 transition-colors"
+                          className="flex items-center space-x-1 bg-marine-700 text-white px-3 py-2 rounded text-sm hover:bg-marine-800 transition-colors"
                           title="Écoute de contrôle"
                         >
                           <Headphones className="w-3 h-3" />

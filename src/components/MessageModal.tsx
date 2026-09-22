@@ -90,7 +90,7 @@ export default function MessageModal({ isOpen, onClose }: MessageModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-xl shadow-flottante max-w-3xl w-full max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-gray-800">Contacter l'équipe</h2>
           <button
@@ -195,7 +195,7 @@ export default function MessageModal({ isOpen, onClose }: MessageModalProps) {
               <button
                 type="submit"
                 disabled={isSubmitting || !formData.subject.trim() || !formData.message.trim()}
-                className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bouton-action w-full disabled:cursor-not-allowed"
               >
                 <Send className="w-5 h-5" />
                 <span>{isSubmitting ? 'Envoi en cours...' : 'Envoyer le message'}</span>
@@ -216,7 +216,7 @@ export default function MessageModal({ isOpen, onClose }: MessageModalProps) {
                 </div>
               ) : (
                 userMessages.map(msg => (
-                  <div key={msg.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div key={msg.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-carte transition-shadow">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-800 mb-1">{msg.subject}</h3>

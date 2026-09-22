@@ -146,7 +146,7 @@ export default function ScheduledNotifications() {
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+            className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-marine-700 text-white rounded-lg text-sm font-medium hover:bg-marine-800 transition-colors"
           >
             <Plus className="w-4 h-4" />
             Programmer
@@ -237,7 +237,7 @@ export default function ScheduledNotifications() {
             <button
               onClick={handleCreate}
               disabled={saving || !body.trim() || !title.trim()}
-              className="inline-flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-5 py-2 bg-marine-700 text-white rounded-lg font-medium hover:bg-marine-800 transition-colors disabled:opacity-50"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Clock className="w-4 h-4" />}
               Enregistrer

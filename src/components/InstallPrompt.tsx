@@ -78,7 +78,7 @@ export default function InstallPrompt() {
     <>
       {/* Bannière d'installation */}
       <div className="fixed bottom-0 left-0 right-0 z-50 p-3 sm:p-4">
-        <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl border border-gray-200 p-4">
+        <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-flottante border border-gray-200 p-4">
           <div className="flex items-start gap-3">
             <div className="w-11 h-11 flex-shrink-0 bg-green-100 rounded-xl flex items-center justify-center">
               <Smartphone className="w-6 h-6 text-green-600" />
@@ -104,7 +104,7 @@ export default function InstallPrompt() {
 
           <button
             onClick={handleInstall}
-            className="mt-3 w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-green-600 text-white rounded-xl font-semibold text-base hover:bg-green-700 transition-colors shadow-sm"
+            className="mt-3 w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-marine-700 text-white rounded-xl font-semibold text-base hover:bg-marine-800 transition-colors"
           >
             <Download className="w-5 h-5" />
             Installer l'application
@@ -119,7 +119,7 @@ export default function InstallPrompt() {
           onClick={() => setShowIosHelp(false)}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
+            className="bg-white rounded-2xl shadow-flottante max-w-md w-full p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -169,7 +169,7 @@ export default function InstallPrompt() {
 
             <button
               onClick={() => setShowIosHelp(false)}
-              className="mt-6 w-full py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors"
+              className="mt-6 w-full py-3 bg-marine-700 text-white rounded-xl font-semibold hover:bg-marine-800 transition-colors"
             >
               J'ai compris
             </button>

@@ -49,7 +49,7 @@ export default function RecipeModal({ recipe, isOpen, onClose }: RecipeModalProp
 
   return (
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+        <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-flottante">
           {/* Header avec image */}
           <div className="relative h-64 md:h-80">
             <img
@@ -57,7 +57,7 @@ export default function RecipeModal({ recipe, isOpen, onClose }: RecipeModalProp
               alt={recipe.title}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-mab-encre/60 via-transparent to-transparent" />
             
             {/* Boutons en overlay */}
             <div className="absolute top-4 right-4 flex space-x-2">
@@ -66,7 +66,7 @@ export default function RecipeModal({ recipe, isOpen, onClose }: RecipeModalProp
                   e.stopPropagation();
                   toggleFavorite(recipe.id);
                 }}
-                className="p-3 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors shadow-lg"
+                className="p-3 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors shadow-carte"
               >
                 <Heart
                   className={`w-5 h-5 ${
@@ -78,7 +78,7 @@ export default function RecipeModal({ recipe, isOpen, onClose }: RecipeModalProp
               </button>
               <button
                 onClick={onClose}
-                className="p-3 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors shadow-lg"
+                className="p-3 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors shadow-carte"
               >
                 <X className="w-5 h-5 text-gray-600" />
               </button>
@@ -86,7 +86,7 @@ export default function RecipeModal({ recipe, isOpen, onClose }: RecipeModalProp
 
             {/* Titre et badges en overlay */}
             <div className="absolute bottom-6 left-6 right-6">
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/30" />
+              <div className="absolute inset-0 bg-gradient-to-t from-mab-encre/80 via-mab-encre/50 to-mab-encre/30" />
               <div className="relative z-10">
                 <div className="flex flex-wrap gap-2 mb-3">
                   <span className={`px-3 py-1 rounded-full text-sm font-medium capitalize ${getDifficultyColor(recipe.difficulty)}`}>
@@ -120,7 +120,7 @@ export default function RecipeModal({ recipe, isOpen, onClose }: RecipeModalProp
           <div className="overflow-y-auto max-h-[calc(90vh-320px)]">
             {/* Sélecteur de variantes */}
             {recipe.variants && recipe.variants.length > 0 && (
-              <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-yellow-50">
+              <div className="p-6 border-b border-gray-200 bg-marine-50">
                 <div className="mb-4">
                   <h2 className="text-lg font-semibold text-gray-800 flex items-center">
                     <Zap className="w-5 h-5 text-orange-600 mr-2" />
@@ -229,7 +229,7 @@ export default function RecipeModal({ recipe, isOpen, onClose }: RecipeModalProp
                 <div className="space-y-4">
                   {currentRecipe.steps.map((step: any, index: number) => (
                     <div key={index} className="flex space-x-4">
-                      <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                      <div className="flex-shrink-0 w-8 h-8 bg-marine-700 text-white rounded-full flex items-center justify-center font-bold text-sm">
                         {index + 1}
                       </div>
                       <div className="flex-1 pt-1">

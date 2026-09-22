@@ -146,7 +146,7 @@ export default function PushNotificationSettings() {
                 <button
                   onClick={handleEnable}
                   disabled={busy}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors disabled:opacity-60"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-marine-700 text-white rounded-xl font-semibold hover:bg-marine-800 transition-colors disabled:opacity-60"
                 >
                   {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <Bell className="w-5 h-5" />}
                   {busy ? 'Activation en cours…' : 'Activer les notifications'}

@@ -202,7 +202,7 @@ export default function ClientesPanel() {
           <div className="md:col-span-2 flex justify-end space-x-3">
             <button type="button" onClick={() => setFormulaire(false)} className="px-4 py-2 text-gray-600 hover:text-gray-800">Annuler</button>
             <button type="submit" disabled={envoi}
-              className="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center space-x-2">
+              className="bg-marine-700 text-white px-5 py-2 rounded-lg hover:bg-marine-800 disabled:opacity-50 flex items-center space-x-2">
               {envoi && <Loader2 className="w-4 h-4 animate-spin" />}
               <span>Ouvrir l'accès</span>
             </button>

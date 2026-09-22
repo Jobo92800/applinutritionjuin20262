@@ -33,7 +33,7 @@ export default function Layout({ children, currentPage, onPageChange }: LayoutPr
   return (
     <div className="min-h-screen">
       {/* Mobile header */}
-      <div className="lg:hidden bg-white shadow-sm border-b px-4 py-3 flex items-center justify-between">
+      <div className="lg:hidden bg-white border-b px-4 py-3 flex items-center justify-between">
         <button
           onClick={() => setSidebarOpen(true)}
           className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -45,7 +45,7 @@ export default function Layout({ children, currentPage, onPageChange }: LayoutPr
       </div>
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-300 ease-in-out`}>
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-carte transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-300 ease-in-out`}>
         <div className="flex items-center justify-between px-6 pt-7 pb-5 border-b border-ardoise-200">
           <img src="/logo.svg" alt="MAbeautyplus" className="h-12 w-auto" />
           <button
@@ -58,7 +58,7 @@ export default function Layout({ children, currentPage, onPageChange }: LayoutPr
 
         <div className="p-6 border-b">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br from-marine-500 to-rose-500 shadow-carte">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-marine-500 shadow-carte">
               <span className="text-white font-semibold text-sm">
                 {user?.name.charAt(0).toUpperCase()}
               </span>

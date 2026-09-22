@@ -63,24 +63,53 @@ fusion faite, ce lien pointera ici.
 
 ## Charte graphique
 
-Celle de l'application thérapeute (V2), reprise à l'identique le 16 septembre
-2026 : **teal** (`#3BBFBF`) pour l'interface, **magenta** (`#E8318A`) réservé
-aux gestes qui engagent — commencer, valider, ouvrir un accès. Typographie
-**Poppins** (chargée dans `index.html`), titres en maigre avec le mot important
-en gras. Coins généreux, boutons en pilule, fond blanc lavé d'un halo de teal
-(`src/index.css`). Le logo recadré est dans `public/logo.svg`, copié de la V2.
+**La DA MAbeautyplus de septembre 2026**, appliquée au hexadécimal près le
+18 septembre (document de référence : `DA-MAbeautyplus-charte-a-coller.md`,
+skill `mabeautyplus-da`). Six principes, dont quatre se voient partout ici :
+
+| Règle | Ce que ça donne dans l'app |
+|---|---|
+| **L'aqua structure, le rose décide** | Une seule zone rose par écran, et c'est l'action : « Commencer » sur le parcours, « Ajouter » sur les courses. Tout le reste est teal. |
+| **Le titre est fin, l'idée est grasse** | Les titres de page sont en Poppins **300** avec deux ou trois mots en **600** : classe `.titre-1` et `<b>` (« Votre **parcours** MAbeautyplus »). Jamais un grand titre entier en gras. |
+| **Des filets, pas des ombres** | Une carte dans le flux a un filet 1px, pas d'ombre. Les quatre ombres du système (`shadow-carte`, `flottante`, `cta`, `profonde`) sont les seules, toutes décalées vers le haut. |
+| **Trois dégradés, pas un de plus** | `bg-degrade-marque` (barres de progression), `bg-degrade-profond` (le hero de l'accueil, les en-têtes de célébration), `bg-halo-haut` (le fond). Aucun dégradé en fond de bloc ni sur un bouton. |
+
+**Les jetons.** `tailwind.config.js` porte la palette. Les valeurs commentées
+sont les jetons de la charte, repris tels quels ; les crans intermédiaires
+qu'une échelle Tailwind réclame et que la charte ne nomme pas sont
+**interpolés en Lab entre deux jetons voisins** — aucune teinte n'est inventée
+à côté de la palette. Les jetons sont aussi disponibles sous leur vrai nom
+(`bg-mab-rail`, `text-mab-aqua-texte`, `border-mab-filet-aqua`,
+`bg-mab-terrain-2-fond`…) : **c'est ce qu'il faut écrire pour du neuf.**
+
+**Le piège du contraste.** `aqua` (#3BBFBF) est à 2,2:1 et `aqua-profond`
+(#2AA5A5) à 3,0:1 : ni l'un ni l'autre n'écrit en petit corps, et le blanc ne
+se pose pas dessus. Ce qui porte du texte descend sur **`aqua-texte`**
+(#1F7F7F, 4,8:1) — `marine-700`, et `text-mab-aqua-texte` pour les capitales.
+Les aplats sans texte (pastilles, coches, jauges) gardent l'aqua.
 
 **Comment ça tient sans avoir réécrit trente écrans :** l'application avait
 été écrite avec les palettes par défaut de Tailwind. `tailwind.config.js`
-**redéfinit ces noms** — `green`, `blue`, `indigo`, `cyan`, `emerald`
-deviennent le teal ; `purple`, `pink`, `orange`, `violet` le magenta ; `gray`
-l'ardoise ; `yellow` aussi devient teal pâle (Jonathan ne veut pas de jaune).
-Un `bg-green-600` écrit en 2025 est donc teal aujourd'hui. `red` reste aux
-erreurs et suppressions, adouci vers le rosé ; `amber` aux avertissements.
-**Pastel plutôt que plein** : les grandes surfaces (barres d'action, rubriques)
-sont en teinte `-100` avec texte `-800`, jamais en `-600` plein — seul le geste
-qui engage a droit au magenta plein. Pour un nouvel écran, préférer les vrais noms — `marine`,
-`rose`, `ardoise` — comme dans la V2.
+**redéfinit ces noms** — `green`, `blue`, `indigo`, `cyan`, `emerald`,
+`yellow` deviennent l'aqua ; `purple`, `pink`, `orange`, `violet` le rose ;
+`gray` l'ardoise. Un `bg-green-600` écrit en 2025 est donc teal aujourd'hui.
+`red` reste aux erreurs, sur l'encre `erreur` (#C0392B) avec des teintes
+pâles douces. Pour un nouvel écran, préférer les vrais noms — `mab-*`,
+`marine`, `rose`, `ardoise`.
+
+**Les classes d'écriture** (`src/index.css`) : `.titre-1`, `.titre-2`,
+`.chapeau`, `.surtitre` (CAPITALES en aqua-texte), `.bouton-action` (pilule
+rose, 56px sur téléphone / 52px au-dessus), `.bouton-second`.
+
+**Aucun mouvement au survol** : couleur, filet et opacité seulement, 150–200 ms.
+Pas de déplacement, pas d'agrandissement ; `prefers-reduced-motion` respecté.
+
+**Le logo** est celui de l'application (`public/logo.svg`), déjà le bon : la
+DA ne le touche pas.
+
+**Vérifier :** `python3 <skill mabeautyplus-da>/scripts/audit_da.py src`.
+Cible atteinte le 18/09 : **100 % de jetons exacts dans `src/`**, zéro couleur
+hors palette, zéro dégradé interdit, zéro ombre hors système.
 
 ---
 

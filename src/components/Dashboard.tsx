@@ -90,41 +90,45 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
       title: 'Parcourir les recettes',
       description: `${recipes.length} recettes disponibles`,
       icon: Book,
-      color: 'bg-blue-500',
+      color: 'bg-marine-500',
       action: () => onPageChange('recipes')
     },
     {
       title: 'Mon parcours audio',
       description: 'Une étape à la fois, à votre rythme',
       icon: Headphones,
-      color: 'bg-purple-500',
+      color: 'bg-marine-500',
       action: () => onPageChange('podcasts')
     },
     {
       title: 'Planifier mes repas',
       description: `${currentWeekMealPlans.length} repas planifiés cette semaine`,
       icon: Calendar,
-      color: 'bg-green-500',
+      color: 'bg-marine-500',
       action: () => onPageChange('calendar')
     },
     {
       title: 'Liste de courses',
       description: 'Gérer ma liste',
       icon: ShoppingCart,
-      color: 'bg-orange-500',
+      color: 'bg-marine-500',
       action: () => onPageChange('shopping')
     }
   ];
 
   return (
     <div className="space-y-8">
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-marine-500 to-rose-400 rounded-2xl p-8 text-white shadow-carte">
+      {/*
+        Le seul moment « profond » de l'application : la charte interdit le
+        dégradé en fond de bloc, mais réserve `degrade-profond` à ce qu'on veut
+        marquer. Titre fin, deux mots porteurs en gras.
+      */}
+      <div className="bg-degrade-profond rounded-2xl p-8 text-white shadow-carte">
         <div>
-          <h1 className="text-3xl font-bold mb-2">
-            Bonjour, {user?.name} ! 👋
+          <h1 className="titre-1 !text-white mb-2">
+            Bonjour, <b>{user?.name}</b>
           </h1>
-          <p className="text-green-100 text-lg">
+          <p className="chapeau !text-mab-profond-texte">
             Prêt à maintenir vos bonnes habitudes alimentaires ?
           </p>
           {user?.subscription_tier && user.subscription_tier !== 'user' && (
@@ -155,7 +159,7 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
             </button>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 relative">
+            <div className="bg-white rounded-xl p-6 border border-gray-200 relative">
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Poids actuel</p>
@@ -185,7 +189,7 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
               </button>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <div className="bg-white rounded-xl p-6 border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">IMC</p>
@@ -202,7 +206,7 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
               </p>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <div className="bg-white rounded-xl p-6 border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Objectif</p>
@@ -215,7 +219,7 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
               <p className="text-sm text-gray-500 mt-2">À atteindre</p>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <div className="bg-white rounded-xl p-6 border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Dernière entrée</p>
@@ -226,8 +230,8 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
                     }
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-orange-600" />
+                <div className="w-12 h-12 bg-marine-100 rounded-lg flex items-center justify-center">
+                  <Calendar className="w-6 h-6 text-marine-700" />
                 </div>
               </div>
               <p className="text-sm text-gray-500 mt-2">
@@ -249,9 +253,9 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
             <button
               key={index}
               onClick={action.action}
-              className="bg-white rounded-xl p-4 md:p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 text-left group"
+              className="bg-white rounded-xl p-4 md:p-6 border border-gray-200 hover:shadow-carte transition-all duration-200 text-left group"
             >
-              <div className={`w-10 h-10 md:w-12 md:h-12 ${action.color} rounded-lg flex items-center justify-center mb-3 md:mb-4 group-hover:scale-110 transition-transform`}>
+              <div className={`w-10 h-10 md:w-12 md:h-12 ${action.color} rounded-lg flex items-center justify-center mb-3 md:mb-4`}>
                 <Icon className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
               <h3 className="font-semibold text-gray-800 mb-1 md:mb-2 text-sm md:text-base">{action.title}</h3>
@@ -264,7 +268,7 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Recipes */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div className="bg-white rounded-xl p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-800">Recettes populaires</h2>
             <button
@@ -296,7 +300,7 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
         </div>
 
         {/* Progress Summary */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div className="bg-white rounded-xl p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-800">Résumé des progrès</h2>
             <button
@@ -335,7 +339,7 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
             <h2 className="text-xl font-semibold text-marine-900">Administration</h2>
             <button
               onClick={() => onPageChange('admin')}
-              className="bg-marine-600 text-white px-4 py-2 rounded-full hover:bg-marine-700 transition-colors flex items-center space-x-2"
+              className="bg-marine-700 text-white px-4 py-2 rounded-full hover:bg-marine-800 transition-colors flex items-center space-x-2"
             >
               <Plus className="w-4 h-4" />
               <span>Gérer le contenu</span>
@@ -359,7 +363,7 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
       {/* Quick Weight Entry Modal */}
       {showWeightModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+          <div className="bg-white rounded-xl shadow-flottante max-w-md w-full p-6">
             <h3 className="text-xl font-bold text-gray-800 mb-4">Ajouter une pesée</h3>
 
             <div className="mb-6">
@@ -392,7 +396,7 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
               <button
                 onClick={handleAddWeight}
                 disabled={!newWeight || isSubmitting}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-marine-700 text-white rounded-lg hover:bg-marine-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
               </button>

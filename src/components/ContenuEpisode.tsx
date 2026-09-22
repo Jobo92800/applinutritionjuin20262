@@ -25,7 +25,7 @@ function Ligne({ texte }: { texte: string }) {
 
 function Titre({ icone: Icone, enfants, couleur }: { icone: typeof BookOpen; enfants: string; couleur: string }) {
   return (
-    <h2 className={`flex items-center space-x-2 text-xs font-semibold tracking-widest uppercase ${couleur}`}>
+    <h2 className={`surtitre flex items-center space-x-2 ${couleur}`}>
       <Icone className="w-4 h-4" /><span>{enfants}</span>
     </h2>
   );
