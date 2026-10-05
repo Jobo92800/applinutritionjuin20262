@@ -321,6 +321,21 @@ final » n'a pas d'épisode : **l'audio n'est pas encore enregistré** (Jonathan
 le refera). Le jour venu : Nouveau podcast en cure 6 mois (il se place en
 dernier, étape 25), déposer le MP3, puis redéposer la fiche S24.
 
+**Le jour de pesée (05/10/2026)** : « choisissez un jour fixe hebdomadaire
+pour vous peser, le matin à jeun » — la première consigne de l'introduction,
+le rituel central de la méthode, et le seul que l'application ne soutenait
+pas. Colonne `profiles.jour_pesee` (smallint ISO, 1 = lundi … 7 = dimanche,
+NULL = aucun rappel ; migration `20261005120000_jour_de_pesee.sql`). Choix
+dans `JourDePesee.tsx`, **sur la page Suivi**, à côté de la courbe — pas
+enfoui dans Compte : c'est là qu'elle se pèse. Re-cliquer sur son jour
+l'enlève. `netlify/lib/rappels-pesee.js` → `rappelsPesee(jourIso, date)`,
+appelé par `scheduled-push` à **8 h de Paris** (`parisNow` compte dimanche =
+0, la colonne suit l'ISO : la conversion est dans la fonction). Ne rappelle
+jamais : sans jour choisi, sans abonnement push, **si elle s'est déjà pesée
+ce matin**, si elle est suspendue, ou si elle l'a été dans les 6 derniers
+jours (journal `rappel-pesee`). `tag: 'pesee'` — le service worker masque la
+notification quand l'application est déjà visible, comme pour le parcours.
+
 **Composer sa semaine, et la bonne version (05/10/2026)** : deux ajouts qui
 partagent le même calcul, `src/lib/cibleRepas.ts` — la journée se répartit
 entre les repas (`PART_DU_REPAS` : 30 / 40 / 30 %, collation 12 % en plus),

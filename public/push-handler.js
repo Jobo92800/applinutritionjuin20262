@@ -20,9 +20,10 @@ self.addEventListener('push', (event) => {
     renotify: true,
   };
 
-  // Une notification du parcours (étape validée, rappel) n'a pas lieu d'être
-  // si la cliente a l'application sous les yeux : la célébration s'en charge.
-  if (options.tag === 'parcours') {
+  // Une notification du parcours (étape validée, rappel) ou le rappel de pesée
+  // n'ont pas lieu d'être si la cliente a déjà l'application sous les yeux :
+  // la célébration s'en charge, ou l'écran du suivi est là, devant elle.
+  if (options.tag === 'parcours' || options.tag === 'pesee') {
     event.waitUntil(
       self.clients
         .matchAll({ type: 'window', includeUncontrolled: true })

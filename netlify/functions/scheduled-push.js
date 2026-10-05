@@ -12,6 +12,7 @@ import {
   VAPID_PRIVATE_KEY,
 } from '../lib/push-core.js';
 import { rappelsParcours, HEURE_RAPPEL } from '../lib/parcours-rappels.js';
+import { rappelsPesee, HEURE_PESEE } from '../lib/rappels-pesee.js';
 
 // Clé de service : nécessaire car aucune session utilisateur n'existe ici.
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -47,6 +48,21 @@ export default async () => {
     }
   }
 
+  /*
+    Le rappel du jour de pesée, le matin. `parisNow` compte les jours à partir
+    de dimanche = 0 ; la colonne `jour_pesee` suit la norme ISO, lundi = 1.
+    Un échec ici ne doit rien bloquer non plus.
+  */
+  let pesees = null;
+  if (hour === HEURE_PESEE) {
+    try {
+      pesees = await rappelsPesee(dayOfWeek === 0 ? 7 : dayOfWeek, date);
+      console.log(`scheduled-push: rappels pesée — ${pesees.rappelees} sur ${pesees.examinees} cliente(s).`);
+    } catch (e) {
+      console.error('scheduled-push: rappels pesée impossibles', e.message);
+    }
+  }
+
   // 1. Programmations actives pour cette heure
   const schedulesResponse = await serviceFetch(
     `/rest/v1/scheduled_notifications?select=*&active=eq.true&hour=eq.${hour}`
@@ -68,7 +84,7 @@ export default async () => {
   });
 
   if (due.length === 0) {
-    return json(200, { checked: schedules.length, sentSchedules: 0, rappels });
+    return json(200, { checked: schedules.length, sentSchedules: 0, rappels, pesees });
   }
 
   // 3. Récupérer les abonnés une seule fois

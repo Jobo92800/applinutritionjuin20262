@@ -469,6 +469,51 @@ p('un bilan sans PDF répond document-absent', r.statut === 404 && r.erreur === 
 r = await get('profil', auth(connecter('sophie@exemple.fr')));
 p('sans fiche V2 : cliente null, rien d\'autre', r.statut === 200 && r.cliente === null && r.bilans.length === 0 && r.poids.length === 0);
 
+// --- le rappel du jour de pesée ---
+{
+  const { rappelsPesee } = await import('../../netlify/lib/rappels-pesee.js');
+  const aujourdhui = new Date().toISOString().slice(0, 10);
+  const compte = (email) => tables.profiles.find((x) => x.email === email);
+
+  // Trois clientes qui ont choisi le mardi.
+  for (const [email, prenom] of [['pesee-ok@exemple.fr', 'Pesée'], ['pesee-faite@exemple.fr', 'Déjà'], ['pesee-muette@exemple.fr', 'Muette']]) {
+    await post('admin-parcours', { action: 'creer', prenom, email, parcours: 'B', motDePasse: 'motdepasse-long' }, ADMIN);
+    compte(email).jour_pesee = 2;
+  }
+  // Une quatrième n'a rien choisi, une cinquième est suspendue.
+  await post('admin-parcours', { action: 'creer', prenom: 'Sans jour', email: 'pesee-sans@exemple.fr', parcours: 'B', motDePasse: 'motdepasse-long' }, ADMIN);
+  await post('admin-parcours', { action: 'creer', prenom: 'Suspendue', email: 'pesee-susp@exemple.fr', parcours: 'B', motDePasse: 'motdepasse-long' }, ADMIN);
+  Object.assign(compte('pesee-susp@exemple.fr'), { jour_pesee: 2, parcours_statut: 'suspendu' });
+
+  // Seules trois sont abonnées aux notifications.
+  for (const email of ['pesee-ok@exemple.fr', 'pesee-faite@exemple.fr', 'pesee-susp@exemple.fr']) {
+    tables.push_subscriptions.push({ id: 'ps-' + email, user_id: compte(email).id, endpoint: 'https://push.exemple/' + email, p256dh: 'k', auth: 'a' });
+  }
+  // « Déjà » s'est pesée ce matin.
+  tables.weight_entries.push({ id: 'wp-deja', user_id: compte('pesee-faite@exemple.fr').id, weight: 70, date: aujourdhui });
+
+  const avant = journal.pushs.length;
+  let bilan = await rappelsPesee(2, aujourdhui);
+  const envois = journal.pushs.slice(avant);
+  p('pesée : seule la cliente abonnée, non pesée et non suspendue est rappelée',
+    bilan.rappelees === 1 && envois.length === 1 && envois[0].title === 'C’est votre jour de pesée');
+  p('pesée : le rappel ouvre la page du suivi', envois[0]?.url === '/?page=progress' && envois[0]?.tag === 'pesee');
+  p('pesée : celle qui s\'est déjà pesée ce matin ne reçoit rien',
+    !envois.some((x) => x.endpoints.some((e) => e.includes('pesee-faite'))));
+  p('pesée : une cliente suspendue n\'est jamais rappelée',
+    !envois.some((x) => x.endpoints.some((e) => e.includes('pesee-susp'))));
+  p('pesée : une cliente sans abonnement n\'est pas comptée comme rappelée',
+    !envois.some((x) => x.endpoints.some((e) => e.includes('pesee-muette'))));
+
+  bilan = await rappelsPesee(2, aujourdhui);
+  p('pesée : pas de second rappel dans la semaine', bilan.rappelees === 0);
+
+  bilan = await rappelsPesee(4, aujourdhui);
+  p('pesée : un autre jour ne réveille personne', bilan.examinees === 0 && bilan.rappelees === 0);
+  bilan = await rappelsPesee(null, aujourdhui);
+  p('pesée : sans jour, rien ne part', bilan.rappelees === 0);
+}
+
 let ko = 0;
 for (const [n, ok, d] of T) { if (!ok) ko++; console.log((ok ? '  OK  ' : '  KO  ') + n + (d && !ok ? ' -> ' + d : '')); }
 console.log(`\n${T.length - ko} contrôle${T.length - ko > 1 ? 's' : ''} passe${T.length - ko > 1 ? 'nt' : ''}` + (ko ? `, ${ko} en échec` : ''));

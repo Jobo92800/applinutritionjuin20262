@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { profilApi } from '../lib/profilApi';
 import { WeightEntry } from '../types';
 import Achievements from './Achievements';
+import JourDePesee from './JourDePesee';
 
 /*
   Les quatre séries du graphique reprennent le trajet du dégradé de marque —
@@ -674,6 +675,9 @@ export default function ProgressTracking() {
           </p>
         </div>
       </div>
+
+      {/* Le rituel de la méthode : un jour fixe, le matin à jeun. */}
+      <JourDePesee />
 
       {/* Weight Chart */}
       <div className="bg-white rounded-xl p-6 border border-gray-200">
