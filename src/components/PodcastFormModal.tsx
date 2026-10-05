@@ -10,6 +10,16 @@ interface PodcastFormModalProps {
   onClose: () => void;
 }
 
+/* Les mêmes listes fermées que le formulaire de recette. */
+const PREFERENCES_RECETTE = [
+  'Végétarien', 'Végan', 'Sans gluten', 'Sans lactose',
+  'Sans féculent', 'Super-aliments', 'Robot de cuisine', 'Air Fryer',
+];
+const CATEGORIES_RECETTE = [
+  'Petit-déjeuner', 'Déjeuner', 'Dîner', 'Collation',
+  'Entrée', 'Plat principal', 'Dessert', 'Boisson',
+];
+
 export default function PodcastFormModal({ podcast, isOpen, onClose }: PodcastFormModalProps) {
   const { addPodcast, updatePodcast, uploadPodcastAudio, uploadPodcastImage, uploadPodcastPdf } = useData();
   const [loading, setLoading] = useState(false);
@@ -39,6 +49,10 @@ export default function PodcastFormModal({ podcast, isOpen, onClose }: PodcastFo
     access_tiers: ['all'] as ('1_month' | '3_month' | '6_month' | 'all')[],
     keyPoints: [''],
     weekChallenges: [''],
+    consigne: '',
+    filtrePreferences: [] as string[],
+    filtreCategories: [] as string[],
+    filtreCaloriesMax: '' as string,
     support_pdf_url: '',
     ctaButton: {
       enabled: false,
@@ -83,6 +97,10 @@ export default function PodcastFormModal({ podcast, isOpen, onClose }: PodcastFo
         access_tiers: podcast.access_tiers || ['all'],
         keyPoints: podcast.keyPoints && podcast.keyPoints.length > 0 ? podcast.keyPoints : [''],
         weekChallenges: podcast.weekChallenges && podcast.weekChallenges.length > 0 ? podcast.weekChallenges : [''],
+        consigne: podcast.consigne || '',
+        filtrePreferences: podcast.filtres?.preferences || [],
+        filtreCategories: podcast.filtres?.categories || [],
+        filtreCaloriesMax: podcast.filtres?.caloriesMax ? String(podcast.filtres.caloriesMax) : '',
         support_pdf_url: podcast.support_pdf_url || '',
         ctaButton: podcast.ctaButton || { enabled: false, text: '', url: '' },
         ctaButton2: podcast.ctaButton2 || { enabled: false, text: '', url: '' }
@@ -100,6 +118,10 @@ export default function PodcastFormModal({ podcast, isOpen, onClose }: PodcastFo
         access_tiers: ['all'],
         keyPoints: [''],
         weekChallenges: [''],
+        consigne: '',
+        filtrePreferences: [],
+        filtreCategories: [],
+        filtreCaloriesMax: '',
         support_pdf_url: '',
         ctaButton: { enabled: false, text: '', url: '' },
         ctaButton2: { enabled: false, text: '', url: '' }
@@ -112,8 +134,16 @@ export default function PodcastFormModal({ podcast, isOpen, onClose }: PodcastFo
     setLoading(true);
 
     try {
+      /* Les clés vides ne partent pas : un filtre absent ne filtre rien. */
+      const filtres: Podcast['filtres'] = {};
+      if (formData.filtrePreferences.length) filtres.preferences = formData.filtrePreferences;
+      if (formData.filtreCategories.length) filtres.categories = formData.filtreCategories;
+      if (Number(formData.filtreCaloriesMax) > 0) filtres.caloriesMax = Number(formData.filtreCaloriesMax);
+
       const podcastData = {
         ...formData,
+        consigne: formData.consigne.trim(),
+        filtres,
         keyPoints: formData.keyPoints.filter(point => point.trim() !== ''),
         weekChallenges: formData.weekChallenges.filter(challenge => challenge.trim() !== ''),
         ctaButton: formData.ctaButton.enabled ? formData.ctaButton : undefined,
@@ -582,6 +612,81 @@ export default function PodcastFormModal({ podcast, isOpen, onClose }: PodcastFo
                     </button>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/*
+              La consigne alimentaire de la semaine : la phrase que l'épisode
+              prononce, et les recettes qui la respectent. Facultatif — sans
+              consigne, rien ne change pour la cliente.
+            */}
+            <div className="rounded-xl border border-marine-200 bg-marine-50 p-5">
+              <label className="block text-sm font-medium text-gray-800">
+                Les recettes de cette semaine
+              </label>
+              <p className="text-xs text-gray-600 mt-1 mb-3">
+                La cliente verra cette phrase sous le lecteur, avec les recettes qui la respectent,
+                et retrouvera la même sélection en ouvrant l'onglet Recettes. Laisser vide pour
+                ne rien proposer de particulier.
+              </p>
+
+              <input
+                type="text"
+                value={formData.consigne}
+                onChange={(e) => setFormData({ ...formData, consigne: e.target.value })}
+                placeholder="Ex : Cette semaine, pas de féculents le midi ni le soir."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-marine-500 focus:border-transparent text-sm"
+              />
+
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs font-medium text-gray-700 mb-2">Préférences exigées (toutes)</p>
+                  <div className="flex flex-wrap gap-2">
+                    {PREFERENCES_RECETTE.map((p) => {
+                      const actif = formData.filtrePreferences.includes(p);
+                      return (
+                        <button key={p} type="button"
+                          onClick={() => setFormData({ ...formData, filtrePreferences: actif
+                            ? formData.filtrePreferences.filter((x) => x !== p)
+                            : [...formData.filtrePreferences, p] })}
+                          className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                            actif ? 'border-marine-600 bg-marine-700 text-white' : 'border-gray-300 bg-white text-gray-600 hover:border-marine-400'}`}>
+                          {p}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-700 mb-2">Catégories acceptées (au moins une)</p>
+                  <div className="flex flex-wrap gap-2">
+                    {CATEGORIES_RECETTE.map((c) => {
+                      const actif = formData.filtreCategories.includes(c);
+                      return (
+                        <button key={c} type="button"
+                          onClick={() => setFormData({ ...formData, filtreCategories: actif
+                            ? formData.filtreCategories.filter((x) => x !== c)
+                            : [...formData.filtreCategories, c] })}
+                          className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                            actif ? 'border-marine-600 bg-marine-700 text-white' : 'border-gray-300 bg-white text-gray-600 hover:border-marine-400'}`}>
+                          {c}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center gap-3">
+                <label className="text-xs font-medium text-gray-700">Plafond calorique</label>
+                <input
+                  type="number" min="0" step="10"
+                  value={formData.filtreCaloriesMax}
+                  onChange={(e) => setFormData({ ...formData, filtreCaloriesMax: e.target.value })}
+                  placeholder="aucun"
+                  className="w-28 px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+                />
+                <span className="text-xs text-gray-500">kcal par portion</span>
               </div>
             </div>
 

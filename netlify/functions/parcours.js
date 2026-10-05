@@ -53,6 +53,9 @@ export default async (req) => {
         supportPdf: e.support_pdf_url || null,
         fiche: !!(e.fiches && e.fiches[cure]),
         boutons: [e.cta_button, e.cta_button2].filter((b) => b && b.enabled),
+        // La consigne alimentaire de la semaine et les recettes qui la respectent.
+        consigne: e.consigne || '',
+        filtres: e.filtres && typeof e.filtres === 'object' ? e.filtres : {},
         vignette: e.thumbnail || null,
         dureeSec: e.duration || null,
         position: p.position_sec || 0,

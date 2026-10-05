@@ -39,6 +39,13 @@ async function appeler<T>(route: string, corps: Record<string, unknown>): Promis
 
 /* ---------------------------------------------------------- Côté cliente --- */
 
+/** Quelles recettes respectent la consigne de l'étape. Toutes les clés sont facultatives. */
+export interface FiltresRecettes {
+  preferences?: string[];
+  categories?: string[];
+  caloriesMax?: number;
+}
+
 export interface EtapeParcours {
   numero: number;
   terminee: boolean;
@@ -53,6 +60,9 @@ export interface EtapeParcours {
   /** Une fiche récapitulative existe pour la cure de la cliente (signée à l'ouverture de l'étape). */
   fiche?: boolean;
   boutons?: { text: string; url: string; enabled: boolean }[];
+  /** La consigne alimentaire de la semaine, telle que l'épisode la prononce. */
+  consigne?: string;
+  filtres?: FiltresRecettes;
   vignette?: string | null;
   dureeSec?: number | null;
   position?: number;

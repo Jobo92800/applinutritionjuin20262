@@ -89,7 +89,7 @@ function AppContent() {
       case 'recipes':
         return <RecipeList />;
       case 'podcasts':
-        return <Parcours />;
+        return <Parcours onPageChange={setCurrentPage} />;
       case 'profil':
         return <MonProfil />;
       case 'aide':

@@ -260,6 +260,29 @@ p('rappel journalisé', tables.parcours_acces_log.some((l) => l.user_id === nina
 bilan = await rappelsParcours();
 p('pas de second rappel dans la semaine', bilan.rappelees === 0);
 
+// --- les recettes de la semaine : la consigne portée par l'étape ---
+const jetonMarieSem = connecter('marie@exemple.fr');
+r = await post('parcours', { appareil: 'app-marie' }, auth(jetonMarieSem));
+const intro = r.etapes?.[0];
+p("l'étape ouverte livre sa consigne et son filtre",
+  intro?.consigne?.startsWith('Cette semaine, pas de féculents')
+  && JSON.stringify(intro?.filtres?.preferences) === '["Sans féculent"]');
+p('une étape verrouillée ne livre ni consigne ni filtre',
+  r.etapes?.filter((x) => !x.accessible).every((x) => x.consigne === undefined && x.filtres === undefined));
+
+// On termine l'introduction : la Semaine 1 s'ouvre avec sa propre consigne.
+tables.parcours_progression.push({ id: 'pr-sem', user_id: tables.profiles.find((x) => x.email === 'marie@exemple.fr').id, podcast_id: 'p1', terminee: true, taux: 1, couverture: '', position_sec: 900 });
+r = await post('parcours', { appareil: 'app-marie' }, auth(jetonMarieSem));
+const s1 = r.etapes?.find((x) => x.numero === 2);
+p('la consigne suit l\'étape du moment, avec son plafond calorique',
+  s1?.consigne === 'Cette semaine, pas de féculents le midi ni le soir.' && s1?.filtres?.caloriesMax === 500);
+
+// Une étape qui ne dit rien n'annonce rien : le filtre reste vide.
+tables.parcours_progression.push({ id: 'pr-sem2', user_id: tables.profiles.find((x) => x.email === 'marie@exemple.fr').id, podcast_id: 'p2', terminee: true, taux: 1, couverture: '', position_sec: 600 });
+r = await post('parcours', { appareil: 'app-marie' }, auth(jetonMarieSem));
+const s2 = r.etapes?.find((x) => x.numero === 3);
+p("une étape sans consigne n'en annonce aucune", s2?.consigne === '' && JSON.stringify(s2?.filtres) === '{}');
+
 // --- « Mon profil » : le BioPortrait lu dans la V2 ---
 const get = async (r, h = {}) => {
   const x = await fetch(B + '/api/' + r, { headers: h });

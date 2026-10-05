@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { Heart, Clock, Users, ChefHat, Search, Filter } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Heart, Clock, Users, ChefHat, Search, Filter, UtensilsCrossed, X } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { Recipe } from '../types';
+import { SemaineParcours, semaineEnCours, respecteLaConsigne, filtreUtile } from '../lib/semaineParcours';
 import RecipeModal from './RecipeModal';
 
 interface RecipeListProps {
@@ -15,6 +16,16 @@ export default function RecipeList({ onRecipeSelect }: RecipeListProps) {
   const [selectedDifficulty, setSelectedDifficulty] = useState('');
   const [selectedDietaryPreference, setSelectedDietaryPreference] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+
+  /*
+    La semaine du parcours : quand l'étape du moment porte une consigne, la
+    page s'ouvre sur les recettes qui la respectent. La cliente peut lever le
+    filtre d'un geste — on l'accompagne, on ne l'enferme pas.
+  */
+  const [semaine, setSemaine] = useState<SemaineParcours | null>(null);
+  const [consigneLevee, setConsigneLevee] = useState(false);
+  useEffect(() => { semaineEnCours().then(setSemaine).catch(() => setSemaine(null)); }, []);
+  const consigneActive = !!semaine && filtreUtile(semaine.filtres) && !consigneLevee;
 
   const categories = [...new Set(recipes.flatMap(recipe => recipe.categories || (recipe.category ? [recipe.category] : [])))];
   const difficulties = ['facile', 'moyen', 'difficile'];
@@ -37,7 +48,9 @@ export default function RecipeList({ onRecipeSelect }: RecipeListProps) {
     const matchesDietaryPreference = !selectedDietaryPreference ||
                                    (recipe.dietaryPreferences && recipe.dietaryPreferences.includes(selectedDietaryPreference));
 
-    return matchesSearch && matchesCategory && matchesDifficulty && matchesDietaryPreference;
+    const matchesSemaine = !consigneActive || respecteLaConsigne(recipe, semaine!.filtres);
+
+    return matchesSearch && matchesCategory && matchesDifficulty && matchesDietaryPreference && matchesSemaine;
   });
 
   const getDifficultyColor = (difficulty: string) => {
@@ -69,9 +82,37 @@ export default function RecipeList({ onRecipeSelect }: RecipeListProps) {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="titre-1"><b>Recettes</b></h1>
-          <p className="text-gray-600 mt-2">{filteredRecipes.length} recettes disponibles</p>
+          <p className="text-gray-600 mt-2">
+            {filteredRecipes.length} recette{filteredRecipes.length > 1 ? 's' : ''}
+            {consigneActive ? ' pour votre semaine' : ' disponible'}{!consigneActive && filteredRecipes.length > 1 ? 's' : ''}
+          </p>
         </div>
       </div>
+
+      {/* La consigne de la semaine, quand l'étape du parcours en porte une. */}
+      {semaine && filtreUtile(semaine.filtres) && (
+        <div className={`rounded-2xl border p-4 flex items-start gap-3 ${
+          consigneActive ? 'bg-marine-50 border-marine-200' : 'bg-white border-gray-200'}`}>
+          <UtensilsCrossed className={`w-5 h-5 flex-shrink-0 mt-0.5 ${consigneActive ? 'text-marine-700' : 'text-gray-400'}`} />
+          <div className="flex-1 min-w-0">
+            <p className="surtitre">Étape {semaine.numero} · {semaine.titre}</p>
+            <p className="text-[15px] leading-7 text-gray-700 mt-1">{semaine.consigne}</p>
+            {!consigneActive && (
+              <button type="button" onClick={() => setConsigneLevee(false)}
+                className="mt-2 text-sm font-semibold text-mab-aqua-texte hover:underline">
+                Revoir seulement les recettes de la semaine
+              </button>
+            )}
+          </div>
+          {consigneActive && (
+            <button type="button" onClick={() => setConsigneLevee(true)}
+              title="Voir toutes les recettes"
+              className="flex-shrink-0 p-2 rounded-full text-gray-500 hover:bg-white transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Search and Filters */}
       <div className="hidden md:block bg-white rounded-xl p-6 border border-gray-200">

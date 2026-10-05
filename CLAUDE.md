@@ -321,6 +321,26 @@ final » n'a pas d'épisode : **l'audio n'est pas encore enregistré** (Jonathan
 le refera). Le jour venu : Nouveau podcast en cure 6 mois (il se place en
 dernier, étape 25), déposer le MP3, puis redéposer la fiche S24.
 
+**Les recettes de la semaine (05/10/2026)** : l'épisode de la semaine dicte
+ce qu'on cuisine. Deux colonnes sur `podcasts` — `consigne` (la phrase que
+l'épisode prononce) et `filtres` jsonb (`{preferences[], categories[],
+caloriesMax}`, toutes les clés facultatives) — migration
+`20261005000000_recettes_de_la_semaine.sql`. `/api/parcours` les livre **sur
+les étapes ouvertes seulement**, comme le reste du contenu. Côté cliente :
+`RecettesDeLaSemaine.tsx` sous l'étape du moment (3 recettes + passage vers
+la liste), et un bandeau dans `RecipeList` avec le filtre appliqué, **levable
+d'un geste** (la croix) et remettable — on accompagne, on n'enferme pas.
+`src/lib/semaineParcours.ts` tient la règle (`respecteLaConsigne` : toutes les
+préférences exigées, au moins une catégorie, le plafond) et le cache 5 min
+partagé par les deux écrans (`oublierLaSemaine()` à la validation d'une
+étape). Saisie dans `PodcastFormModal` (bloc « Les recettes de cette
+semaine »). **Tout est facultatif** : sans consigne, l'application est
+exactement celle d'avant. Les consignes des semaines 1 à 5 sont proposées
+dans `~/Desktop/Nouveau Site MAbeautyplus/Consignes de la semaine -
+proposition.sql`. Limite connue : le filtre ne sait pas dire « féculents au
+déjeuner mais pas au dîner » — la phrase porte la nuance, le filtre ouvre la
+catégorie. Une règle par repas demanderait un autre modèle.
+
 **Mon profil — le BioPortrait (18/09/2026)** : un onglet « Mon profil »
 (`MonProfil.tsx`, page `profil`) montre à la cliente son BioPortrait tel qu'il
 a été établi au centre : profil × terrain dominants avec les mots du barème

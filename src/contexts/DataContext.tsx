@@ -79,6 +79,57 @@ const DEMO_RECIPES: Recipe[] = [
     nutrition: { calories: 320, protein: 12, carbs: 45, fat: 8 },
     createdBy: 'demo-user',
     createdAt: '2024-01-01T00:00:00Z'
+  },
+  /* Deux recettes de plus pour juger la sélection de la semaine en démo. */
+  {
+    id: '2',
+    title: 'Omelette au Parmesan et Epinards',
+    description: '',
+    image: '',
+    difficulty: 'facile',
+    prepTime: 10,
+    servings: 1,
+    category: 'Déjeuner',
+    categories: ['Petit-déjeuner', 'Déjeuner', 'Dîner'],
+    dietaryPreferences: ['Sans gluten', 'Sans féculent'],
+    ingredients: [
+      { id: '1', name: 'Oeuf', quantity: 2, unit: 'pièce', category: 'epicerie-salee' },
+      { id: '2', name: 'Parmesan', quantity: 5, unit: 'g', category: 'produits-laitiers' },
+      { id: '3', name: 'Epinards (feuilles)', quantity: 30, unit: 'g', category: 'surgeles' }
+    ],
+    steps: [
+      'Battez les œufs avec le parmesan, une pincée de sel et de poivre.',
+      'Faites revenir les épinards dans un filet d’huile, versez les œufs par-dessus.',
+      'Laissez cuire quelques minutes, retournez, servez chaud.'
+    ],
+    nutrition: { calories: 380, protein: 26, carbs: 13, fat: 25 },
+    createdBy: 'demo-user',
+    createdAt: '2024-01-02T00:00:00Z'
+  },
+  {
+    id: '3',
+    title: 'Tartare de Thon aux Légumes Croquants',
+    description: '',
+    image: '',
+    difficulty: 'facile',
+    prepTime: 15,
+    servings: 1,
+    category: 'Dîner',
+    categories: ['Déjeuner', 'Dîner', 'Entrée'],
+    dietaryPreferences: ['Sans lactose', 'Sans féculent'],
+    ingredients: [
+      { id: '1', name: 'Thon (filet)', quantity: 120, unit: 'g', category: 'poisson' },
+      { id: '2', name: 'Concombre', quantity: 60, unit: 'g', category: 'fruits-legumes' },
+      { id: '3', name: 'Avocat', quantity: 50, unit: 'g', category: 'fruits-legumes' }
+    ],
+    steps: [
+      'Détaillez le thon, le concombre et l’avocat en petits dés.',
+      'Assaisonnez de jus de citron, d’huile d’olive, de sel et de poivre.',
+      'Dressez en cercle et servez bien frais.'
+    ],
+    nutrition: { calories: 382, protein: 38, carbs: 14, fat: 22 },
+    createdBy: 'demo-user',
+    createdAt: '2024-01-03T00:00:00Z'
   }
 ];
 
@@ -398,6 +449,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         access_tiers: podcast.access_tiers || ['all'],
         displayOrder: podcast.display_order || 0,
         support_pdf_url: podcast.support_pdf_url || undefined,
+        consigne: podcast.consigne || '',
+        filtres: podcast.filtres || {},
         ctaButton: podcast.cta_button || null,
         ctaButton2: podcast.cta_button2 || null,
         createdBy: podcast.created_by || '',
@@ -1004,6 +1057,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
         insertData.support_pdf_url = podcast.support_pdf_url;
       }
 
+      if (podcast.consigne) insertData.consigne = podcast.consigne;
+      if (podcast.filtres) insertData.filtres = podcast.filtres;
+
       // Ajouter les CTA buttons s'ils existent et sont valides
       if (podcast.ctaButton && podcast.ctaButton.enabled && podcast.ctaButton.text && podcast.ctaButton.url) {
         insertData.cta_button = podcast.ctaButton;
@@ -1048,6 +1104,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (podcast.weekChallenges !== undefined) {
         updateData.week_challenges = podcast.weekChallenges.length > 0 ? podcast.weekChallenges : null;
       }
+      if (podcast.consigne !== undefined) updateData.consigne = podcast.consigne || null;
+      if (podcast.filtres !== undefined) updateData.filtres = podcast.filtres || {};
       if (podcast.audioUrl !== undefined) updateData.audio_url = podcast.audioUrl || null;
       if (podcast.fichier !== undefined) updateData.fichier = podcast.fichier;
       if (podcast.duration !== undefined) updateData.duration = podcast.duration;

@@ -72,6 +72,10 @@ export interface Podcast {
   createdAt: string;
   displayOrder?: number;
   support_pdf_url?: string;
+  /** La consigne alimentaire de la semaine, affichée sous le lecteur et en tête des recettes. */
+  consigne?: string;
+  /** Quelles recettes la respectent : {preferences[], categories[], caloriesMax}. */
+  filtres?: { preferences?: string[]; categories?: string[]; caloriesMax?: number };
   ctaButton?: {
     text: string;
     url: string;

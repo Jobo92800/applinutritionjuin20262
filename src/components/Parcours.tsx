@@ -4,7 +4,9 @@ import { parcoursApi, EtatParcours, EtapeParcours, ParcoursApiError } from '../l
 import { idAppareil, minutes, mmss } from '../lib/parcoursEcoute';
 import { isPushSupported, permissionState, isSubscribed, subscribeToPush, iosNeedsInstall } from '../lib/webpush';
 import { useAuth } from '../contexts/AuthContext';
+import { depuisEtape, oublierLaSemaine } from '../lib/semaineParcours';
 import ParcoursLecteur from './ParcoursLecteur';
+import RecettesDeLaSemaine from './RecettesDeLaSemaine';
 
 /*
   Le parcours audio de la cliente : une étape après l'autre. Ce que le serveur
@@ -97,7 +99,12 @@ function InvitationRappels() {
   );
 }
 
-export default function Parcours() {
+interface Props {
+  /** Pour emmener la cliente vers les recettes de sa semaine. */
+  onPageChange?: (page: string) => void;
+}
+
+export default function Parcours({ onPageChange }: Props) {
   const appareil = idAppareil();
   const [etat, setEtat] = useState<EtatParcours | null>(null);
   const [erreur, setErreur] = useState('');
@@ -153,6 +160,7 @@ export default function Parcours() {
         total={etat.total}
         onRetour={() => { setOuverte(null); charger(); }}
         onSuivante={async () => {
+          oublierLaSemaine();   // une étape validée, c'est une nouvelle consigne
           const nouvel = await parcoursApi.etat(appareil).catch(() => null);
           if (nouvel) setEtat(nouvel);
           const suivante = nouvel?.etapes[nouvel.disponible];
@@ -162,6 +170,7 @@ export default function Parcours() {
     );
   }
 
+  const semaine = depuisEtape(courante);
   const pourcent = etat.total ? Math.round((etat.terminees / etat.total) * 100) : 0;
   const toutFini = etat.terminees >= etat.total;
 
@@ -217,6 +226,15 @@ export default function Parcours() {
             <span>{toutFini ? 'Réécouter' : courante.position ? 'Reprendre mon écoute' : 'Commencer'}</span>
           </button>
         </div>
+      )}
+
+      {/*
+        La consigne de la semaine et les recettes qui la respectent : c'est le
+        seul endroit où l'épisode qu'elle écoute rejoint ce qu'elle met dans
+        son assiette. Rien ne s'affiche si l'étape ne dit rien.
+      */}
+      {semaine && onPageChange && (
+        <RecettesDeLaSemaine semaine={semaine} onVoirToutes={() => onPageChange('recipes')} />
       )}
 
       {/* La frise */}
