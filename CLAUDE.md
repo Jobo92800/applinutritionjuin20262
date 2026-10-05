@@ -321,6 +321,23 @@ final » n'a pas d'épisode : **l'audio n'est pas encore enregistré** (Jonathan
 le refera). Le jour venu : Nouveau podcast en cure 6 mois (il se place en
 dernier, étape 25), déposer le MP3, puis redéposer la fiche S24.
 
+**Le retour vers la thérapeute (05/10/2026)** : la V2 lit ici ce que fait la
+cliente entre deux rendez-vous. Action **`activite`** sur
+`/api/admin-parcours` (`netlify/lib/activite-cliente.js`), authentifiée par
+l'`x-mbp-code` habituel, interrogée **par email** — la seule clé que les deux
+applications partagent. Elle rend : dernière ouverture et `jamaisVenue`,
+avancement du parcours avec les jours depuis la dernière écoute, les pesées
+**saisies par la cliente** (la V2 a déjà celles du centre) avec l'écart depuis
+la première, les cases cochées de la semaine et les jours parfaits sur sept,
+les repas planifiés. Volontairement **pas** ses messages ni ses photos de
+repas. Un email sans compte répond `null`, jamais une erreur.
+Côté V2 : `CarteActiviteCliente` en tête de l'onglet Parcours audio, et
+**deux secrets séparés** sur la fonction Edge `acces-parcours-audio` —
+`NUTRITION_API_URL` et `NUTRITION_ADMIN_CODE` (= l'`ADMIN_CODE` de Netlify
+ici). Séparés de `PODCAST_API_URL`, qui pilote la **création** de compte et
+reste sur Mon Parcours depuis le 28/09 : lire et créer sont deux sujets.
+Secrets absents → la carte ne s'affiche pas, rien ne casse.
+
 **Les recettes de la semaine (05/10/2026)** : l'épisode de la semaine dicte
 ce qu'on cuisine. Deux colonnes sur `podcasts` — `consigne` (la phrase que
 l'épisode prononce) et `filtres` jsonb (`{preferences[], categories[],
