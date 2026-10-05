@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Headphones, Lock, Check, Play, Loader2, Bell, X } from 'lucide-react';
+import { Headphones, Lock, Check, Play, Loader2, Bell, X, Download } from 'lucide-react';
 import { parcoursApi, EtatParcours, EtapeParcours, ParcoursApiError } from '../lib/parcoursApi';
 import { idAppareil, minutes, mmss } from '../lib/parcoursEcoute';
 import { isPushSupported, permissionState, isSubscribed, subscribeToPush, iosNeedsInstall } from '../lib/webpush';
 import { useAuth } from '../contexts/AuthContext';
 import { depuisEtape, oublierLaSemaine } from '../lib/semaineParcours';
+import { episodesGardes } from '../lib/audioHorsLigne';
 import ParcoursLecteur from './ParcoursLecteur';
 import RecettesDeLaSemaine from './RecettesDeLaSemaine';
 
@@ -125,6 +126,12 @@ export default function Parcours({ onPageChange }: Props) {
 
   useEffect(() => { charger(); }, [charger]);
 
+  /* Quelles étapes s'écoutent sans réseau : la frise le dit d'un coup d'œil. */
+  const [gardees, setGardees] = useState<Set<number>>(new Set());
+  useEffect(() => {
+    episodesGardes().then((liste) => setGardees(new Set(liste.map((e) => e.numero))));
+  }, [ouverte]);
+
   if (chargement && !etat) {
     return (
       <div className="flex items-center justify-center py-24 text-gray-500">
@@ -241,14 +248,19 @@ export default function Parcours({ onPageChange }: Props) {
       <div>
         <h2 className="font-semibold text-gray-800 mb-3">Votre parcours</h2>
         <ol className="relative border-l-2 border-gray-200 ml-4 space-y-6">
-          {etat.etapes.map((e, i) => <Etape key={e.numero} etape={e} premiereVerrouillee={i === etat.disponible + 1} onOuvrir={() => setOuverte(e.numero)} />)}
+          {etat.etapes.map((e, i) => (
+            <Etape key={e.numero} etape={e} premiereVerrouillee={i === etat.disponible + 1}
+              gardee={gardees.has(e.numero)} onOuvrir={() => setOuverte(e.numero)} />
+          ))}
         </ol>
       </div>
     </div>
   );
 }
 
-function Etape({ etape, premiereVerrouillee, onOuvrir }: { etape: EtapeParcours; premiereVerrouillee: boolean; onOuvrir: () => void }) {
+function Etape({ etape, premiereVerrouillee, gardee, onOuvrir }: {
+  etape: EtapeParcours; premiereVerrouillee: boolean; gardee: boolean; onOuvrir: () => void;
+}) {
   const pc = Math.round((etape.taux || 0) * 100);
   const pastille = etape.terminee
     ? 'bg-green-500 text-white'
@@ -262,8 +274,13 @@ function Etape({ etape, premiereVerrouillee, onOuvrir }: { etape: EtapeParcours;
       {etape.accessible ? (
         <button onClick={onOuvrir} className="text-left w-full">
           <p className={`font-medium ${etape.terminee ? 'text-gray-700' : 'text-mab-aqua-texte'}`}>{etape.numero}. {etape.titre}</p>
-          <p className="text-sm text-gray-500">
-            {etape.terminee ? 'Terminée' : pc > 0 ? `En cours · ${pc} % écouté` : 'Disponible'}
+          <p className="text-sm text-gray-500 flex items-center gap-2">
+            <span>{etape.terminee ? 'Terminée' : pc > 0 ? `En cours · ${pc} % écouté` : 'Disponible'}</span>
+            {gardee && (
+              <span title="S'écoute sans réseau" className="inline-flex items-center gap-1 text-mab-aqua-texte">
+                <Download className="w-3.5 h-3.5" /><span className="text-xs">hors connexion</span>
+              </span>
+            )}
           </p>
         </button>
       ) : (

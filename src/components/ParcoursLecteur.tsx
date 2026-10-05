@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { ArrowLeft, Play, Pause, RotateCcw, RotateCw, Headphones, Lock, FileText, ExternalLink, PartyPopper } from 'lucide-react';
+import { ArrowLeft, Play, Pause, RotateCcw, RotateCw, Headphones, Lock, FileText, ExternalLink, PartyPopper, Download, Check, Loader2, Trash2 } from 'lucide-react';
 import { parcoursApi, EtapeParcours, ParcoursApiError } from '../lib/parcoursApi';
 import { supabase } from '../lib/supabase';
 import { empaqueter, depaqueter, tauxLocal, mmss } from '../lib/parcoursEcoute';
+import { sonGarde, garder, oublier, stockageDisponible, enMo } from '../lib/audioHorsLigne';
 import ContenuEpisode from './ContenuEpisode';
 
 /*
@@ -91,6 +92,23 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
     } catch { /* rien de plus à tenter */ }
   }, [appareil, numero]);
 
+  /*
+    Garder l'épisode pour l'écouter sans réseau.
+
+    `urlLocale` est l'adresse d'objet de la copie gardée : on la révoque à la
+    sortie, sinon le navigateur garde le son en mémoire. `urlSignee` est celle
+    du serveur, conservée pour pouvoir télécharger après coup.
+  */
+  const [garde, setGarde] = useState<{ octets: number } | null>(null);
+  const [telechargement, setTelechargement] = useState<number | null>(null);
+  const [erreurGarde, setErreurGarde] = useState('');
+  const urlLocale = useRef<string | null>(null);
+  const [urlSignee, setUrlSignee] = useState<string | null>(null);
+
+  useEffect(() => () => {
+    if (urlLocale.current) { URL.revokeObjectURL(urlLocale.current); urlLocale.current = null; }
+  }, []);
+
   /* ------------------------------------------------------- chargement --- */
   useEffect(() => {
     let annule = false;
@@ -98,15 +116,38 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
       try {
         const { data } = await supabase.auth.getSession();
         jetonAcces.current = data?.session?.access_token || null;
-        const rep = await parcoursApi.audio(numero, appareil);
-        if (annule || !audioRef.current) return;
+
+        /*
+          La copie gardée d'abord : elle évite un aller-retour réseau et
+          fonctionne sans connexion. Le serveur reste consulté pour la durée,
+          la fiche PDF et le contrôle de déblocage — mais s'il ne répond pas,
+          l'épisode s'écoute quand même.
+        */
+        const local = await sonGarde(numero);
+        if (annule) return;
+        if (local && audioRef.current) {
+          urlLocale.current = URL.createObjectURL(local);
+          audioRef.current.src = urlLocale.current;
+          audioRef.current.load();
+          setGarde({ octets: local.size });
+          setChargement(false);
+        }
+
+        const rep = await parcoursApi.audio(numero, appareil).catch((e) => {
+          if (local) return null;          // hors connexion, mais on a le son
+          throw e;
+        });
+        if (annule || !audioRef.current || !rep) return;
+        setUrlSignee(rep.url);
         if (rep.dureeSec) {
           dureeEp.current = rep.dureeSec;
           setDuree(rep.dureeSec);
           couv.current = depaqueter(etape.couverture, rep.dureeSec);
         }
-        audioRef.current.src = rep.url;
-        audioRef.current.load();
+        if (!local) {
+          audioRef.current.src = rep.url;
+          audioRef.current.load();
+        }
         setFichePdf(rep.fichePdf || null);
         setChargement(false);
       } catch (e) {
@@ -122,6 +163,34 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
     })();
     return () => { annule = true; };
   }, [numero, appareil, etape.couverture]);
+
+  const garderLEpisode = async () => {
+    if (!urlSignee || telechargement !== null) return;
+    setErreurGarde('');
+    setTelechargement(0);
+    try {
+      const octets = await garder(numero, etape.titre || `Étape ${numero}`, dureeEp.current || null,
+        urlSignee, (part) => setTelechargement(part));
+      setGarde({ octets });
+    } catch {
+      setErreurGarde("Le téléchargement n'a pas abouti. Réessayez avec une meilleure connexion.");
+    } finally {
+      setTelechargement(null);
+    }
+  };
+
+  const oublierLEpisode = async () => {
+    await oublier(numero);
+    setGarde(null);
+    /* On repasse sur l'adresse du serveur pour que la lecture continue. */
+    if (urlSignee && audioRef.current) {
+      const position = audioRef.current.currentTime;
+      audioRef.current.src = urlSignee;
+      audioRef.current.load();
+      audioRef.current.currentTime = position;
+    }
+    if (urlLocale.current) { URL.revokeObjectURL(urlLocale.current); urlLocale.current = null; }
+  };
 
   /* --------------------------------------------- événements du lecteur --- */
   useEffect(() => {
@@ -333,6 +402,35 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
                   : "L'étape suivante se débloque une fois cet épisode écouté."}
             </p>
           </div>
+
+          {/*
+            Garder l'épisode : les clientes écoutent en voiture, en marchant.
+            Pas de réseau, pas d'épisode — sauf s'il est déjà sur l'appareil.
+          */}
+          {stockageDisponible() && (urlSignee || garde) && (
+            <div className="mt-4">
+              {garde ? (
+                <div className="flex items-center justify-between gap-3 rounded-full border border-marine-200 bg-marine-50 px-4 py-2.5">
+                  <span className="flex items-center gap-2 text-sm font-medium text-mab-aqua-texte">
+                    <Check className="w-4 h-4" />
+                    Disponible hors connexion · {enMo(garde.octets)}
+                  </span>
+                  <button type="button" onClick={oublierLEpisode} title="Libérer la place"
+                    className="p-1.5 rounded-full text-gray-500 hover:bg-white transition-colors">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <button type="button" onClick={garderLEpisode} disabled={telechargement !== null || !urlSignee}
+                  className="w-full flex items-center justify-center space-x-2 rounded-full border border-marine-500 bg-white py-2.5 text-sm font-semibold text-mab-aqua-texte hover:bg-marine-100 transition-colors disabled:opacity-60">
+                  {telechargement !== null
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /><span>Téléchargement… {Math.round(telechargement * 100)} %</span></>
+                    : <><Download className="w-4 h-4" /><span>Garder pour écouter sans réseau</span></>}
+                </button>
+              )}
+              {erreurGarde && <p className="mt-2 text-xs text-rose-700">{erreurGarde}</p>}
+            </div>
+          )}
 
           {/* La fiche récap : le support écrit de l'épisode, à portée de main du lecteur. */}
           {fichePdf && (

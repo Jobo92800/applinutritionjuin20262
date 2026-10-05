@@ -321,6 +321,21 @@ final » n'a pas d'épisode : **l'audio n'est pas encore enregistré** (Jonathan
 le refera). Le jour venu : Nouveau podcast en cure 6 mois (il se place en
 dernier, étape 25), déposer le MP3, puis redéposer la fiche S24.
 
+**L'épisode hors connexion (05/10/2026)** : elles écoutent en voiture, dans
+le métro. L'audio vit dans un bucket privé derrière une adresse signée 2 h —
+mettre l'adresse en cache ne servirait à rien, c'est le **fichier** qu'on
+garde. `src/lib/audioHorsLigne.ts` : IndexedDB (`mbp-parcours` / `episodes`,
+clé = numéro d'étape), `garder()` lit le flux pour afficher la progression
+quand le serveur annonce la taille, et demande `navigator.storage.persist()`
+— un refus n'est pas un échec. **Toutes les lectures sont silencieuses** :
+sans IndexedDB (navigation privée, quota), elles rendent `null`/`[]` et
+l'application se comporte comme avant. Bouton sous le lecteur (« Garder pour
+écouter sans réseau » → « Disponible hors connexion · 7,2 Mo » + corbeille),
+et la frise marque les étapes gardées. **Le lecteur préfère la copie locale**
+et n'échoue plus si le serveur ne répond pas quand elle existe ; la durée
+vient alors du fichier lui-même (`loadedmetadata` le gérait déjà). Oublier un
+épisode repasse sur l'adresse signée **sans perdre la position**.
+
 **Le jour de pesée (05/10/2026)** : « choisissez un jour fixe hebdomadaire
 pour vous peser, le matin à jeun » — la première consigne de l'introduction,
 le rituel central de la méthode, et le seul que l'application ne soutenait

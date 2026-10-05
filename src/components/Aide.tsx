@@ -114,6 +114,7 @@ export default function Aide({ onPageChange }: Props) {
           ]} />
           <p className="text-[15px] leading-7 text-gray-700">Dans le lecteur : le bouton rond lance et met en pause, « 15 s » recule ou avance. Vous pouvez avancer dans un épisode déjà entendu, ce que vous passez compte comme écouté. Sous le lecteur, le grand bouton teal ouvre la <b>fiche récap</b> de l'étape (PDF), puis le résumé, les points à retenir et vos défis de la semaine.</p>
           <p className="text-[15px] leading-7 text-gray-700">Vous pouvez écouter depuis votre téléphone, votre tablette et votre ordinateur (jusqu'à quatre appareils) : votre progression est la même partout. Une étape terminée se réécoute autant de fois que vous voulez.</p>
+          <Astuce enfants={<><b>Pas de réseau là où vous écoutez ?</b> Sous le lecteur, « Garder pour écouter sans réseau » télécharge l'épisode sur votre téléphone. Il s'écoute ensuite en voiture, dans le métro, partout — et la corbeille libère la place quand vous avez fini.</>} />
           <Astuce enfants={<><b>Un seul épisode par semaine, c'est voulu.</b> Choisissez un jour fixe : pesée le matin à jeun, écoute de l'étape, planification des repas.</>} />
         </div>
       ),

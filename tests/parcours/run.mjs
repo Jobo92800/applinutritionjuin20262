@@ -469,6 +469,21 @@ p('un bilan sans PDF répond document-absent', r.statut === 404 && r.erreur === 
 r = await get('profil', auth(connecter('sophie@exemple.fr')));
 p('sans fiche V2 : cliente null, rien d\'autre', r.statut === 200 && r.cliente === null && r.bilans.length === 0 && r.poids.length === 0);
 
+// --- garder un épisode hors connexion : la dégradation gracieuse ---
+{
+  const hl = await import('../../src/lib/audioHorsLigne.ts');
+  // Node n'a pas IndexedDB : c'est exactement le cas d'un navigateur privé
+  // ou d'un stockage refusé. Rien ne doit lever, l'application reste entière.
+  p('hors connexion : le stockage se déclare indisponible sans IndexedDB', hl.stockageDisponible() === false);
+  p('hors connexion : lire un son absent rend null plutôt que de lever', (await hl.sonGarde(1)) === null);
+  p('hors connexion : la liste rend un tableau vide plutôt que de lever',
+    Array.isArray(await hl.episodesGardes()) && (await hl.episodesGardes()).length === 0);
+  await hl.oublier(1);   // ne doit pas lever
+  p('hors connexion : oublier un épisode absent ne lève pas', true);
+  p('hors connexion : les tailles s\'écrivent en mégaoctets, à la française',
+    hl.enMo(7_340_032) === '7,0 Mo' && hl.enMo(921_600) === '0,9 Mo');
+}
+
 // --- le rappel du jour de pesée ---
 {
   const { rappelsPesee } = await import('../../netlify/lib/rappels-pesee.js');
