@@ -3,6 +3,7 @@ import { X, Plus, Trash2, Save, Upload } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { adminParcoursApi } from '../lib/parcoursApi';
 import { Podcast } from '../types';
+import { respecteLaConsigne } from '../lib/semaineParcours';
 
 interface PodcastFormModalProps {
   podcast?: Podcast | null;
@@ -20,8 +21,22 @@ const CATEGORIES_RECETTE = [
   'Entrée', 'Plat principal', 'Dessert', 'Boisson',
 ];
 
+/*
+  Combien de recettes un filtre retient vraiment. Sans ce chiffre sous les
+  yeux, on écrit des filtres qui ne filtrent rien — c'est arrivé sur trois
+  épisodes, qui gardaient 41 recettes sur 43.
+*/
+function verdictFiltre(retenues: number, total: number): { ton: string; texte: string } {
+  if (!total) return { ton: 'text-gray-500', texte: 'Aucune recette en base.' };
+  if (retenues === 0) return { ton: 'text-mab-erreur', texte: `Aucune recette ne respecte ce filtre : la cliente verrait une liste vide.` };
+  if (retenues === total) return { ton: 'text-mab-gris', texte: `Les ${total} recettes passent : ce filtre ne trie rien, la phrase seule suffirait.` };
+  if (retenues / total > 0.85) return { ton: 'text-mab-gris', texte: `${retenues} recettes sur ${total} : le tri est très large, la cliente ne le verra pas.` };
+  if (retenues <= 3) return { ton: 'text-mab-rose-texte', texte: `${retenues} recette${retenues > 1 ? 's' : ''} sur ${total} : c'est peu pour une semaine entière.` };
+  return { ton: 'text-mab-aqua-texte', texte: `${retenues} recettes sur ${total} respectent cette consigne.` };
+}
+
 export default function PodcastFormModal({ podcast, isOpen, onClose }: PodcastFormModalProps) {
-  const { addPodcast, updatePodcast, uploadPodcastAudio, uploadPodcastImage, uploadPodcastPdf } = useData();
+  const { addPodcast, updatePodcast, uploadPodcastAudio, uploadPodcastImage, uploadPodcastPdf, recipes } = useData();
   const [loading, setLoading] = useState(false);
   const [uploadingAudio, setUploadingAudio] = useState(false);
   const [apercu, setApercu] = useState<string | null>(null);
@@ -128,6 +143,14 @@ export default function PodcastFormModal({ podcast, isOpen, onClose }: PodcastFo
       });
     }
   }, [podcast]);
+
+  /* L'aperçu du filtre, recalculé à chaque clic sur une étiquette. */
+  const recettesRetenues = recipes.filter((r) => respecteLaConsigne(r, {
+    preferences: formData.filtrePreferences.length ? formData.filtrePreferences : undefined,
+    categories: formData.filtreCategories.length ? formData.filtreCategories : undefined,
+    caloriesMax: Number(formData.filtreCaloriesMax) > 0 ? Number(formData.filtreCaloriesMax) : undefined,
+  }));
+  const apercuFiltre = verdictFiltre(recettesRetenues.length, recipes.length);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -677,7 +700,7 @@ export default function PodcastFormModal({ podcast, isOpen, onClose }: PodcastFo
                 </div>
               </div>
 
-              <div className="mt-4 flex items-center gap-3">
+              <div className="mt-4 flex flex-wrap items-center gap-3">
                 <label className="text-xs font-medium text-gray-700">Plafond calorique</label>
                 <input
                   type="number" min="0" step="10"
@@ -688,6 +711,15 @@ export default function PodcastFormModal({ podcast, isOpen, onClose }: PodcastFo
                 />
                 <span className="text-xs text-gray-500">kcal par portion</span>
               </div>
+
+              {/* Ce que ce filtre donnerait, tout de suite. */}
+              <p className={`mt-4 text-sm font-medium ${apercuFiltre.ton}`}>{apercuFiltre.texte}</p>
+              {!!recettesRetenues.length && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Par exemple : {recettesRetenues.slice(0, 3).map((r) => r.title).join(' · ')}
+                  {recettesRetenues.length > 3 ? '…' : ''}
+                </p>
+              )}
             </div>
 
             {/* Défis de la semaine */}

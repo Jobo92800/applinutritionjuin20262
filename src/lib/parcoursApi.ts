@@ -6,6 +6,7 @@
   signées, comptage). Même principe que `webpush.ts` pour les notifications.
 */
 import { supabase } from './supabase';
+import type { FiltresRecettes } from './consigneRecettes';
 
 export class ParcoursApiError extends Error {
   code: string;
@@ -38,13 +39,6 @@ async function appeler<T>(route: string, corps: Record<string, unknown>): Promis
 }
 
 /* ---------------------------------------------------------- Côté cliente --- */
-
-/** Quelles recettes respectent la consigne de l'étape. Toutes les clés sont facultatives. */
-export interface FiltresRecettes {
-  preferences?: string[];
-  categories?: string[];
-  caloriesMax?: number;
-}
 
 export interface EtapeParcours {
   numero: number;

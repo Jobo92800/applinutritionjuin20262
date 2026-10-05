@@ -283,6 +283,22 @@ r = await post('parcours', { appareil: 'app-marie' }, auth(jetonMarieSem));
 const s2 = r.etapes?.find((x) => x.numero === 3);
 p("une étape sans consigne n'en annonce aucune", s2?.consigne === '' && JSON.stringify(s2?.filtres) === '{}');
 
+// --- la règle « une recette respecte-t-elle la consigne » ---
+const { respecteLaConsigne, filtreUtile } = await import('../../src/lib/consigneRecettes.ts');
+const recetteA = { dietaryPreferences: ['Sans féculent', 'Sans gluten'], categories: ['Déjeuner', 'Dîner'], nutrition: { calories: 380 } };
+const recetteB = { dietaryPreferences: ['Végétarien'], categories: ['Dessert'], nutrition: { calories: 520 } };
+p('un filtre vide laisse tout passer', respecteLaConsigne(recetteA, {}) && respecteLaConsigne(recetteB, {}));
+p('les préférences sont TOUTES exigées',
+  respecteLaConsigne(recetteA, { preferences: ['Sans féculent', 'Sans gluten'] })
+  && !respecteLaConsigne(recetteA, { preferences: ['Sans féculent', 'Végan'] }));
+p('une seule catégorie suffit',
+  respecteLaConsigne(recetteA, { categories: ['Dîner', 'Collation'] })
+  && !respecteLaConsigne(recetteA, { categories: ['Dessert'] }));
+p('le plafond calorique porte sur la version de base',
+  respecteLaConsigne(recetteA, { caloriesMax: 400 }) && !respecteLaConsigne(recetteB, { caloriesMax: 400 }));
+p('un filtre sans aucun critère est signalé comme inutile',
+  !filtreUtile({}) && !filtreUtile({ preferences: [] }) && filtreUtile({ caloriesMax: 500 }));
+
 // --- « Mon profil » : le BioPortrait lu dans la V2 ---
 const get = async (r, h = {}) => {
   const x = await fetch(B + '/api/' + r, { headers: h });

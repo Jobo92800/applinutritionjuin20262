@@ -330,11 +330,17 @@ les étapes ouvertes seulement**, comme le reste du contenu. Côté cliente :
 `RecettesDeLaSemaine.tsx` sous l'étape du moment (3 recettes + passage vers
 la liste), et un bandeau dans `RecipeList` avec le filtre appliqué, **levable
 d'un geste** (la croix) et remettable — on accompagne, on n'enferme pas.
-`src/lib/semaineParcours.ts` tient la règle (`respecteLaConsigne` : toutes les
-préférences exigées, au moins une catégorie, le plafond) et le cache 5 min
+La règle vit **seule et sans import** dans `src/lib/consigneRecettes.ts`
+(`respecteLaConsigne` : toutes les préférences exigées, au moins une
+catégorie, le plafond) — c'est ce qui permet au banc de l'exécuter telle
+quelle. `src/lib/semaineParcours.ts` la réexporte et tient le cache 5 min
 partagé par les deux écrans (`oublierLaSemaine()` à la validation d'une
 étape). Saisie dans `PodcastFormModal` (bloc « Les recettes de cette
-semaine »). **Tout est facultatif** : sans consigne, l'application est
+semaine »), **avec l'aperçu en direct** : « 20 recettes sur 43 respectent
+cette consigne », ou l'avertissement quand le filtre ne trie rien (il gardait
+41 recettes sur 43 pour les semaines 2 à 4) ou n'en laisse aucune. Côté
+cliente, le compte est honnête — « 20 recettes **sur 43** pour votre
+semaine » — et une liste vide propose de lever le filtre. **Tout est facultatif** : sans consigne, l'application est
 exactement celle d'avant. Les consignes des semaines 1 à 5 sont proposées
 dans `~/Desktop/Nouveau Site MAbeautyplus/Consignes de la semaine -
 proposition.sql`. Limite connue : le filtre ne sait pas dire « féculents au

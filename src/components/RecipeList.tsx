@@ -84,7 +84,12 @@ export default function RecipeList({ onRecipeSelect }: RecipeListProps) {
           <h1 className="titre-1"><b>Recettes</b></h1>
           <p className="text-gray-600 mt-2">
             {filteredRecipes.length} recette{filteredRecipes.length > 1 ? 's' : ''}
-            {consigneActive ? ' pour votre semaine' : ' disponible'}{!consigneActive && filteredRecipes.length > 1 ? 's' : ''}
+            {/* Avec le filtre de la semaine, on dit sur combien on a trié :
+                « 20 sur 43 » se comprend, « 41 recettes » laisse croire à un
+                tri qui n'a pas eu lieu. */}
+            {consigneActive
+              ? ` sur ${recipes.length} pour votre semaine`
+              : ` disponible${filteredRecipes.length > 1 ? 's' : ''}`}
           </p>
         </div>
       </div>
@@ -254,7 +259,17 @@ export default function RecipeList({ onRecipeSelect }: RecipeListProps) {
         <div className="text-center py-12">
           <ChefHat className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-xl font-medium text-gray-500 mb-2">Aucune recette trouvée</h3>
-          <p className="text-gray-400">Essayez de modifier vos critères de recherche</p>
+          {consigneActive ? (
+            <>
+              <p className="text-gray-500">Aucune recette ne correspond à la fois à votre recherche et à la consigne de la semaine.</p>
+              <button type="button" onClick={() => setConsigneLevee(true)}
+                className="mt-4 rounded-full border border-marine-500 bg-white px-6 py-2.5 font-semibold text-mab-aqua-texte hover:bg-marine-100 transition-colors">
+                Voir toutes les recettes
+              </button>
+            </>
+          ) : (
+            <p className="text-gray-400">Essayez de modifier vos critères de recherche</p>
+          )}
         </div>
       )}
 
