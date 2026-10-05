@@ -151,7 +151,7 @@ export default function Aide({ onPageChange }: Props) {
             <>Appuyez sur <b>Nouvelle entrée</b>, entrez votre poids et la date (et si vous voulez vos tours de taille, poitrine, hanches).</>,
             <>La courbe et l'IMC se mettent à jour. Une entrée se modifie ou se supprime avec les deux icônes à droite dans l'historique.</>,
           ]} />
-          <p className="text-[15px] leading-7 text-gray-700">Les pesées et mensurations faites <b>au centre</b> apparaissent aussi sur la courbe, marquées « Pesée au centre » : elles viennent de votre thérapeute et ne se modifient pas ici. La ligne rouge en pointillé est votre objectif de poids (réglable dans Compte).</p>
+          <p className="text-[15px] leading-7 text-gray-700">Les pesées et mensurations faites <b>au centre</b> apparaissent aussi sur la courbe, marquées « Pesée au centre » : elles viennent de votre thérapeute et ne se modifient pas ici. Sur la courbe, un <b>point plein</b> est une pesée faite au centre, un <b>point creux</b> une pesée que vous avez saisie. La ligne rouge en pointillé est votre objectif de poids (réglable dans Compte).</p>
           <p className="text-[15px] leading-7 text-gray-700"><b>Les objectifs de la semaine</b> : quatre questions, une case par jour — compléments alimentaires, hydratation (2 litres), audio de la semaine, cuisine maison. Une journée où tout est coché fait avancer votre <b>série</b>, et les badges se gagnent avec la régularité : Semaine Parfaite, Maître de l'Hydratation, Champion des Compléments, Chef à Domicile, Auditeur Assidu, Série de 7 jours, Série de 30 jours.</p>
           <Astuce enfants={<><b>0,5 à 1 kg par semaine</b>, c'est une perte saine et durable. Regardez la direction, pas la vitesse.</>} />
         </div>

@@ -375,16 +375,25 @@ export default function ProgressTracking() {
             />
           ))}
 
-          {/* Points sur les courbes */}
+          {/*
+            Points sur les courbes.
+
+            Un point **plein** vient d'une pesée faite au centre, un point
+            **creux** d'une pesée que la cliente a saisie elle-même. Même
+            couleur, même courbe : ce sont les mêmes mesures, on distingue
+            seulement qui les a prises.
+          */}
           {measurementPoints.map(measurement =>
-            measurement.points.map((point, index) => (
+            measurement.points.map((point, index) => {
+              const duCentre = (point!.entry as { source?: string })?.source === 'centre';
+              return (
               <g key={`${measurement.key}-point-${index}`}>
                 <circle
                   cx={point!.x}
                   cy={point!.y}
-                  r="5"
-                  fill="#ffffff"
-                  stroke={measurement.color}
+                  r={duCentre ? 5.5 : 5}
+                  fill={duCentre ? measurement.color : '#ffffff'}
+                  stroke={duCentre ? '#ffffff' : measurement.color}
                   strokeWidth="2.5"
                   filter="url(#shadow)"
                   className="cursor-pointer transition-all"
@@ -405,7 +414,8 @@ export default function ProgressTracking() {
                   />
                 )}
               </g>
-            ))
+              );
+            })
           )}
 
           {/* Tooltip au survol */}
@@ -457,6 +467,7 @@ export default function ProgressTracking() {
                     month: 'short',
                     year: 'numeric'
                   })}
+                  {entry.source === 'centre' ? ' · au centre' : ''}
                 </text>
 
                 {measurementPoints.map((m, idx) => {
@@ -695,6 +706,15 @@ export default function ProgressTracking() {
                 <div className="w-3 h-1 border-dashed border" style={{ backgroundColor: COULEUR_OBJECTIF, borderColor: COULEUR_OBJECTIF }}></div>
                 <span>Objectif ({weightGoal}kg)</span>
               </div>
+              {/* Qui a pris la mesure : point plein = au centre, creux = chez vous. */}
+              {userEntries.some((e) => e.source === 'centre') && (
+                <div className="flex items-center space-x-2">
+                  <span className="w-3 h-3 rounded-full border-2 border-mab-aqua bg-white"></span>
+                  <span>Chez vous</span>
+                  <span className="w-3 h-3 rounded-full bg-mab-aqua ring-2 ring-white ml-2"></span>
+                  <span>Au centre</span>
+                </div>
+              )}
             </div>
           )}
         </div>

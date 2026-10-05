@@ -443,7 +443,11 @@ l'appel, puis reçoit le PDF ; en PWA installée, téléchargement.
 réponse (`poids[]`) et se lisent dans l'onglet Suivi avec les pesées de la
 cliente : `WeightEntry.source = 'centre'`, badge « Pesée au centre », ni
 modification ni suppression — c'est la thérapeute qui les tient. Rien n'est
-écrit dans `weight_entries`. **Les mensurations du centre** (taille, poitrine,
+écrit dans `weight_entries`. **Sur la courbe, un point plein vient du centre,
+un point creux de la cliente** — même couleur, même courbe, ce sont les mêmes
+mesures : on distingue seulement qui les a prises. La légende ne montre cette
+paire que si au moins une pesée du centre existe, et l'infobulle ajoute
+« · au centre ». **Les mensurations du centre** (taille, poitrine,
 hanches — les seules que la courbe trace) rejoignent l'entrée de la pesée du
 même jour, ou font leur propre entrée sans poids (`WeightEntry.weight` est
 devenu facultatif : « Poids actuel », IMC et l'historique ne comptent que les
