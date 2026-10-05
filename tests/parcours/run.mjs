@@ -260,6 +260,95 @@ p('rappel journalisé', tables.parcours_acces_log.some((l) => l.user_id === nina
 bilan = await rappelsParcours();
 p('pas de second rappel dans la semaine', bilan.rappelees === 0);
 
+// --- la version de recette adaptée aux besoins de la cliente ---
+{
+  const { cibleDuRepas, versionLaPlusProche, choixUtile } = await import('../../src/lib/cibleRepas.ts');
+  p('la cible dépend du repas visé',
+    cibleDuRepas(2000, [], 'Petit-déjeuner') === 600
+    && cibleDuRepas(2000, [], 'Déjeuner') === 800
+    && cibleDuRepas(2000, [], 'Collation') === 240);
+  p('sans repas connu, on prend le plus lourd que la recette revendique',
+    cibleDuRepas(2000, ['Dîner', 'Déjeuner']) === 800 && cibleDuRepas(2000, ['Collation']) === 240);
+  p('une recette sans catégorie de repas se juge sur un déjeuner', cibleDuRepas(2000, ['Plat principal']) === 800);
+
+  const trois = [
+    { id: null, nom: 'Version originale', calories: 460 },
+    { id: 'v1', nom: 'Calories : faibles', calories: 370 },
+    { id: 'v2', nom: 'Calories : élevées', calories: 550 },
+  ];
+  p('on retient la version la plus proche de la cible',
+    versionLaPlusProche(trois, 380)?.id === 'v1'
+    && versionLaPlusProche(trois, 470)?.id === null
+    && versionLaPlusProche(trois, 600)?.id === 'v2');
+  p('à égalité de distance, la plus légère gagne',
+    versionLaPlusProche([{ id: 'a', nom: 'a', calories: 400 }, { id: 'b', nom: 'b', calories: 600 }], 500)?.id === 'a');
+  p('une recette sans calories ne force aucun choix',
+    versionLaPlusProche([{ id: null, nom: 'o', calories: 0 }], 500) === null
+    && versionLaPlusProche(trois, 0) === null);
+  p('on ne conseille rien quand les versions se valent',
+    !choixUtile([{ id: null, nom: 'o', calories: 400 }, { id: 'v', nom: 'v', calories: 390 }])
+    && choixUtile(trois)
+    && !choixUtile([{ id: null, nom: 'o', calories: 400 }]));
+}
+
+// --- composer une semaine de repas ---
+{
+  const { composerLaSemaine } = await import('../../src/lib/composerSemaine.ts');
+  const R = (id, cats, prefs, kcal) => ({ id, categories: cats, dietaryPreferences: prefs, nutrition: { calories: kcal } });
+  const recettes = [
+    R('dej-leger',  ['Déjeuner'], ['Sans féculent'], 380),
+    R('dej-lourd',  ['Déjeuner'], [], 900),
+    R('dej-autre',  ['Déjeuner'], ['Sans féculent'], 400),
+    R('diner',      ['Dîner'],    ['Sans féculent'], 600),
+    R('pdj',        ['Petit-déjeuner'], ['Sans gluten'], 350),
+  ];
+  const creneau = (date, repas, sousRepas, categorie) => ({ date, repas, sousRepas, categorie });
+
+  let prop = composerLaSemaine({
+    creneaux: [creneau('2026-10-05', 'déjeuner', 'plat', 'Déjeuner')],
+    recettes, caloriesJournee: 2000,
+  });
+  p('composer : on choisit la recette la plus proche de la cible du repas',
+    prop.length === 1 && prop[0].recetteId === 'dej-lourd' && prop[0].mealKey === 'déjeuner_plat');
+
+  prop = composerLaSemaine({
+    creneaux: [creneau('2026-10-05', 'déjeuner', 'plat', 'Déjeuner'), creneau('2026-10-06', 'déjeuner', 'plat', 'Déjeuner')],
+    recettes, caloriesJournee: 1000, preferences: ['Sans féculent'],
+  });
+  p('composer : ses préférences sont respectées et on évite la répétition',
+    prop.length === 2 && prop[0].recetteId !== prop[1].recetteId
+    && prop.every((x) => ['dej-leger', 'dej-autre'].includes(x.recetteId)));
+
+  prop = composerLaSemaine({
+    creneaux: [creneau('2026-10-05', 'déjeuner', 'plat', 'Déjeuner')],
+    recettes, caloriesJournee: 2000, consigne: { preferences: ['Sans féculent'] },
+  });
+  p('composer : la consigne de la semaine oriente le choix',
+    prop[0]?.recetteId === 'dej-autre' || prop[0]?.recetteId === 'dej-leger');
+
+  prop = composerLaSemaine({
+    creneaux: [creneau('2026-10-05', 'déjeuner', 'plat', 'Déjeuner')],
+    recettes, caloriesJournee: 2000, consigne: { preferences: ['Végan', 'Sans gluten'] },
+  });
+  p('composer : une consigne trop stricte s\'assouplit plutôt que de laisser vide', prop.length === 1);
+
+  prop = composerLaSemaine({
+    creneaux: [creneau('2026-10-05', 'déjeuner', 'plat', 'Déjeuner')],
+    recettes, caloriesJournee: 2000, preferences: ['Végan'],
+  });
+  p('composer : ses préférences, elles, ne s\'assouplissent jamais', prop.length === 0);
+
+  prop = composerLaSemaine({
+    creneaux: [creneau('2026-10-05', 'déjeuner', 'plat', 'Déjeuner')],
+    recettes, caloriesJournee: 2000, dejaServies: ['dej-lourd'],
+  });
+  p('composer : une recette déjà servie cette semaine passe son tour',
+    prop[0]?.recetteId !== 'dej-lourd');
+
+  p('composer : aucune case libre, aucune proposition',
+    composerLaSemaine({ creneaux: [], recettes, caloriesJournee: 2000 }).length === 0);
+}
+
 // --- ce que la thérapeute voit de l'activité d'une cliente ---
 {
   const nina2 = tables.profiles.find((x) => x.email === 'marie@exemple.fr');

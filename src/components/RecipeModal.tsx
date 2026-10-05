@@ -1,17 +1,63 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { X, Clock, Users, ChefHat, Heart, Zap } from 'lucide-react';
 import { Recipe } from '../types';
 import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
+import { getNutritionRecommendations } from '../utils/nutritionCalculator';
+import { cibleDuRepas, versionLaPlusProche, choixUtile, type VersionRecette } from '../lib/cibleRepas';
 
 interface RecipeModalProps {
   recipe: Recipe;
   isOpen: boolean;
   onClose: () => void;
+  /** Le repas visé, quand on l'ouvre depuis le calendrier : la cible en dépend. */
+  repas?: string;
 }
 
-export default function RecipeModal({ recipe, isOpen, onClose }: RecipeModalProps) {
+export default function RecipeModal({ recipe, isOpen, onClose, repas }: RecipeModalProps) {
   const { favorites, toggleFavorite } = useData();
+  const { user } = useAuth();
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
+  /* La cliente a-t-elle choisi elle-même ? Alors on ne la contredit plus. */
+  const [choisiParElle, setChoisiParElle] = useState(false);
+
+  /*
+    Quelle version correspond à ses besoins.
+
+    L'application connaît déjà ses besoins de la journée ; il ne manquait que
+    le rapprochement avec les trois versions de la recette. On ne décide rien
+    d'irréversible : la version conseillée est simplement pré-sélectionnée et
+    porte une pastille, les autres restent à un clic.
+  */
+  const conseil = useMemo(() => {
+    const profil = user?.profile || {};
+    const journee = getNutritionRecommendations({
+      gender: profil.gender || 'femme',
+      age: profil.age || '31-70',
+      activityLevel: profil.activityLevel || 'moderee',
+      metabolism: profil.metabolism || 'normal',
+    }).dailyTargets.calories;
+
+    const versions: VersionRecette[] = [
+      { id: null, nom: 'Version originale', calories: recipe.nutrition?.calories || 0 },
+      ...(recipe.variants || []).map((v) => ({
+        id: v.id, nom: v.name, calories: v.nutrition?.calories || 0,
+      })),
+    ];
+    if (!choixUtile(versions)) return null;
+
+    const cible = cibleDuRepas(journee, recipe.categories || [], repas);
+    return versionLaPlusProche(versions, cible);
+  }, [user, recipe, repas]);
+
+  /* Pré-sélection à l'ouverture, et seulement tant qu'elle n'a rien choisi. */
+  useEffect(() => {
+    if (!isOpen || choisiParElle || !conseil) return;
+    setSelectedVariant(conseil.id ? (recipe.variants || []).find((v) => v.id === conseil.id) ?? null : null);
+  }, [isOpen, conseil, choisiParElle, recipe.variants]);
+
+  /* Chaque ouverture repart du conseil. */
+  useEffect(() => { if (!isOpen) setChoisiParElle(false); }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -126,7 +172,11 @@ export default function RecipeModal({ recipe, isOpen, onClose }: RecipeModalProp
                     <Zap className="w-5 h-5 text-orange-600 mr-2" />
                     Variantes disponibles
                   </h2>
-                  <p className="text-sm text-gray-600">Choisissez une version adaptée à vos besoins caloriques</p>
+                  <p className="text-sm text-gray-600">
+                    {conseil
+                      ? 'Nous avons présélectionné celle qui correspond à vos besoins. Les autres restent à portée.'
+                      : 'Choisissez une version adaptée à vos besoins caloriques'}
+                  </p>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -148,13 +198,18 @@ export default function RecipeModal({ recipe, isOpen, onClose }: RecipeModalProp
                   .map((variant) => (
                     <button
                       key={variant.id}
-                      onClick={() => setSelectedVariant(variant.isOriginal ? null : variant)}
+                      onClick={() => { setChoisiParElle(true); setSelectedVariant(variant.isOriginal ? null : variant); }}
                       className={`p-4 rounded-lg border-2 transition-all text-left ${
                         (variant.isOriginal && !selectedVariant) || selectedVariant?.id === variant.id
                           ? 'border-orange-500 bg-orange-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
+                      {conseil && (conseil.id ?? 'original') === (variant.isOriginal ? 'original' : variant.id) && (
+                        <span className="mb-1.5 inline-block rounded-full bg-marine-700 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-white">
+                          Adaptée à vos besoins
+                        </span>
+                      )}
                       <div className="text-sm font-medium text-gray-800 mb-1">{variant.name}</div>
                       <div className="text-lg font-bold text-orange-600">{variant.nutrition.calories} kcal</div>
                       <div className="text-xs text-gray-600 line-clamp-2">

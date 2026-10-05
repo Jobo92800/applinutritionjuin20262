@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Plus, X, Zap } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Zap, Wand2, Loader2 } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import RecipeModal from './RecipeModal';
 import { getNutritionRecommendations } from '../utils/nutritionCalculator';
+import { composerLaSemaine, type Creneau } from '../lib/composerSemaine';
+import { semaineEnCours } from '../lib/semaineParcours';
 
 export default function MealCalendar() {
   const { recipes, mealPlans, addMealPlan, updateMealPlan } = useData();
@@ -111,6 +113,94 @@ export default function MealCalendar() {
     { key: 'Plat principal', name: '🍖 Plat principal', icon: '🍖' },
     { key: 'Dessert', name: '🍰 Dessert', icon: '🍰' }
   ];
+
+  /*
+    Composer la semaine.
+
+    Le tableau de bord affiche « 0 repas planifiés » parce que remplir vingt
+    et une cases à la main, personne ne le fait deux semaines de suite. On
+    propose un plat dans chaque case **encore libre** des trois repas
+    principaux — jamais dans une case déjà posée —, en respectant ses
+    préférences alimentaires et la consigne de son étape du parcours.
+    Elle ajuste ensuite case par case, comme avant.
+  */
+  const CATEGORIE_DU_REPAS: Record<string, string> = {
+    'petit-déjeuner': 'Petit-déjeuner',
+    'déjeuner': 'Déjeuner',
+    'dîner': 'Dîner',
+    'collation': 'Collation',
+  };
+  /** Une seule case par repas : celle du plat, pas l'entrée ni le dessert. */
+  const CASE_PRINCIPALE: Record<string, string> = {
+    'petit-déjeuner': 'principal',
+    'déjeuner': 'plat',
+    'dîner': 'plat',
+  };
+
+  const [composition, setComposition] = useState<'repos' | 'encours'>('repos');
+  const [bilanComposition, setBilanComposition] = useState('');
+
+  const composerMaSemaine = async () => {
+    if (!user || composition === 'encours') return;
+    setComposition('encours');
+    setBilanComposition('');
+    try {
+      const creneaux: Creneau[] = [];
+      const dejaServies: string[] = [];
+
+      for (const jour of weekDays) {
+        const date = formatDate(jour);
+        for (const [repas, sousRepas] of Object.entries(CASE_PRINCIPALE)) {
+          const posee = getMealForDay(date, repas, sousRepas);
+          if (posee) { dejaServies.push(String(posee).split('_variant_')[0]); continue; }
+          creneaux.push({ date, repas, sousRepas, categorie: CATEGORIE_DU_REPAS[repas] });
+        }
+      }
+
+      if (!creneaux.length) {
+        setBilanComposition('Votre semaine est déjà complète.');
+        return;
+      }
+
+      /* La consigne de l'étape du parcours oriente la composition, si elle existe. */
+      const semaine = await semaineEnCours().catch(() => null);
+
+      const propositions = composerLaSemaine({
+        creneaux,
+        recettes: recipes,
+        caloriesJournee: userNutritionTargets?.dailyTargets.calories || 1800,
+        preferences: user.profile?.dietaryPreferences || [],
+        consigne: semaine?.filtres || {},
+        dejaServies,
+      });
+
+      /* Une écriture par jour : on regroupe pour ne pas se marcher dessus. */
+      const parJour = new Map<string, Record<string, string>>();
+      for (const prop of propositions) {
+        parJour.set(prop.date, { ...(parJour.get(prop.date) || {}), [prop.mealKey]: prop.recetteId });
+      }
+
+      for (const [date, repasDuJour] of parJour) {
+        const existant = mealPlans.find((plan) => plan.date === date && plan.userId === user.id);
+        if (existant) {
+          await updateMealPlan(existant.id, { meals: { ...existant.meals, ...repasDuJour } });
+        } else {
+          await addMealPlan({ userId: user.id, date, meals: repasDuJour });
+        }
+      }
+
+      setBilanComposition(
+        propositions.length
+          ? `${propositions.length} repas proposés. Changez ce qui ne vous va pas.`
+          : 'Aucune recette ne correspond encore à vos préférences.'
+      );
+    } catch (e) {
+      console.error('Composition de la semaine impossible :', e);
+      setBilanComposition("La composition n'a pas abouti. Réessayez dans un instant.");
+    } finally {
+      setComposition('repos');
+    }
+  };
 
   const getWeekDays = (date: Date) => {
     const week = [];
@@ -399,6 +489,21 @@ export default function MealCalendar() {
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
+      </div>
+
+      {/* Composer la semaine en un geste */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <button
+          onClick={composerMaSemaine}
+          disabled={composition === 'encours'}
+          className="bouton-second w-full sm:w-auto disabled:opacity-60"
+        >
+          {composition === 'encours' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+          <span>Composer ma semaine</span>
+        </button>
+        <p className="text-sm text-gray-500">
+          {bilanComposition || 'Les cases vides se remplissent selon vos préférences. Rien de ce que vous avez déjà choisi ne bouge.'}
+        </p>
       </div>
 
       {/* Modal de sélection de recette */}

@@ -321,6 +321,28 @@ final » n'a pas d'épisode : **l'audio n'est pas encore enregistré** (Jonathan
 le refera). Le jour venu : Nouveau podcast en cure 6 mois (il se place en
 dernier, étape 25), déposer le MP3, puis redéposer la fiche S24.
 
+**Composer sa semaine, et la bonne version (05/10/2026)** : deux ajouts qui
+partagent le même calcul, `src/lib/cibleRepas.ts` — la journée se répartit
+entre les repas (`PART_DU_REPAS` : 30 / 40 / 30 %, collation 12 % en plus),
+d'où la cible calorique d'un plat.
+**La bonne version** (`RecipeModal`) : la fiche présélectionne la version la
+plus proche de cette cible, avec la pastille « Adaptée à vos besoins ». Les
+autres restent à un clic, et **dès qu'elle en choisit une, on ne la contredit
+plus** tant que la fenêtre est ouverte. On ne conseille rien quand les
+versions se valent à moins de 12 % (`choixUtile`) : désigner une version
+identique aux autres n'apprend rien. Le repas visé peut être passé en prop
+(`repas`) ; sinon il se déduit des catégories de la recette.
+**Composer ma semaine** (`src/lib/composerSemaine.ts`, bouton dans
+`MealCalendar`) : un plat dans chaque case **encore libre** des trois repas
+principaux (`CASE_PRINCIPALE` — le plat, pas l'entrée ni le dessert). Trois
+cercles du plus exigeant au plus large : catégorie + ses préférences + la
+consigne du parcours, puis sans la consigne, puis sans la catégorie. **Ses
+préférences alimentaires ne s'assouplissent jamais** ; la consigne, si. On
+évite de resservir tant qu'il reste des recettes fraîches. **Rien de ce
+qu'elle a posé n'est touché** — relancer le bouton répond « votre semaine est
+déjà complète ». Les deux règles sont des modules sans dépendance, vérifiés
+par le banc (`npm run test:parcours`).
+
 **Le retour vers la thérapeute (05/10/2026)** : la V2 lit ici ce que fait la
 cliente entre deux rendez-vous. Action **`activite`** sur
 `/api/admin-parcours` (`netlify/lib/activite-cliente.js`), authentifiée par
