@@ -260,6 +260,54 @@ p('rappel journalisé', tables.parcours_acces_log.some((l) => l.user_id === nina
 bilan = await rappelsParcours();
 p('pas de second rappel dans la semaine', bilan.rappelees === 0);
 
+// --- ce que la thérapeute voit de l'activité d'une cliente ---
+{
+  const nina2 = tables.profiles.find((x) => x.email === 'marie@exemple.fr');
+  const j = (n) => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+  // Lundi de la semaine en cours, comme le calcule le serveur.
+  const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  const lundi = d.toISOString().slice(0, 10);
+
+  tables.weight_entries.push(
+    { id: 'w1', user_id: nina2.id, weight: 85, date: j(40) },
+    { id: 'w2', user_id: nina2.id, weight: 82.5, date: j(6) },
+  );
+  tables.weekly_progress.push({
+    id: 'wp1', user_id: nina2.id, week_start: lundi,
+    // Les quatre objectifs cochés les deux premiers jours de la semaine.
+    goals: {
+      supplements: { completed: [true, true, false, false, false, false, false] },
+      water:       { completed: [true, true, false, false, false, false, false] },
+      podcast:     { completed: [true, true, false, false, false, false, false] },
+      homecooking: { completed: [true, false, false, false, false, false, false] },
+    },
+  });
+  tables.meal_plans.push(
+    { id: 'mp1', user_id: nina2.id, date: lundi, meals: { 'petit-déjeuner': 'r1', 'déjeuner': 'r2' } },
+    { id: 'mp2', user_id: nina2.id, date: lundi, meals: { 'dîner': 'r3' } },
+  );
+
+  r = await post('admin-parcours', { action: 'activite', email: 'MARIE@Exemple.fr' }, ADMIN);
+  const a = r.activite || {};
+  p('activité : le compte est trouvé quelle que soit la casse', r.statut === 200 && a.prenom === 'Marie Dupont');
+  p('activité : le parcours dit l\'étape en cours et le total',
+    a.parcours?.etapeEnCours >= 1 && a.parcours?.total > 0 && typeof a.parcours?.joursDepuisEcoute === 'number');
+  p('activité : la pesée de la cliente, son écart et son ancienneté',
+    a.poids?.nombre === 2 && a.poids?.dernier === 82.5 && a.poids?.ecart === -2.5 && a.poids?.joursDepuis === 6);
+  p('activité : les cases cochées de la semaine, sur 28',
+    a.objectifs?.cochees === 7 && a.objectifs?.total === 28);
+  p('activité : un seul jour parfait sur les sept derniers', a.objectifs?.joursParfaits7 === 1);
+  p('activité : les repas planifiés cette semaine sont comptés', a.repas?.planifiesCetteSemaine === 3);
+  p('activité : on sait si elle est déjà venue', typeof a.jamaisVenue === 'boolean');
+
+  r = await post('admin-parcours', { action: 'activite', email: 'personne@exemple.fr' }, ADMIN);
+  p('activité : un email sans compte répond null, pas une erreur', r.statut === 200 && r.activite === null);
+  r = await post('admin-parcours', { action: 'activite', email: 'pas-un-email' }, ADMIN);
+  p('activité : un email invalide est refusé', r.statut === 400);
+  r = await post('admin-parcours', { action: 'activite', email: 'marie@exemple.fr' });
+  p('activité : sans le code, rien ne sort', r.statut === 401);
+}
+
 // --- les recettes de la semaine : la consigne portée par l'étape ---
 const jetonMarieSem = connecter('marie@exemple.fr');
 r = await post('parcours', { appareil: 'app-marie' }, auth(jetonMarieSem));

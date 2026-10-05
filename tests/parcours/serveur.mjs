@@ -38,6 +38,10 @@ export const tables = {
   parcours_appareils: [],
   parcours_acces_log: [],
   push_subscriptions: [],
+  /* Ce que la cliente fait dans l'application, lu par la fiche de la V2. */
+  weight_entries: [],
+  weekly_progress: [],
+  meal_plans: [],
 };
 
 const podcast = (id, title, tiers, ordre, extra = {}) => ({

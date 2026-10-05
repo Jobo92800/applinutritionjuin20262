@@ -16,6 +16,7 @@ import {
   copierVersPrive, journaliser, ipDe, utilisateurDuJeton, jetonDeRequete,
   relaisActif, relais, EXPORT_CODE,
 } from '../lib/parcours-core.js';
+import { activiteCliente } from '../lib/activite-cliente.js';
 
 const ok = (donnees) => json(200, { ok: true, ...donnees });
 const nettoyerEmail = (v) => String(v || '').trim().toLowerCase();
@@ -192,6 +193,19 @@ export default async (req) => {
         }
         await journaliser('invitation-renvoyee', { userId: profil.id, ip: ipDe(req) });
         return ok({ invitation: { envoye: true, deja: true } });
+      }
+
+      /* ------------------------------------- ce que fait une cliente dans l'app --- */
+      /*
+        Lecture seule, pour la fiche de la V2 thérapeute : où en est la
+        cliente entre deux rendez-vous. On interroge par email, la seule clé
+        que les deux applications partagent.
+      */
+      case 'activite': {
+        const email = nettoyerEmail(corps.email);
+        if (!emailValide(email)) return json(400, { erreur: 'email-invalide' });
+        const activite = await activiteCliente(email);
+        return ok({ activite });
       }
 
       /* ------------------------------------------------------- les clientes --- */
