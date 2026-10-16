@@ -529,6 +529,119 @@ p('sans fiche V2 : cliente null, rien d\'autre', r.statut === 200 && r.cliente =
   p('pesée : sans jour, rien ne part', bilan.rappelees === 0);
 }
 
+/* ------------------------------------------------- dates et semaines --- */
+{
+  const { isoLocal, aujourdhuiIso, lundiDeLaSemaine } = await import('../../src/lib/dateLocale.ts');
+
+  // Le piège d'origine : toISOString() rend la date UTC, donc la veille à Paris.
+  const nuit = new Date(2026, 9, 15, 0, 30);          // 15 octobre, 0 h 30 local
+  p('date : minuit passé reste le bon jour', isoLocal(nuit) === '2026-10-15',
+    isoLocal(nuit));
+  p('date : toISOString donnait bien la veille',
+    nuit.toISOString().split('T')[0] !== isoLocal(nuit));
+  p('date : un mois et un jour à un chiffre sont complétés',
+    isoLocal(new Date(2026, 0, 5, 12, 0)) === '2026-01-05');
+  p('date : aujourd\'hui est au format attendu', /^\d{4}-\d{2}-\d{2}$/.test(aujourdhuiIso()));
+
+  // Le dimanche doit revenir de six jours, pas avancer d'un.
+  const lundiAttendu = '2026-10-12';
+  const jours = [12, 13, 14, 15, 16, 17, 18];         // du lundi 12 au dimanche 18
+  p('semaine : les sept jours renvoient au même lundi',
+    jours.every((j) => isoLocal(lundiDeLaSemaine(new Date(2026, 9, j, 14, 0))) === lundiAttendu),
+    jours.map((j) => isoLocal(lundiDeLaSemaine(new Date(2026, 9, j, 14, 0)))).join(' '));
+  p('semaine : le dimanche ne saute pas à la semaine suivante',
+    isoLocal(lundiDeLaSemaine(new Date(2026, 9, 18, 14, 0))) === lundiAttendu);
+  p('semaine : le lundi suivant ouvre bien une nouvelle semaine',
+    isoLocal(lundiDeLaSemaine(new Date(2026, 9, 19, 14, 0))) === '2026-10-19');
+  p('semaine : le lundi est pris à minuit, heure locale',
+    lundiDeLaSemaine(new Date(2026, 9, 15, 23, 45)).getHours() === 0);
+}
+
+/* ------------------------------------------ la recette derrière une case --- */
+{
+  const { decomposer, composerCle, resoudreRepas, ingredientsDuRepas } =
+    await import('../../src/lib/repasPlanifie.ts');
+
+  const base = [{ name: 'Poulet', quantity: 150, unit: 'g', category: 'boucherie-charcuterie' }];
+  const legere = [{ name: 'Poulet', quantity: 100, unit: 'g', category: 'boucherie-charcuterie' }];
+  const recettes = [{
+    id: 'r1', ingredients: base,
+    variants: [{ id: 'v1', name: 'Version légère', ingredients: legere }, { id: 'v2', name: 'Version copieuse' }],
+  }];
+
+  p('repas : une case sans version rend la recette',
+    decomposer('r1').varianteId === null && resoudreRepas('r1', recettes)?.variante === null);
+  p('repas : la clé d\'une version se relit',
+    decomposer(composerCle('r1', { id: 'v1' })).varianteId === 'v1');
+  p('repas : un nom de version avec tiret bas n\'est plus tronqué',
+    decomposer('r1_variant_Version_tres_legere').varianteId === 'Version_tres_legere');
+
+  // Le défaut principal : les ingrédients d'un repas posé en version.
+  p('courses : un repas posé en version livre ses ingrédients',
+    ingredientsDuRepas('r1_variant_v1', recettes)[0]?.quantity === 100,
+    JSON.stringify(ingredientsDuRepas('r1_variant_v1', recettes)));
+  p('courses : une version sans ingrédients propres reprend ceux de la recette',
+    ingredientsDuRepas('r1_variant_v2', recettes)[0]?.quantity === 150);
+  p('courses : une version disparue retombe sur la recette, le repas ne s\'évapore pas',
+    ingredientsDuRepas('r1_variant_supprimee', recettes)[0]?.quantity === 150
+      && resoudreRepas('r1_variant_supprimee', recettes)?.recette.id === 'r1');
+  p('courses : une recette retirée du catalogue ne rend rien',
+    ingredientsDuRepas('inconnue_variant_v1', recettes).length === 0
+      && resoudreRepas('inconnue', recettes) === null);
+  p('repas : une version repérée par son rang se retrouve encore',
+    resoudreRepas('r1_variant_0', recettes)?.variante?.id === 'v1');
+
+  /*
+    L'addition elle-même, telle que la liste de courses l'appelle : c'est le
+    défaut d'origine, une semaine entière de repas posés en version ne
+    produisait aucune ligne.
+  */
+  const { listeDeCourses } = await import('../../src/lib/repasPlanifie.ts');
+  const semaine = [
+    { meals: { 'déjeuner_plat': 'r1', 'dîner_plat': 'r1_variant_v1' } },
+    { meals: { 'déjeuner_plat': 'r1_variant_v1', 'dîner_plat': null } },
+  ];
+  const lignes = listeDeCourses(semaine, recettes);
+  p('courses : une semaine mêlant recette et versions produit une seule ligne additionnée',
+    lignes.length === 1 && lignes[0].name === 'Poulet' && lignes[0].quantity === 350,
+    JSON.stringify(lignes));
+  p('courses : la ligne garde son unité et son rayon',
+    lignes[0]?.unit === 'g' && lignes[0]?.category === 'boucherie-charcuterie');
+  p('courses : avant la correction, les deux versions ne pesaient rien',
+    listeDeCourses([{ meals: { a: 'r1_variant_v1' } }], recettes)[0]?.quantity === 100);
+  p('courses : une case vide ou nulle ne casse pas l\'addition',
+    listeDeCourses([{ meals: { a: null, b: undefined, c: '' } }], recettes).length === 0);
+  p('courses : deux unités différentes font deux lignes',
+    listeDeCourses([{ meals: { a: 'r2' } }], [...recettes, {
+      id: 'r2',
+      ingredients: [
+        { name: 'Tomates', quantity: 2, unit: 'pièce', category: 'fruits-legumes' },
+        { name: 'Tomates', quantity: 200, unit: 'g', category: 'fruits-legumes' },
+      ],
+    }]).length === 2);
+}
+
+/* ------------------------------------------------------------- l'IMC --- */
+{
+  const { imc, imcAffiche, categorieImc, SANS_TAILLE } = await import('../../src/lib/imc.ts');
+
+  p('IMC : sans la taille, on n\'annonce rien',
+    imc(60) === null && categorieImc(imc(60)) === null && imcAffiche(imc(60)) === '—');
+  p('IMC : la taille inventée de 1,70 m donnait une catégorie fausse',
+    imc(60, 155) === 25 && Number((60 / 1.7 ** 2).toFixed(1)) === 20.8);
+  p('IMC : 60 kg pour 1,55 m, c\'est « Surpoids »', categorieImc(imc(60, 155)).texte === 'Surpoids');
+  p('IMC : les seuils de l\'OMS sont respectés',
+    categorieImc(18.4).texte === 'Insuffisance pondérale'
+      && categorieImc(18.5).texte === 'Poids normal'
+      && categorieImc(24.9).texte === 'Poids normal'
+      && categorieImc(25).texte === 'Surpoids'
+      && categorieImc(30).texte === 'Obésité');
+  p('IMC : la virgule est française', imcAffiche(imc(60, 155)) === '25,0');
+  p('IMC : un poids ou une taille absurde ne produit pas de chiffre',
+    imc(0, 170) === null && imc(60, 0) === null && imc(60, -5) === null);
+  p('IMC : l\'invitation à renseigner la taille existe', SANS_TAILLE.includes('taille'));
+}
+
 let ko = 0;
 for (const [n, ok, d] of T) { if (!ok) ko++; console.log((ok ? '  OK  ' : '  KO  ') + n + (d && !ok ? ' -> ' + d : '')); }
 console.log(`\n${T.length - ko} contrôle${T.length - ko > 1 ? 's' : ''} passe${T.length - ko > 1 ? 'nt' : ''}` + (ko ? `, ${ko} en échec` : ''));

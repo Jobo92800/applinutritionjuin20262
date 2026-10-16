@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User, Mail, Lock, Target, Calendar, Shield, Save, CreditCard as Edit, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { imc, imcAffiche } from '../lib/imc';
 import { useData } from '../contexts/DataContext';
 import { supabase } from '../lib/supabase';
 import PushNotificationSettings from './PushNotificationSettings';
@@ -17,8 +18,8 @@ export default function AccountProfile() {
     newPassword: '',
     confirmPassword: '',
     weightGoal: user?.profile?.weightGoal?.toString() || '70',
-    heightCm: user?.profile?.heightCm?.toString() || '170',
-    gender: user?.profile?.gender || 'homme',
+    heightCm: user?.profile?.heightCm?.toString() || '',
+    gender: user?.profile?.gender || 'femme',
     age: user?.profile?.age || '18-30',
     activityLevel: user?.profile?.activityLevel || 'moderee',
     metabolism: user?.profile?.metabolism || 'normal',
@@ -38,8 +39,8 @@ export default function AccountProfile() {
         name: user.name || '',
         email: user.email || '',
         weightGoal: user.profile?.weightGoal?.toString() || '70',
-        heightCm: user.profile?.heightCm?.toString() || '170',
-        gender: user.profile?.gender || 'homme',
+        heightCm: user.profile?.heightCm?.toString() || '',
+        gender: user.profile?.gender || 'femme',
         age: user.profile?.age || '18-30',
         activityLevel: user.profile?.activityLevel || 'moderee',
         metabolism: user.profile?.metabolism || 'normal',
@@ -89,7 +90,7 @@ export default function AccountProfile() {
         .update({
           name: formData.name,
           weight_goal: parseFloat(formData.weightGoal),
-          height_cm: parseInt(formData.heightCm),
+          height_cm: Number.parseInt(formData.heightCm, 10) || null,
           gender: formData.gender,
           age: formData.age,
           activity_level: formData.activityLevel,
@@ -152,13 +153,13 @@ export default function AccountProfile() {
     }));
   };
 
-  const calculateBMI = () => {
-    if (latestWeight?.weight != null && formData.heightCm) {
-      const heightM = parseInt(formData.heightCm) / 100;
-      return (latestWeight.weight / (heightM * heightM)).toFixed(1);
-    }
-    return 'N/A';
-  };
+  /*
+    Sans taille renseignée, le champ valait « 170 » par défaut : l'IMC
+    s'affichait donc toujours, calculé sur une taille inventée. On n'annonce
+    plus rien tant qu'elle n'a pas donné la sienne.
+  */
+  const calculateBMI = () =>
+    imcAffiche(imc(latestWeight?.weight ?? 0, Number(formData.heightCm) || null));
 
   const getSubscriptionBadge = () => {
     if (!user?.subscription_tier) return null;
@@ -300,7 +301,9 @@ export default function AccountProfile() {
                   </div>
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <div className="text-2xl font-bold text-blue-600">{calculateBMI()}</div>
-                    <div className="text-sm text-blue-700">IMC</div>
+                    <div className="text-sm text-blue-700">
+                      {formData.heightCm ? 'IMC' : 'IMC — renseignez votre taille'}
+                    </div>
                   </div>
                 </div>
                 <div className="bg-purple-50 p-4 rounded-lg">
@@ -347,7 +350,9 @@ export default function AccountProfile() {
                   onChange={(e) => setFormData({ ...formData, heightCm: e.target.value })}
                 />
               ) : (
-                <p className="text-gray-800 bg-gray-50 px-4 py-2 rounded-lg">{formData.heightCm} cm</p>
+                <p className="text-gray-800 bg-gray-50 px-4 py-2 rounded-lg">
+                  {formData.heightCm ? `${formData.heightCm} cm` : 'Non renseignée'}
+                </p>
               )}
             </div>
 

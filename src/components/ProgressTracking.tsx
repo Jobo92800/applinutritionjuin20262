@@ -6,6 +6,8 @@ import { profilApi } from '../lib/profilApi';
 import { WeightEntry } from '../types';
 import Achievements from './Achievements';
 import JourDePesee from './JourDePesee';
+import { aujourdhuiIso } from '../lib/dateLocale';
+import { imc, imcAffiche, categorieImc, SANS_TAILLE } from '../lib/imc';
 
 /*
   Les quatre séries du graphique reprennent le trajet du dégradé de marque —
@@ -41,7 +43,7 @@ export default function ProgressTracking() {
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
   const [newEntry, setNewEntry] = useState({
     weight: '',
-    date: new Date().toISOString().split('T')[0],
+    date: aujourdhuiIso(),
     measurements: {
       waist: '',
       chest: '',
@@ -102,7 +104,7 @@ export default function ProgressTracking() {
 
       setNewEntry({
         weight: '',
-        date: new Date().toISOString().split('T')[0],
+        date: aujourdhuiIso(),
         measurements: { waist: '', chest: '', hips: '' }
       });
       setShowAddEntry(false);
@@ -159,18 +161,6 @@ export default function ProgressTracking() {
     setShowEditEntry(true);
   };
 
-  const calculateIMC = (weight: number, heightCm?: number) => {
-    // Utiliser la taille du profil si disponible, sinon 1.70m par défaut
-    const height = heightCm ? heightCm / 100 : 1.70;
-    return (weight / (height * height)).toFixed(1);
-  };
-
-  const getIMCCategory = (imc: number) => {
-    if (imc < 18.5) return { text: 'Insuffisance pondérale', color: 'text-blue-600' };
-    if (imc < 25) return { text: 'Poids normal', color: 'text-green-600' };
-    if (imc < 30) return { text: 'Surpoids', color: 'text-yellow-600' };
-    return { text: 'Obésité', color: 'text-red-600' };
-  };
 
   // Les relevés de mensurations sans pesée ne comptent pas comme un poids.
   const pesees = userEntries.filter((e) => e.weight != null) as (WeightEntry & { weight: number })[];
@@ -642,18 +632,19 @@ export default function ProgressTracking() {
             <div>
               <p className="text-sm font-medium text-gray-600">IMC</p>
               <p className="text-xl md:text-2xl font-bold text-gray-800">
-                {latest ? calculateIMC(latest.weight, heightCm) : 'N/A'}
+                {imcAffiche(latest ? imc(latest.weight, heightCm) : null)}
               </p>
             </div>
             <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <Target className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
             </div>
           </div>
-          {latest && (
-            <p className={`text-xs md:text-sm font-medium mt-2 ${getIMCCategory(parseFloat(calculateIMC(latest.weight, heightCm))).color}`}>
-              {getIMCCategory(parseFloat(calculateIMC(latest.weight, heightCm))).text}
-            </p>
-          )}
+          {/* Sans sa taille, on n'annonce aucune catégorie : on l'invite à la renseigner. */}
+          {latest && !heightCm && <p className="text-xs md:text-sm text-gray-500 mt-2">{SANS_TAILLE}</p>}
+          {latest && heightCm && (() => {
+            const cat = categorieImc(imc(latest.weight, heightCm));
+            return cat ? <p className={`text-xs md:text-sm font-medium mt-2 ${cat.couleur}`}>{cat.texte}</p> : null;
+          })()}
         </div>
 
         <div className="bg-white rounded-xl p-6 border border-gray-200">
@@ -928,14 +919,16 @@ export default function ProgressTracking() {
                   )}
                 </div>
                 <div className="flex items-center gap-4">
-                  {entry.weight != null && <div className="text-right">
-                    <div className="text-sm font-medium text-gray-800">
-                      IMC: {calculateIMC(entry.weight, heightCm)}
-                    </div>
-                    <div className={`text-xs ${getIMCCategory(parseFloat(calculateIMC(entry.weight, heightCm))).color}`}>
-                      {getIMCCategory(parseFloat(calculateIMC(entry.weight, heightCm))).text}
-                    </div>
-                  </div>}
+                  {entry.weight != null && heightCm != null && (() => {
+                    const valeur = imc(entry.weight, heightCm);
+                    const cat = categorieImc(valeur);
+                    return (
+                      <div className="text-right">
+                        <div className="text-sm font-medium text-gray-800">IMC&nbsp;: {imcAffiche(valeur)}</div>
+                        {cat && <div className={`text-xs ${cat.couleur}`}>{cat.texte}</div>}
+                      </div>
+                    );
+                  })()}
                   {entry.source !== 'centre' && <div className="flex gap-2">
                     <button
                       onClick={() => openEditModal(entry)}

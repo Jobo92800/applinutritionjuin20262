@@ -76,7 +76,7 @@ export interface EtatParcours {
 export const parcoursApi = {
   etat: (appareil: string) => appeler<EtatParcours>('parcours', { appareil }),
   audio: (numero: number, appareil: string) =>
-    appeler<{ url: string; expireDans: number; dureeSec: number | null; fichePdf?: string | null }>('audio', { numero, appareil }),
+    appeler<{ url: string; expireDans: number; dureeSec: number | null; fichePdf?: string | null; fichier?: string | null }>('audio', { numero, appareil }),
   progression: (charge: { numero: number; appareil: string; couverture: string; position: number; duree: number }) =>
     appeler<{ taux: number; terminee: boolean; deja?: boolean }>('progression', charge),
 };

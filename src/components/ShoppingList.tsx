@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Check, Plus, Trash2, Download, ShoppingCart, CheckCheck, X, Calendar, ChevronDown } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
+import { isoLocal, lundiDeLaSemaine } from '../lib/dateLocale';
 import { useAuth } from '../contexts/AuthContext';
 import { ShoppingItem } from '../types';
 
@@ -67,13 +68,8 @@ export default function ShoppingList() {
     setNewItem({ name: '', quantity: 1, unit: 'pièce', category: 'autres' });
   };
 
-  // Fonction pour obtenir le début de la semaine (lundi)
-  const getWeekStart = (date: Date = new Date()) => {
-    const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-    return new Date(d.setDate(diff));
-  };
+  // Le lundi de la semaine (règle partagée, voir lib/dateLocale).
+  const getWeekStart = (date: Date = new Date()) => lundiDeLaSemaine(date);
 
   // Fonction pour obtenir la fin de la semaine (dimanche)
   const getWeekEnd = (weekStart: Date) => {
@@ -92,7 +88,7 @@ export default function ShoppingList() {
     userMealPlans.forEach(plan => {
       const planDate = new Date(plan.date);
       const weekStart = getWeekStart(planDate);
-      weeks.add(weekStart.toISOString().split('T')[0]);
+      weeks.add(isoLocal(weekStart));
     });
     
     return Array.from(weeks)
@@ -121,7 +117,7 @@ export default function ShoppingList() {
 
   const handleQuickGenerate = () => {
     // Génération rapide pour la semaine courante
-    const currentWeekStart = getWeekStart().toISOString().split('T')[0];
+    const currentWeekStart = isoLocal(getWeekStart());
     generateFromMealPlan(currentWeekStart);
     setShowWeekSelector(false);
   };

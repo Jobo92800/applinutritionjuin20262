@@ -4,6 +4,8 @@ import { adminParcoursApi } from '../lib/parcoursApi';
 import { useAuth } from './AuthContext';
 import { Recipe, Podcast, MealPlan, WeightEntry, ShoppingItem, WeeklyGoal, WeeklyProgress, Badge, Message } from '../types';
 import { computeStreaks, computeEarnedBadgeIds, Streaks } from '../utils/achievements';
+import { listeDeCourses } from '../lib/repasPlanifie';
+import { isoLocal, lundiDeLaSemaine } from '../lib/dateLocale';
 
 interface DataContextType {
   recipes: Recipe[];
@@ -677,13 +679,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Fonction pour obtenir le début de la semaine (lundi)
-  const getWeekStart = (date: Date = new Date()) => {
-    const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-    return new Date(d.setDate(diff)).toISOString().split('T')[0];
-  };
+  // Le lundi de la semaine, en date locale (voir lib/dateLocale).
+  const getWeekStart = (date: Date = new Date()) => isoLocal(lundiDeLaSemaine(date));
 
   // Obtenir ou créer le progrès de la semaine courante
   const getCurrentWeekProgress = (userId: string): WeeklyProgress | null => {
@@ -1455,34 +1452,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
       });
     }
     
-    const ingredients: { [key: string]: ShoppingItem } = {};
+    /*
+      Un repas posé en **version** s'enregistre `recetteId_variant_X` : la
+      recherche sur l'identifiant seul ne trouvait rien et le repas
+      disparaissait de la liste sans rien dire. L'addition est désormais une
+      règle pure, vérifiée par le banc d'essai.
+    */
+    const lignes = listeDeCourses(userMealPlans, recipes);
 
-    userMealPlans.forEach(plan => {
-      Object.values(plan.meals).forEach(recipeId => {
-        if (recipeId) {
-          const recipe = recipes.find(r => r.id === recipeId);
-          if (recipe) {
-            recipe.ingredients.forEach(ingredient => {
-              const key = `${ingredient.name}-${ingredient.unit}`;
-              if (ingredients[key]) {
-                ingredients[key].quantity += ingredient.quantity;
-              } else {
-                ingredients[key] = {
-                  id: generateUUID(),
-                  name: ingredient.name,
-                  quantity: ingredient.quantity,
-                  unit: ingredient.unit,
-                  category: ingredient.category,
-                  checked: false
-                };
-              }
-            });
-          }
-        }
-      });
-    });
-
-    const shoppingItems = Object.values(ingredients);
+    const shoppingItems: ShoppingItem[] = lignes.map((l) => ({ id: generateUUID(), ...l, checked: false }));
     await updateShoppingList(shoppingItems);
   };
 

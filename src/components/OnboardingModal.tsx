@@ -25,7 +25,13 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
     currentWeight: 70,
     weightGoal: 70,
     heightCm: 170,
-    gender: 'homme',
+    /*
+      La clientèle de MAbeautyplus est féminine : « homme » pré-coché faisait
+      calculer les besoins d'un homme à toute cliente qui passait l'étape sans
+      y toucher — 1 950-2 150 kcal au lieu de 1 550-1 750, soit 400 kcal de
+      trop par jour, et les versions les plus lourdes des recettes proposées.
+    */
+    gender: 'femme',
     age: '18-30',
     activityLevel: 'moderee',
     metabolism: 'normal'

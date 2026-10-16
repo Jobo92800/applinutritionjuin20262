@@ -6,6 +6,8 @@ import RecipeModal from './RecipeModal';
 import { getNutritionRecommendations } from '../utils/nutritionCalculator';
 import { composerLaSemaine, type Creneau } from '../lib/composerSemaine';
 import { semaineEnCours } from '../lib/semaineParcours';
+import { isoLocal, lundiDeLaSemaine } from '../lib/dateLocale';
+import { resoudreRepas, composerCle } from '../lib/repasPlanifie';
 
 export default function MealCalendar() {
   const { recipes, mealPlans, addMealPlan, updateMealPlan } = useData();
@@ -29,7 +31,7 @@ export default function MealCalendar() {
     const profile = user.profile || {};
     
     const targets = getNutritionRecommendations({
-      gender: profile.gender || 'homme',
+      gender: profile.gender || 'femme',
       age: profile.age || '18-30',
       activityLevel: profile.activityLevel || 'moderee',
       metabolism: profile.metabolism || 'normal'
@@ -202,11 +204,17 @@ export default function MealCalendar() {
     }
   };
 
-  const getWeekDays = (date: Date) => {
-    const week = [];
-    const startOfWeek = new Date(date);
-    startOfWeek.setDate(date.getDate() - date.getDay() + 1); // Start on Monday
+  /*
+    Le lundi au dimanche de la semaine affichée.
 
+    `getDay()` rend 0 le dimanche : retirer `getDay() - 1` y avançait d'un
+    jour au lieu de reculer de six. Le planning sautait donc à la semaine
+    suivante tous les dimanches, pendant que le tableau de bord, la liste de
+    courses et le suivi hebdomadaire restaient, eux, sur la semaine en cours.
+  */
+  const getWeekDays = (date: Date) => {
+    const startOfWeek = lundiDeLaSemaine(date);
+    const week = [];
     for (let i = 0; i < 7; i++) {
       const day = new Date(startOfWeek);
       day.setDate(startOfWeek.getDate() + i);
@@ -215,9 +223,8 @@ export default function MealCalendar() {
     return week;
   };
 
-  const formatDate = (date: Date) => {
-    return date.toISOString().split('T')[0];
-  };
+  /* Date locale : `toISOString` donnait la veille entre minuit et 2 h. */
+  const formatDate = (date: Date) => isoLocal(date);
 
   const weekDays = getWeekDays(currentWeek);
 
@@ -229,42 +236,34 @@ export default function MealCalendar() {
     return plan?.meals[mealKey as keyof typeof plan.meals];
   };
 
+  /*
+    La recette derrière une case du planning.
+
+    Deux corrections ici : le découpage se fait sur `_variant_` et non sur le
+    premier tiret bas rencontré, et une version qui n'existe plus retombe sur
+    la recette de base — avant, le repas disparaissait purement et simplement
+    de la case.
+  */
   const getRecipeById = (id: string) => {
-    if (id.includes('_variant_')) {
-      const [recipeId, , variantId] = id.split('_');
-      const recipe = recipes.find(r => r.id === recipeId);
+    const trouve = resoudreRepas(id, recipes);
+    if (!trouve) return undefined;
 
-      if (recipe) {
-        if (recipe.variants) {
-          let variant = recipe.variants.find(v => v.id === variantId);
+    const { recette: recipe, variante: variant } = trouve;
+    if (!variant) return recipe;
 
-          if (!variant) {
-            const variantIndex = parseInt(variantId);
-            if (!isNaN(variantIndex) && variantIndex < recipe.variants.length) {
-              variant = recipe.variants[variantIndex];
-            }
-          }
-
-          if (variant) {
-            return {
-              ...recipe,
-              id: id,
-              title: `${recipe.title} (${variant.name})`,
-              ingredients: variant.ingredients || recipe.ingredients,
-              steps: recipe.steps,
-              nutrition: {
-                calories: variant.targetCalories || variant.nutrition?.calories || recipe.nutrition.calories,
-                protein: variant.nutrition?.protein || recipe.nutrition.protein,
-                carbs: variant.nutrition?.carbs || recipe.nutrition.carbs,
-                fat: variant.nutrition?.fat || recipe.nutrition.fat
-              }
-            };
-          }
-        }
-      }
-    }
-
-    return recipes.find(recipe => recipe.id === id);
+    return {
+      ...recipe,
+      id,
+      title: `${recipe.title} (${variant.name})`,
+      ingredients: variant.ingredients?.length ? variant.ingredients : recipe.ingredients,
+      steps: recipe.steps,
+      nutrition: {
+        calories: variant.targetCalories || variant.nutrition?.calories || recipe.nutrition.calories,
+        protein: variant.nutrition?.protein || recipe.nutrition.protein,
+        carbs: variant.nutrition?.carbs || recipe.nutrition.carbs,
+        fat: variant.nutrition?.fat || recipe.nutrition.fat,
+      },
+    };
   };
 
   // Filtrer les recettes selon la catégorie sélectionnée et le terme de recherche
@@ -341,7 +340,7 @@ export default function MealCalendar() {
   const assignRecipeToMeal = (recipeId: string) => {
     if (!selectedMeal || !user) return;
 
-    const finalRecipeId = selectedVariant ? `${recipeId}_variant_${selectedVariant.id || selectedVariant.name || '0'}` : recipeId;
+    const finalRecipeId = composerCle(recipeId, selectedVariant);
 
     const existingPlan = mealPlans.find(
       plan => plan.date === selectedMeal.date && plan.userId === user.id
@@ -379,7 +378,7 @@ export default function MealCalendar() {
   const assignRecipeToMealWithVariant = (recipeId: string, variant?: any) => {
     if (!selectedMeal || !user) return;
 
-    const finalRecipeId = variant ? `${recipeId}_variant_${variant.id || variant.name || '0'}` : recipeId;
+    const finalRecipeId = composerCle(recipeId, variant);
 
     const existingPlan = mealPlans.find(
       plan => plan.date === selectedMeal.date && plan.userId === user.id
@@ -987,7 +986,7 @@ export default function MealCalendar() {
               Vos objectifs nutritionnels personnalisés
             </h3>
             <p className="text-sm text-gray-600 mt-1">
-              Basés sur votre profil : {(user.profile?.gender || 'homme') === 'homme' ? 'Homme' : 'Femme'}, {
+              Basés sur votre profil : {(user.profile?.gender || 'femme') === 'homme' ? 'Homme' : 'Femme'}, {
                 (user.profile?.age || '18-30') === '18-30' ? '18-30 ans' :
                 (user.profile?.age || '18-30') === '31-70' ? '31-70 ans' :
                 (user.profile?.age || '18-30') === '71+' ? '71+ ans' : (user.profile?.age || '18-30')

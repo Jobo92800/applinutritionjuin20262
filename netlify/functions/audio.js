@@ -63,6 +63,13 @@ export default async (req) => {
       expireDans: DUREE_LIEN,
       dureeSec: etape.duration || null,
       fichePdf,
+      /*
+        Le chemin du fichier dans le bucket, pas une adresse : il sert au
+        navigateur à savoir si la copie qu'il garde hors connexion est encore
+        la bonne. Sans lui, un épisode réenregistré restait inaudible dans sa
+        version remplacée chez celles qui l'avaient téléchargé.
+      */
+      fichier: etape.fichier,
     });
   } catch (e) {
     console.error('audio :', e.message);

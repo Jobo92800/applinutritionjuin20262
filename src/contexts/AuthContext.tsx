@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { oublierLaSemaine } from '../lib/semaineParcours';
 import type { User } from '@supabase/supabase-js';
 
 interface AuthUser {
@@ -602,6 +603,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.warn('Cannot remove from localStorage:', error);
       }
+
+      /*
+        La consigne de la semaine est gardée cinq minutes en mémoire du
+        module : sans cet oubli, la cliente qui se connecte juste après une
+        autre sur le même appareil héritait de l'étape de la précédente.
+      */
+      oublierLaSemaine();
 
       setUser(null);
     } catch (error) {

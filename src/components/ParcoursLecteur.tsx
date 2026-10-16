@@ -3,7 +3,7 @@ import { ArrowLeft, Play, Pause, RotateCcw, RotateCw, Headphones, Lock, FileText
 import { parcoursApi, EtapeParcours, ParcoursApiError } from '../lib/parcoursApi';
 import { supabase } from '../lib/supabase';
 import { empaqueter, depaqueter, tauxLocal, mmss } from '../lib/parcoursEcoute';
-import { sonGarde, garder, oublier, stockageDisponible, enMo } from '../lib/audioHorsLigne';
+import { sonGarde, garder, oublier, metaGardee, stockageDisponible, enMo } from '../lib/audioHorsLigne';
 import ContenuEpisode from './ContenuEpisode';
 
 /*
@@ -104,6 +104,8 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
   const [erreurGarde, setErreurGarde] = useState('');
   const urlLocale = useRef<string | null>(null);
   const [urlSignee, setUrlSignee] = useState<string | null>(null);
+  /* Le chemin du fichier annoncé par le serveur, pour marquer la copie gardée. */
+  const fichierServeur = useRef<string | null>(null);
 
   useEffect(() => () => {
     if (urlLocale.current) { URL.revokeObjectURL(urlLocale.current); urlLocale.current = null; }
@@ -124,6 +126,7 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
           l'épisode s'écoute quand même.
         */
         const local = await sonGarde(numero);
+        const metaLocale = local ? await metaGardee(numero) : null;
         if (annule) return;
         if (local && audioRef.current) {
           urlLocale.current = URL.createObjectURL(local);
@@ -139,12 +142,28 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
         });
         if (annule || !audioRef.current || !rep) return;
         setUrlSignee(rep.url);
+        fichierServeur.current = rep.fichier || null;
         if (rep.dureeSec) {
           dureeEp.current = rep.dureeSec;
           setDuree(rep.dureeSec);
           couv.current = depaqueter(etape.couverture, rep.dureeSec);
         }
-        if (!local) {
+        /*
+          La copie gardée est-elle encore la bonne ? Si l'épisode a été
+          réenregistré depuis, son chemin dans le bucket a changé : on oublie
+          la copie périmée et on repasse sur la version du serveur. Sans ce
+          contrôle, celle qui avait téléchargé l'épisode entendait l'ancienne
+          version indéfiniment.
+        */
+        const perimee = !!(local && rep.fichier && metaLocale?.fichier && metaLocale.fichier !== rep.fichier);
+        if (perimee) {
+          await oublier(numero);
+          if (annule || !audioRef.current) return;
+          if (urlLocale.current) { URL.revokeObjectURL(urlLocale.current); urlLocale.current = null; }
+          setGarde(null);
+        }
+
+        if (!local || perimee) {
           audioRef.current.src = rep.url;
           audioRef.current.load();
         }
@@ -170,7 +189,7 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
     setTelechargement(0);
     try {
       const octets = await garder(numero, etape.titre || `Étape ${numero}`, dureeEp.current || null,
-        urlSignee, (part) => setTelechargement(part));
+        urlSignee, (part) => setTelechargement(part), fichierServeur.current);
       setGarde({ octets });
     } catch {
       setErreurGarde("Le téléchargement n'a pas abouti. Réessayez avec une meilleure connexion.");

@@ -4,6 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import RecipeModal from './RecipeModal';
 import { Recipe } from '../types';
+import { aujourdhuiIso, lundiDeLaSemaine } from '../lib/dateLocale';
+import { imc, imcAffiche, categorieImc, SANS_TAILLE } from '../lib/imc';
 
 interface DashboardProps {
   onPageChange: (page: string) => void;
@@ -19,13 +21,8 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
 
   const currentWeekMealPlans = mealPlans.filter(plan => {
     const planDate = new Date(plan.date);
-    const today = new Date();
-    // Semaine du lundi au dimanche, cohérente avec le calendrier des repas.
-    const dayOfWeek = today.getDay(); // 0 = dimanche
-    const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - diffToMonday);
-    weekStart.setHours(0, 0, 0, 0);
+    // Semaine du lundi au dimanche, règle partagée (voir lib/dateLocale).
+    const weekStart = lundiDeLaSemaine();
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6);
     weekEnd.setHours(23, 59, 59, 999);
@@ -46,17 +43,6 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
 
   const hasProfileData = user?.profile?.weightGoal || user?.profile?.heightCm;
 
-  const calculateIMC = (weight: number, heightCm?: number) => {
-    const height = heightCm ? heightCm / 100 : 1.70;
-    return (weight / (height * height)).toFixed(1);
-  };
-
-  const getIMCCategory = (imc: number) => {
-    if (imc < 18.5) return { text: 'Insuffisance pondérale', color: 'text-blue-600' };
-    if (imc < 25) return { text: 'Poids normal', color: 'text-green-600' };
-    if (imc < 30) return { text: 'Surpoids', color: 'text-yellow-600' };
-    return { text: 'Obésité', color: 'text-red-600' };
-  };
 
   const handleAddWeight = async () => {
     if (!user || !newWeight || isSubmitting) return;
@@ -72,7 +58,7 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
       await addWeightEntry({
         userId: user.id,
         weight: weight,
-        date: new Date().toISOString().split('T')[0],
+        date: aujourdhuiIso(),
         measurements: {}
       });
       setNewWeight('');
@@ -194,16 +180,20 @@ export default function Dashboard({ onPageChange }: DashboardProps) {
                 <div>
                   <p className="text-sm font-medium text-gray-600">IMC</p>
                   <p className="text-2xl font-bold text-gray-800">
-                    {calculateIMC(currentWeight, heightCm)}
+                    {imcAffiche(imc(currentWeight, heightCm))}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                   <Target className="w-6 h-6 text-blue-600" />
                 </div>
               </div>
-              <p className={`text-sm font-medium mt-2 ${getIMCCategory(parseFloat(calculateIMC(currentWeight, heightCm))).color}`}>
-                {getIMCCategory(parseFloat(calculateIMC(currentWeight, heightCm))).text}
-              </p>
+              {/* Sans sa taille, aucune catégorie : une mesure fausse est pire qu'absente. */}
+              {!heightCm ? (
+                <p className="text-sm text-gray-500 mt-2">{SANS_TAILLE}</p>
+              ) : (() => {
+                const cat = categorieImc(imc(currentWeight, heightCm));
+                return cat ? <p className={`text-sm font-medium mt-2 ${cat.couleur}`}>{cat.texte}</p> : null;
+              })()}
             </div>
 
             <div className="bg-white rounded-xl p-6 border border-gray-200">

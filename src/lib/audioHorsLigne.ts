@@ -23,6 +23,13 @@ export interface EpisodeHorsLigne {
   dureeSec: number | null;
   octets: number;
   gardeLe: string;
+  /**
+   * Le chemin du fichier dans le bucket au moment du téléchargement. Il
+   * permet de reconnaître une copie périmée : si vous réenregistrez un
+   * épisode, celles qui l'avaient gardé entendaient l'ancienne version
+   * indéfiniment, puisque rien ne distinguait les deux.
+   */
+  fichier?: string | null;
 }
 
 interface Enregistrement extends EpisodeHorsLigne {
@@ -55,11 +62,23 @@ function transaction<T>(mode: IDBTransactionMode, action: (m: IDBObjectStore) =>
   );
 }
 
-/** Le son gardé pour cette étape, ou null. Ne lève jamais. */
-export async function sonGarde(numero: number): Promise<Blob | null> {
+/**
+ * Le son gardé pour cette étape, ou null. Ne lève jamais.
+ *
+ * `fichierAttendu` est le chemin annoncé par le serveur : quand il est connu
+ * et qu'il ne correspond pas à celui de la copie, la copie est périmée — on
+ * l'oublie et on rend null, pour que l'épisode se recharge. Hors connexion,
+ * l'appelant ne le connaît pas : on rend alors ce qu'on a.
+ */
+export async function sonGarde(numero: number, fichierAttendu?: string | null): Promise<Blob | null> {
   try {
     const e = await transaction<Enregistrement | undefined>('readonly', (m) => m.get(numero));
-    return e?.son ?? null;
+    if (!e) return null;
+    if (fichierAttendu && e.fichier && e.fichier !== fichierAttendu) {
+      await oublier(numero);
+      return null;
+    }
+    return e.son ?? null;
   } catch {
     return null;
   }
@@ -70,7 +89,7 @@ export async function episodesGardes(): Promise<EpisodeHorsLigne[]> {
   try {
     const tout = await transaction<Enregistrement[]>('readonly', (m) => m.getAll());
     return tout
-      .map(({ numero, titre, dureeSec, octets, gardeLe }) => ({ numero, titre, dureeSec, octets, gardeLe }))
+      .map(({ numero, titre, dureeSec, octets, gardeLe, fichier }) => ({ numero, titre, dureeSec, octets, gardeLe, fichier }))
       .sort((a, b) => a.numero - b.numero);
   } catch {
     return [];
@@ -90,6 +109,7 @@ export async function garder(
   dureeSec: number | null,
   url: string,
   surProgression?: (part: number) => void,
+  fichier?: string | null,
 ): Promise<number> {
   const reponse = await fetch(url);
   if (!reponse.ok) throw new Error(`téléchargement refusé : ${reponse.status}`);
@@ -112,7 +132,10 @@ export async function garder(
   }
 
   await transaction('readwrite', (m) =>
-    m.put({ numero, titre, dureeSec, octets: son.size, gardeLe: new Date().toISOString(), son } as Enregistrement)
+    m.put({
+      numero, titre, dureeSec, octets: son.size,
+      gardeLe: new Date().toISOString(), fichier: fichier ?? null, son,
+    } as Enregistrement)
   );
 
   /*
@@ -140,4 +163,16 @@ export function stockageDisponible(): boolean {
 /** « 7,2 Mo ». */
 export function enMo(octets: number): string {
   return `${(octets / 1024 / 1024).toFixed(1).replace('.', ',')} Mo`;
+}
+
+/** Ce qu'on sait de la copie gardée pour cette étape, sans charger le son. */
+export async function metaGardee(numero: number): Promise<EpisodeHorsLigne | null> {
+  try {
+    const e = await transaction<Enregistrement | undefined>('readonly', (m) => m.get(numero));
+    if (!e) return null;
+    const { numero: n, titre, dureeSec, octets, gardeLe, fichier } = e;
+    return { numero: n, titre, dureeSec, octets, gardeLe, fichier };
+  } catch {
+    return null;
+  }
 }
