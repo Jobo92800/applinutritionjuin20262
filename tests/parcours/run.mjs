@@ -621,6 +621,54 @@ p('sans fiche V2 : cliente null, rien d\'autre', r.statut === 200 && r.cliente =
     }]).length === 2);
 }
 
+/* --------------------------------------------- les rayons de la liste --- */
+{
+  const { rangerParRayon, RAYON_AUTRES } = await import('../../src/lib/rayons.ts');
+  const CONNUS = ['fruits-legumes', 'poisson', 'epicerie-salee', RAYON_AUTRES];
+
+  const liste = [
+    { name: 'Tomates', category: 'fruits-legumes' },
+    { name: 'Thon', category: 'poisson' },
+    { name: 'Sel', category: 'epicerie-salee' },
+    { name: 'Sauce soja', category: 'sauces' },        // rayon qui n'existe pas
+    { name: 'Curcuma', category: 'epices' },           // idem
+    { name: 'Ajouté à la main', category: RAYON_AUTRES },
+    { name: 'Sans rayon', category: null },
+    { name: 'Rayon vide', category: '' },
+  ];
+  const range = rangerParRayon(liste, CONNUS);
+  const total = range.reduce((n, r) => n + r.articles.length, 0);
+
+  // La garantie qui compte : « 3 / 15 articles cochés » ne peut plus mentir.
+  p('rayons : aucun article ne se perd', total === liste.length, `${total} sur ${liste.length}`);
+  p('rayons : les rayons inconnus tombent dans « Autres »',
+    range.find((r) => r.cle === RAYON_AUTRES)?.articles.length === 5,
+    JSON.stringify(range.map((r) => [r.cle, r.articles.length])));
+  p('rayons : un article sans rayon du tout est rattrapé',
+    range.find((r) => r.cle === RAYON_AUTRES)?.articles.some((a) => a.name === 'Sans rayon'));
+  p('rayons : « Autres » vient toujours en dernier',
+    range[range.length - 1]?.cle === RAYON_AUTRES);
+  p('rayons : l\'ordre des rayons connus est respecté',
+    range.map((r) => r.cle).join(',') === `fruits-legumes,poisson,epicerie-salee,${RAYON_AUTRES}`);
+  p('rayons : un rayon sans article n\'apparaît pas',
+    !rangerParRayon([{ category: 'poisson' }], CONNUS).some((r) => r.cle === 'fruits-legumes'));
+  p('rayons : sans rien d\'inconnu, « Autres » ne s\'affiche pas',
+    !rangerParRayon([{ category: 'poisson' }], CONNUS).some((r) => r.cle === RAYON_AUTRES));
+  p('rayons : une liste vide ne rend aucun rayon', rangerParRayon([], CONNUS).length === 0);
+
+  // Replié, un rayon ne montre plus ses articles : sa ligne doit tout dire.
+  const { resumeDuRayon } = await import('../../src/lib/rayons.ts');
+  p('rayon replié : rien de coché, on annonce le nombre',
+    resumeDuRayon([{}, {}, {}]) === '3 articles');
+  p('rayon replié : un seul article reste au singulier',
+    resumeDuRayon([{}]) === '1 article');
+  p('rayon replié : en cours, on reprend la forme de l\'en-tête de page',
+    resumeDuRayon([{ checked: true }, {}, {}]) === '1 / 3 cochés');
+  p('rayon replié : terminé, on le dit sans chiffre',
+    resumeDuRayon([{ checked: true }, { checked: true }]) === 'Tout est coché');
+  p('rayon replié : un rayon vide ne compte rien', resumeDuRayon([]) === '0 article');
+}
+
 /* ------------------------------------------------------------- l'IMC --- */
 {
   const { imc, imcAffiche, categorieImc, SANS_TAILLE } = await import('../../src/lib/imc.ts');

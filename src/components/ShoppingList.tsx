@@ -2,13 +2,43 @@ import { useState } from 'react';
 import { Check, Plus, Trash2, Download, ShoppingCart, CheckCheck, X, Calendar, ChevronDown } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { isoLocal, lundiDeLaSemaine } from '../lib/dateLocale';
+import { rangerParRayon, resumeDuRayon, RAYON_AUTRES } from '../lib/rayons';
 import { useAuth } from '../contexts/AuthContext';
 import { ShoppingItem } from '../types';
 
 export default function ShoppingList() {
   const { shoppingList, updateShoppingList, generateShoppingList, mealPlans } = useData();
   const { user } = useAuth();
-  const [newItem, setNewItem] = useState({ name: '', quantity: 1, unit: 'pièce', category: 'autres' });
+  const [newItem, setNewItem] = useState({ name: '', quantity: 1, unit: 'pièce', category: RAYON_AUTRES });
+
+  /*
+    Les rayons se replient.
+
+    Quatre-vingt-quatorze articles font une liste interminable dans les
+    rayons : elle replie ce qu'elle a fini et garde sous les yeux ce qui
+    reste. Le pli est une commodité personnelle — il vit dans le
+    navigateur de cet appareil, par cliente, et son absence ne gêne rien :
+    sans stockage, tout s'ouvre, comme avant.
+  */
+  const CLE_PLIS = user ? `rayonsReplies_${user.id}` : '';
+  const [replies, setReplies] = useState<Set<string>>(() => {
+    try {
+      const garde = CLE_PLIS ? localStorage.getItem(CLE_PLIS) : null;
+      return new Set<string>(garde ? JSON.parse(garde) : []);
+    } catch {
+      return new Set<string>();
+    }
+  });
+
+  const basculerRayon = (cle: string) => {
+    setReplies((avant) => {
+      const apres = new Set(avant);
+      if (apres.has(cle)) apres.delete(cle);
+      else apres.add(cle);
+      try { if (CLE_PLIS) localStorage.setItem(CLE_PLIS, JSON.stringify([...apres])); } catch { /* sans stockage, le pli ne survit pas au rechargement */ }
+      return apres;
+    });
+  };
   const [showWeekSelector, setShowWeekSelector] = useState(false);
   const [, setSelectedWeekStart] = useState('');
 
@@ -24,7 +54,13 @@ export default function ShoppingList() {
     { key: 'boulangerie-patisserie', name: '🥖 Boulangerie / Pâtisserie', color: 'bg-orange-100' },
     { key: 'bio-dietetique', name: '🌱 Produit Bio / Diététiques', color: 'bg-green-200' },
     { key: 'condiments-assaisonnements', name: '🧄 Condiments / Assaisonnements', color: 'bg-amber-100' },
-    { key: 'complements-alimentaires', name: '💊 Compléments Alimentaires', color: 'bg-purple-100' }
+    { key: 'complements-alimentaires', name: '💊 Compléments Alimentaires', color: 'bg-purple-100' },
+    /*
+      Le rayon qui rattrape tout. Sans lui, un article rangé dans un rayon
+      inconnu — ou ajouté sans toucher au menu déroulant — restait invisible
+      tout en comptant dans « X / Y articles cochés ».
+    */
+    { key: RAYON_AUTRES, name: '📦 Autres', color: 'bg-gray-100' }
   ];
 
   const toggleItemCheck = (itemId: string) => {
@@ -65,7 +101,7 @@ export default function ShoppingList() {
     };
 
     updateShoppingList([...shoppingList, item]);
-    setNewItem({ name: '', quantity: 1, unit: 'pièce', category: 'autres' });
+    setNewItem({ name: '', quantity: 1, unit: 'pièce', category: RAYON_AUTRES });
   };
 
   // Le lundi de la semaine (règle partagée, voir lib/dateLocale).
@@ -144,10 +180,12 @@ export default function ShoppingList() {
 
   const availableWeeks = getAvailableWeeks();
 
-  const groupedItems = categories.map(category => ({
-    ...category,
-    items: shoppingList.filter(item => item.category === category.key)
-  })).filter(category => category.items.length > 0);
+  /* Rien ne se perd : la somme des rayons vaut toujours shoppingList.length. */
+  const groupedItems = rangerParRayon(shoppingList, categories.map((c) => c.key))
+    .map(({ cle, articles }) => ({
+      ...(categories.find((c) => c.key === cle) || categories[categories.length - 1]),
+      items: articles,
+    }));
 
   const checkedCount = shoppingList.filter(item => item.checked).length;
   const totalCount = shoppingList.length;
@@ -349,11 +387,23 @@ export default function ShoppingList() {
         <div className="space-y-6">
           {groupedItems.map((category) => (
             <div key={category.key} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className={`px-6 py-4 ${category.color} border-b`}>
-                <h3 className="font-semibold text-gray-800">{category.name}</h3>
-                <p className="text-sm text-gray-600">{category.items.length} articles</p>
-              </div>
-              <div className="p-6">
+              <button
+                type="button"
+                onClick={() => basculerRayon(category.key)}
+                aria-expanded={!replies.has(category.key)}
+                aria-controls={`rayon-${category.key}`}
+                className={`w-full text-left px-6 py-4 ${category.color} ${replies.has(category.key) ? '' : 'border-b'} flex items-center justify-between gap-4`}
+              >
+                <span>
+                  <span className="block font-semibold text-gray-800">{category.name}</span>
+                  <span className="block text-sm text-gray-600">{resumeDuRayon(category.items)}</span>
+                </span>
+                <ChevronDown
+                  aria-hidden="true"
+                  className={`w-5 h-5 shrink-0 text-gray-600 transition-transform ${replies.has(category.key) ? '-rotate-90' : ''}`}
+                />
+              </button>
+              <div id={`rayon-${category.key}`} hidden={replies.has(category.key)} className="p-6">
                 <div className="space-y-3">
                   {category.items.map((item) => (
                     <div
