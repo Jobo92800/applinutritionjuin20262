@@ -3,7 +3,7 @@ import { ArrowLeft, Play, Pause, RotateCcw, RotateCw, Headphones, Lock, FileText
 import { parcoursApi, EtapeParcours, ParcoursApiError } from '../lib/parcoursApi';
 import { supabase } from '../lib/supabase';
 import { empaqueter, depaqueter, tauxLocal, mmss } from '../lib/parcoursEcoute';
-import { sonGarde, garder, oublier, metaGardee, stockageDisponible, enMo } from '../lib/audioHorsLigne';
+import { sonGarde, garder, oublier, metaGardee, placeGardee, stockageDisponible, enMo, EPISODES_MAX } from '../lib/audioHorsLigne';
 import ContenuEpisode from './ContenuEpisode';
 
 /*
@@ -186,6 +186,24 @@ export default function ParcoursLecteur({ etape, appareil, seuil, total, onRetou
   const garderLEpisode = async () => {
     if (!urlSignee || telechargement !== null) return;
     setErreurGarde('');
+
+    /*
+      Une place bornée, et dite avant de télécharger.
+
+      Rien ne limitait le nombre d'épisodes gardés : on pouvait remplir son
+      téléphone sans qu'aucun écran ne le mentionne. On refuse donc poliment
+      au-delà de la limite, en disant à la fois où on en est et quoi faire —
+      un refus sans la suite à donner est juste un mur.
+    */
+    const place = await placeGardee();
+    if (place.nombre >= EPISODES_MAX && !garde) {
+      setErreurGarde(
+        `Vous gardez déjà ${place.nombre} épisodes (${enMo(place.octets)}), c'est le maximum. `
+        + 'Libérez-en un depuis votre parcours pour en garder un nouveau.'
+      );
+      return;
+    }
+
     setTelechargement(0);
     try {
       const octets = await garder(numero, etape.titre || `Étape ${numero}`, dureeEp.current || null,

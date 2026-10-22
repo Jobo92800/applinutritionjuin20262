@@ -13,6 +13,11 @@
     semaine, elle, s'assouplit si elle ne laisse plus assez de choix : mieux
     vaut une semaine composée qu'une semaine vide.
   - **On évite les répétitions** tant qu'il reste des recettes non servies.
+  - **Chaque chose à sa place.** Une case n'accueille qu'une recette de sa
+    catégorie : un dessert va au dessert, une entrée à l'entrée. Quand rien
+    ne convient, la case reste vide — avant, un dernier filet de sécurité
+    lâchait la catégorie et pouvait poser un dessert en plat principal, ce
+    qui est pire qu'une case vide.
 
   Règle pure — elle ne connaît que des objets, pas React ni Supabase —, donc
   vérifiée telle quelle par le banc d'essai. L'extension `.ts` de l'import est
@@ -35,8 +40,12 @@ export interface Creneau {
   repas: string;
   /** Le sous-repas : « principal », « plat »… */
   sousRepas: string;
-  /** La catégorie de recette attendue : « Déjeuner », « Dîner »… */
-  categorie: string;
+  /**
+   * Les catégories acceptables pour cette case, de la plus précise à la plus
+   * large : une case « plat » du déjeuner accepte « Déjeuner » comme
+   * « Plat principal », selon la façon dont la recette a été rangée.
+   */
+  categories: string[];
 }
 
 export interface FiltresConsigne {
@@ -53,7 +62,8 @@ export interface Proposition {
   recetteId: string;
 }
 
-const aLaCategorie = (r: RecetteCandidate, c: string) => (r.categories || []).includes(c);
+const aLUneDesCategories = (r: RecetteCandidate, cats: string[]) =>
+  cats.some((c) => (r.categories || []).includes(c));
 const respecteSesPreferences = (r: RecetteCandidate, prefs: string[]) =>
   prefs.every((p) => (r.dietaryPreferences || []).includes(p));
 
@@ -92,18 +102,18 @@ export function composerLaSemaine({
   const propositions: Proposition[] = [];
 
   for (const creneau of creneaux) {
-    const cible = cibleDuRepas(caloriesJournee, [creneau.categorie], creneau.categorie);
+    const cible = cibleDuRepas(caloriesJournee, creneau.categories, creneau.categories[0]);
 
     /*
-      Trois cercles, du plus exigeant au plus large. On ne descend au cercle
-      suivant que si le précédent est vide — et jamais au point de trahir ses
-      préférences alimentaires, qui restent dans les trois.
+      Deux cercles, du plus exigeant au plus large. La consigne de la semaine
+      s'assouplit si elle ne laisse plus assez de choix ; la catégorie de la
+      case et ses préférences alimentaires, jamais.
     */
     const cercles = [
       (r: RecetteCandidate) =>
-        aLaCategorie(r, creneau.categorie) && respecteSesPreferences(r, preferences) && respecteLaConsigne(r, consigne),
-      (r: RecetteCandidate) => aLaCategorie(r, creneau.categorie) && respecteSesPreferences(r, preferences),
-      (r: RecetteCandidate) => respecteSesPreferences(r, preferences),
+        aLUneDesCategories(r, creneau.categories) && respecteSesPreferences(r, preferences) && respecteLaConsigne(r, consigne),
+      (r: RecetteCandidate) =>
+        aLUneDesCategories(r, creneau.categories) && respecteSesPreferences(r, preferences),
     ];
 
     let choisie: RecetteCandidate | null = null;

@@ -302,7 +302,7 @@ p('pas de second rappel dans la semaine', bilan.rappelees === 0);
     R('diner',      ['Dîner'],    ['Sans féculent'], 600),
     R('pdj',        ['Petit-déjeuner'], ['Sans gluten'], 350),
   ];
-  const creneau = (date, repas, sousRepas, categorie) => ({ date, repas, sousRepas, categorie });
+  const creneau = (date, repas, sousRepas, ...categories) => ({ date, repas, sousRepas, categories });
 
   let prop = composerLaSemaine({
     creneaux: [creneau('2026-10-05', 'déjeuner', 'plat', 'Déjeuner')],
@@ -347,6 +347,57 @@ p('pas de second rappel dans la semaine', bilan.rappelees === 0);
 
   p('composer : aucune case libre, aucune proposition',
     composerLaSemaine({ creneaux: [], recettes, caloriesJournee: 2000 }).length === 0);
+
+  /*
+    Chaque chose à sa place. Le dernier filet de sécurité lâchait la
+    catégorie : un dessert pouvait atterrir en plat du dîner.
+  */
+  const carte = [
+    ...recettes,
+    R('entree-fraiche', ['Entrée'],   [], 120),
+    R('entree-lourde',  ['Entrée'],   [], 300),
+    R('dessert-leger',  ['Dessert'],  [], 150),
+    R('plat-principal', ['Plat principal'], [], 550),
+  ];
+
+  prop = composerLaSemaine({
+    creneaux: [creneau('2026-10-05', 'déjeuner', 'entree', 'Entrée')],
+    recettes: carte, caloriesJournee: 2000,
+  });
+  p('composer : une case entrée ne reçoit qu\'une entrée',
+    prop.length === 1 && prop[0].recetteId.startsWith('entree'), JSON.stringify(prop));
+  p('composer : l\'entrée se juge sur une petite part, pas sur un repas entier',
+    prop[0]?.recetteId === 'entree-fraiche', JSON.stringify(prop));
+
+  prop = composerLaSemaine({
+    creneaux: [creneau('2026-10-05', 'dîner', 'dessert', 'Dessert')],
+    recettes: carte, caloriesJournee: 2000,
+  });
+  p('composer : une case dessert ne reçoit qu\'un dessert',
+    prop.length === 1 && prop[0].recetteId === 'dessert-leger');
+
+  // Aucune entrée au catalogue : la case reste vide plutôt que d'accueillir un plat.
+  prop = composerLaSemaine({
+    creneaux: [creneau('2026-10-05', 'déjeuner', 'entree', 'Entrée')],
+    recettes, caloriesJournee: 2000,
+  });
+  p('composer : faute de recette de la bonne catégorie, la case reste vide',
+    prop.length === 0, JSON.stringify(prop));
+
+  // Un dessert ne peut plus tomber en plat, même si c'est la seule recette.
+  prop = composerLaSemaine({
+    creneaux: [creneau('2026-10-05', 'dîner', 'plat', 'Dîner', 'Plat principal')],
+    recettes: [R('dessert-seul', ['Dessert'], [], 200)], caloriesJournee: 2000,
+  });
+  p('composer : un dessert ne tombe jamais en plat', prop.length === 0, JSON.stringify(prop));
+
+  // Une case plat accepte les deux façons de ranger une recette.
+  prop = composerLaSemaine({
+    creneaux: [creneau('2026-10-05', 'dîner', 'plat', 'Dîner', 'Plat principal')],
+    recettes: carte, caloriesJournee: 2000,
+  });
+  p('composer : une case plat accepte « Dîner » comme « Plat principal »',
+    ['diner', 'plat-principal'].includes(prop[0]?.recetteId), JSON.stringify(prop));
 }
 
 // --- ce que la thérapeute voit de l'activité d'une cliente ---
@@ -482,6 +533,14 @@ p('sans fiche V2 : cliente null, rien d\'autre', r.statut === 200 && r.cliente =
   p('hors connexion : oublier un épisode absent ne lève pas', true);
   p('hors connexion : les tailles s\'écrivent en mégaoctets, à la française',
     hl.enMo(7_340_032) === '7,0 Mo' && hl.enMo(921_600) === '0,9 Mo');
+
+  // La place gardée est bornée, et la mesure ne lève pas sans stockage.
+  p('hors connexion : une limite d\'épisodes est fixée',
+    Number.isInteger(hl.EPISODES_MAX) && hl.EPISODES_MAX > 0 && hl.EPISODES_MAX < 24,
+    String(hl.EPISODES_MAX));
+  const place = await hl.placeGardee();
+  p('hors connexion : mesurer la place sans stockage rend zéro plutôt que de lever',
+    place.nombre === 0 && place.octets === 0, JSON.stringify(place));
 }
 
 // --- le rappel du jour de pesée ---

@@ -23,6 +23,14 @@ export const PART_DU_REPAS: Record<string, number> = {
   'Déjeuner': 0.4,
   'Dîner': 0.3,
   'Collation': 0.12,
+  /*
+    L'entrée et le dessert ne sont pas des repas : ils accompagnent. Jugés
+    sur la part d'un déjeuner, on proposerait le dessert le plus lourd du
+    catalogue. Ils valent une petite fraction de la journée — comme la
+    collation, ils viennent en plus des trois repas.
+  */
+  'Entrée': 0.08,
+  'Dessert': 0.08,
 };
 
 /** Quand une recette ne dit pas à quel repas elle va, on la juge sur un déjeuner. */

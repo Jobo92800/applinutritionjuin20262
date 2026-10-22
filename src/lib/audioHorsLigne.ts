@@ -13,6 +13,17 @@
     privée, quota plein), l'application se comporte comme avant.
 */
 
+/**
+ * Combien d'épisodes au plus, gardés en même temps.
+ *
+ * Rien ne bornait le téléchargement : une cliente pouvait garder les vingt-
+ * quatre étapes d'une cure de six mois — de l'ordre de cent cinquante
+ * mégaoctets — sans que rien ne le lui dise, jusqu'à ce que son téléphone
+ * se plaigne. Cinq épisodes couvrent largement un mois d'avance, et elle en
+ * libère un en deux gestes depuis son parcours.
+ */
+export const EPISODES_MAX = 5;
+
 const BASE = 'mbp-parcours';
 const MAGASIN = 'episodes';
 const VERSION = 1;
@@ -175,4 +186,10 @@ export async function metaGardee(numero: number): Promise<EpisodeHorsLigne | nul
   } catch {
     return null;
   }
+}
+
+/** Combien d'épisodes sont gardés, et la place qu'ils prennent. Ne lève jamais. */
+export async function placeGardee(): Promise<{ nombre: number; octets: number }> {
+  const liste = await episodesGardes();
+  return { nombre: liste.length, octets: liste.reduce((t, e) => t + (e.octets || 0), 0) };
 }

@@ -126,18 +126,29 @@ export default function MealCalendar() {
     préférences alimentaires et la consigne de son étape du parcours.
     Elle ajuste ensuite case par case, comme avant.
   */
-  const CATEGORIE_DU_REPAS: Record<string, string> = {
-    'petit-déjeuner': 'Petit-déjeuner',
-    'déjeuner': 'Déjeuner',
-    'dîner': 'Dîner',
-    'collation': 'Collation',
-  };
-  /** Une seule case par repas : celle du plat, pas l'entrée ni le dessert. */
-  const CASE_PRINCIPALE: Record<string, string> = {
-    'petit-déjeuner': 'principal',
-    'déjeuner': 'plat',
-    'dîner': 'plat',
-  };
+  /*
+    CHAQUE CASE A SA CATÉGORIE.
+
+    La composition ne remplissait que les trois cases principales, et son
+    dernier filet de sécurité lâchait la catégorie : un dessert pouvait se
+    retrouver en plat du dîner. Désormais chaque case déclare ce qu'elle
+    accepte — l'entrée prend une entrée, le dessert prend un dessert — et une
+    case pour laquelle rien ne convient reste vide.
+
+    Une case « plat » accepte deux étiquettes, parce que vos recettes sont
+    rangées tantôt en « Déjeuner » / « Dîner », tantôt en « Plat principal ».
+    La première de la liste sert aussi à calculer la part calorique de la
+    case (voir `cibleRepas`).
+  */
+  const CASES_A_COMPOSER: { repas: string; sousRepas: string; categories: string[] }[] = [
+    { repas: 'petit-déjeuner', sousRepas: 'principal', categories: ['Petit-déjeuner'] },
+    { repas: 'déjeuner',       sousRepas: 'entree',    categories: ['Entrée'] },
+    { repas: 'déjeuner',       sousRepas: 'plat',      categories: ['Déjeuner', 'Plat principal'] },
+    { repas: 'déjeuner',       sousRepas: 'dessert',   categories: ['Dessert'] },
+    { repas: 'dîner',          sousRepas: 'entree',    categories: ['Entrée'] },
+    { repas: 'dîner',          sousRepas: 'plat',      categories: ['Dîner', 'Plat principal'] },
+    { repas: 'dîner',          sousRepas: 'dessert',   categories: ['Dessert'] },
+  ];
 
   const [composition, setComposition] = useState<'repos' | 'encours'>('repos');
   const [bilanComposition, setBilanComposition] = useState('');
@@ -152,10 +163,10 @@ export default function MealCalendar() {
 
       for (const jour of weekDays) {
         const date = formatDate(jour);
-        for (const [repas, sousRepas] of Object.entries(CASE_PRINCIPALE)) {
+        for (const { repas, sousRepas, categories } of CASES_A_COMPOSER) {
           const posee = getMealForDay(date, repas, sousRepas);
           if (posee) { dejaServies.push(String(posee).split('_variant_')[0]); continue; }
-          creneaux.push({ date, repas, sousRepas, categorie: CATEGORIE_DU_REPAS[repas] });
+          creneaux.push({ date, repas, sousRepas, categories });
         }
       }
 

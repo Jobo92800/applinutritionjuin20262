@@ -5,7 +5,7 @@ import { idAppareil, minutes, mmss } from '../lib/parcoursEcoute';
 import { isPushSupported, permissionState, isSubscribed, subscribeToPush, iosNeedsInstall } from '../lib/webpush';
 import { useAuth } from '../contexts/AuthContext';
 import { depuisEtape, oublierLaSemaine } from '../lib/semaineParcours';
-import { episodesGardes } from '../lib/audioHorsLigne';
+import { episodesGardes, enMo, EPISODES_MAX } from '../lib/audioHorsLigne';
 import ParcoursLecteur from './ParcoursLecteur';
 import RecettesDeLaSemaine from './RecettesDeLaSemaine';
 
@@ -128,8 +128,12 @@ export default function Parcours({ onPageChange }: Props) {
 
   /* Quelles étapes s'écoutent sans réseau : la frise le dit d'un coup d'œil. */
   const [gardees, setGardees] = useState<Set<number>>(new Set());
+  const [placePrise, setPlacePrise] = useState(0);
   useEffect(() => {
-    episodesGardes().then((liste) => setGardees(new Set(liste.map((e) => e.numero))));
+    episodesGardes().then((liste) => {
+      setGardees(new Set(liste.map((e) => e.numero)));
+      setPlacePrise(liste.reduce((t, e) => t + (e.octets || 0), 0));
+    });
   }, [ouverte]);
 
   if (chargement && !etat) {
@@ -246,7 +250,17 @@ export default function Parcours({ onPageChange }: Props) {
 
       {/* La frise */}
       <div>
-        <h2 className="font-semibold text-gray-800 mb-3">Votre parcours</h2>
+        <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+          <h2 className="font-semibold text-gray-800">Votre parcours</h2>
+          {/* Ce que les épisodes gardés prennent sur son téléphone : sans ce
+              repère, la place se consomme sans qu'aucun écran ne le dise. */}
+          {gardees.size > 0 && (
+            <p className="text-xs text-gray-500">
+              {gardees.size} sur {EPISODES_MAX} épisode{gardees.size > 1 ? 's' : ''} gardé{gardees.size > 1 ? 's' : ''}
+              {' · '}{enMo(placePrise)}
+            </p>
+          )}
+        </div>
         <ol className="relative border-l-2 border-gray-200 ml-4 space-y-6">
           {etat.etapes.map((e, i) => (
             <Etape key={e.numero} etape={e} premiereVerrouillee={i === etat.disponible + 1}

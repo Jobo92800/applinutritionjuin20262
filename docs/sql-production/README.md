@@ -15,6 +15,7 @@ rejouables, et tous se terminent par un tableau avant/après où la colonne
 | 2 | Consignes de la semaine | Remplit ces consignes pour les étapes existantes. | oct. 2026 |
 | — | Correction recettes | 34 noms d'ingrédient avec une espace en trop (qui dédoublaient les lignes de courses), 6 noms de variante, 7 `targetCalories` faux, le Bibimbap à 178 g de glucides au lieu de 17, et la recette de test `sfdgsdfg` visible par les clientes. | 21 oct. 2026 |
 | 3 | Sauce soja vers tamari | Cinq recettes annonçaient « Sans gluten » en contenant de la sauce soja, qui est brassée avec du blé. Passe l'ingrédient au tamari et réécrit les étapes. | 22 oct. 2026 |
+| 4 | Filtres de semaine sans effet | Trois étapes portaient un filtre fait uniquement de catégories de repas : il laissait passer 41 recettes sur 43, donc ne triait rien. Les vide en gardant leur consigne. | à passer |
 
 ## Ce qui reste en suspens
 
