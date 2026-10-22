@@ -256,7 +256,7 @@ export default function Parcours({ onPageChange }: Props) {
               repère, la place se consomme sans qu'aucun écran ne le dise. */}
           {gardees.size > 0 && (
             <p className="text-xs text-gray-500">
-              {gardees.size} sur {EPISODES_MAX} épisode{gardees.size > 1 ? 's' : ''} gardé{gardees.size > 1 ? 's' : ''}
+              {gardees.size} épisode{gardees.size > 1 ? 's' : ''} gardé{gardees.size > 1 ? 's' : ''} sur {EPISODES_MAX}
               {' · '}{enMo(placePrise)}
             </p>
           )}
