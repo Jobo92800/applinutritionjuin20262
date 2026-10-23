@@ -5,6 +5,7 @@ import { useAuth } from './AuthContext';
 import { Recipe, Podcast, MealPlan, WeightEntry, ShoppingItem, WeeklyGoal, WeeklyProgress, Badge, Message } from '../types';
 import { computeStreaks, computeEarnedBadgeIds, Streaks } from '../utils/achievements';
 import { listeDeCourses } from '../lib/repasPlanifie';
+import { CELEBRATION_BADGES } from '../lib/fonctionnalites';
 import { isoLocal, lundiDeLaSemaine } from '../lib/dateLocale';
 
 interface DataContextType {
@@ -1689,7 +1690,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
 
       setEarnedBadgeIds(prev => Array.from(new Set([...prev, ...missing])));
-      setNewBadges(badges.filter(badge => missing.includes(badge.id)));
+      /*
+        Le badge est gagné et enregistré dans tous les cas ; `newBadges` ne
+        sert qu'à ouvrir la fenêtre de félicitations. Fenêtre fermée, on ne
+        met rien en attente — sinon la liste gonflerait sans que personne ne
+        vienne jamais la vider.
+      */
+      if (CELEBRATION_BADGES) setNewBadges(badges.filter(badge => missing.includes(badge.id)));
     };
 
     award();

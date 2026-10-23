@@ -20,3 +20,16 @@
  * et remettre sa section dans `docs/guide-cliente/guide.html`.
  */
 export const ANALYSE_PHOTO = false;
+
+/**
+ * La fenêtre de félicitations quand un badge se débloque.
+ *
+ * Fermée le 23 octobre 2026, à la demande de Jonathan : elle s'ouvrait
+ * par-dessus l'écran en cours et il fallait la congédier pour continuer.
+ *
+ * **Les badges, eux, continuent de se gagner** : ils sont enregistrés
+ * comme avant et s'affichent dans « Mes badges », sur la page Suivi. Seule
+ * l'interruption disparaît — on félicite là où elle regarde, pas en lui
+ * coupant la route.
+ */
+export const CELEBRATION_BADGES = false;

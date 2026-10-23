@@ -17,7 +17,7 @@ import ProgressTracking from './components/ProgressTracking';
 import AdminPanel from './components/AdminPanel';
 import AccountProfile from './components/AccountProfile';
 import FoodAnalysis from './components/FoodAnalysis';
-import { ANALYSE_PHOTO } from './lib/fonctionnalites';
+import { ANALYSE_PHOTO, CELEBRATION_BADGES } from './lib/fonctionnalites';
 import BadgeCelebration from './components/BadgeCelebration';
 
 function AppContent() {
@@ -128,7 +128,7 @@ function AppContent() {
       />
 
       {/* Félicitations à l'obtention d'un badge */}
-      <BadgeCelebration />
+      {CELEBRATION_BADGES && <BadgeCelebration />}
     </>
   );
 }
