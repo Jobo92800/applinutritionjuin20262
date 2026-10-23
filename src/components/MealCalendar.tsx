@@ -8,6 +8,7 @@ import { composerLaSemaine, type Creneau } from '../lib/composerSemaine';
 import { semaineEnCours } from '../lib/semaineParcours';
 import { isoLocal, lundiDeLaSemaine } from '../lib/dateLocale';
 import { resoudreRepas, composerCle } from '../lib/repasPlanifie';
+import { COMPOSER_LA_SEMAINE } from '../lib/fonctionnalites';
 
 export default function MealCalendar() {
   const { recipes, mealPlans, addMealPlan, updateMealPlan } = useData();
@@ -501,8 +502,8 @@ export default function MealCalendar() {
         </div>
       </div>
 
-      {/* Composer la semaine en un geste */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+      {/* Composer la semaine en un geste — en sommeil, voir lib/fonctionnalites */}
+      {COMPOSER_LA_SEMAINE && <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <button
           onClick={composerMaSemaine}
           disabled={composition === 'encours'}
@@ -514,7 +515,7 @@ export default function MealCalendar() {
         <p className="text-sm text-gray-500">
           {bilanComposition || 'Les cases vides se remplissent selon vos préférences. Rien de ce que vous avez déjà choisi ne bouge.'}
         </p>
-      </div>
+      </div>}
 
       {/* Modal de sélection de recette */}
       {selectedMeal && (

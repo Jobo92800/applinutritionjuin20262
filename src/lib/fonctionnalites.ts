@@ -33,3 +33,18 @@ export const ANALYSE_PHOTO = false;
  * coupant la route.
  */
 export const CELEBRATION_BADGES = false;
+
+/**
+ * Le bouton « Composer ma semaine », sur le calendrier des repas.
+ *
+ * Fermé le 23 octobre 2026, à la demande de Jonathan : le catalogue est
+ * encore trop mince pour que la composition soit bonne. Avec quarante-trois
+ * recettes, et très peu d'entrées et de desserts, elle laisse des cases
+ * vides et répète les mêmes plats — proposer cela, c'est se présenter sous
+ * son plus mauvais jour.
+ *
+ * La règle qui compose (`lib/composerSemaine`) reste écrite et vérifiée par
+ * le banc d'essai : elle attend simplement d'avoir de quoi travailler.
+ * À rouvrir quand les recettes auront été étoffées.
+ */
+export const COMPOSER_LA_SEMAINE = false;
