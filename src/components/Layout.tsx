@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Home, Book, Calendar, ShoppingCart, TrendingUp, Headphones, Settings, LogOut, Menu, X, Camera, Fingerprint, HelpCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { ANALYSE_PHOTO } from '../lib/fonctionnalites';
 import FloatingMessageButton from './FloatingMessageButton';
 
 interface LayoutProps {
@@ -21,10 +22,15 @@ export default function Layout({ children, currentPage, onPageChange }: LayoutPr
     { id: 'calendar', name: 'Calendrier', icon: Calendar },
     { id: 'shopping', name: 'Courses', icon: ShoppingCart },
     { id: 'progress', name: 'Suivi', icon: TrendingUp },
-    { id: 'food-analysis', name: 'Analyse photo', icon: Camera },
     { id: 'account', name: 'Compte', icon: Settings },
     { id: 'aide', name: 'Aide', icon: HelpCircle },
   ];
+
+  /* En sommeil : voir lib/fonctionnalites. Le jour où elle rouvre, elle
+     reprend sa place entre le Suivi et le Compte. */
+  if (ANALYSE_PHOTO) {
+    navigationItems.splice(7, 0, { id: 'food-analysis', name: 'Analyse photo', icon: Camera });
+  }
 
   if (user?.role === 'admin') {
     navigationItems.push({ id: 'admin', name: 'Administration', icon: Settings });

@@ -1,6 +1,6 @@
 import { useState, ReactNode } from 'react';
 import {
-  ChevronDown, Smartphone, LogIn, Home, Headphones, Fingerprint, TrendingUp, Book, Camera, Settings,
+  ChevronDown, Smartphone, LogIn, Home, Headphones, Fingerprint, TrendingUp, Book, Settings,
   MessageCircle, FileText, Bell, LifeBuoy,
 } from 'lucide-react';
 import PushNotificationSettings from './PushNotificationSettings';
@@ -174,14 +174,6 @@ export default function Aide({ onPageChange }: Props) {
       ),
     },
     {
-      id: 'photo', icone: Camera, titre: 'Analyse calorique par photo',
-      resume: 'Une estimation de votre assiette, pour prendre conscience des portions.',
-      page: 'food-analysis',
-      contenu: (
-        <p className="text-[15px] leading-7 text-gray-700">Prenez votre assiette en photo ou importez-la depuis la galerie, puis « Analyser » : l'application estime les calories et la répartition du repas. « Sauvegarder dans l'historique » pour la retrouver. C'est une estimation, utile pour se rendre compte — pas une pesée au gramme près.</p>
-      ),
-    },
-    {
       id: 'compte', icone: Settings, titre: 'Mon compte',
       resume: 'Votre taille, votre objectif de poids, vos préférences.',
       page: 'account',
@@ -205,6 +197,9 @@ export default function Aide({ onPageChange }: Props) {
       ),
     },
   ];
+
+  /* La carte de l'analyse photo a été retirée avec la fonctionnalité
+     (lib/fonctionnalites) : la remettre ici le jour où elle rouvre. */
 
   const NOMS_PAGES: Record<string, string> = {
     account: 'Ouvrir Mon compte', podcasts: 'Ouvrir Mon parcours', profil: 'Ouvrir Mon profil',

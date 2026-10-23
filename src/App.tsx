@@ -17,12 +17,16 @@ import ProgressTracking from './components/ProgressTracking';
 import AdminPanel from './components/AdminPanel';
 import AccountProfile from './components/AccountProfile';
 import FoodAnalysis from './components/FoodAnalysis';
+import { ANALYSE_PHOTO } from './lib/fonctionnalites';
 import BadgeCelebration from './components/BadgeCelebration';
 
 function AppContent() {
   const { user, isLoading, completeOnboarding } = useAuth();
   // Une notification ouvre directement la bonne page : /?page=podcasts
-  const PAGES = ['dashboard', 'recipes', 'podcasts', 'profil', 'calendar', 'shopping', 'progress', 'food-analysis', 'account', 'aide', 'admin'];
+  /* `food-analysis` n'y est que si la fonctionnalité est ouverte : sinon
+     l'adresse `?page=food-analysis` retombe sur l'accueil. */
+  const PAGES = ['dashboard', 'recipes', 'podcasts', 'profil', 'calendar', 'shopping', 'progress',
+    ...(ANALYSE_PHOTO ? ['food-analysis'] : []), 'account', 'aide', 'admin'];
   const pageDemandee = new URLSearchParams(window.location.search).get('page');
   const [currentPage, setCurrentPage] = useState(pageDemandee && PAGES.includes(pageDemandee) ? pageDemandee : 'dashboard');
   const [showPasswordReset, setShowPasswordReset] = useState(false);
@@ -101,7 +105,7 @@ function AppContent() {
       case 'progress':
         return <ProgressTracking />;
       case 'food-analysis':
-        return <FoodAnalysis />;
+        return ANALYSE_PHOTO ? <FoodAnalysis /> : <Dashboard onPageChange={setCurrentPage} />;
       case 'account':
         return <AccountProfile />;
       case 'admin':
